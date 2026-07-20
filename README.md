@@ -31,7 +31,8 @@
 - [ ] 第一階段 3.3-C：手語老師／聾人顧問人工審核（`data/synth/review_sheet*.xlsx`＋twtsl 例句）
 - [ ] 第一階段 3.4：train/dev/test 切分（審核通過後）
 - [ ] 第二階段：Gemma 4 E4B＋QLoRA 環境建置
-- [ ] 第三階段：提示法基線 → QLoRA SFT → 多任務混訓 → RAG
+- [x] 第三階段 Stage A：提示法基線（fewshot BLEU-4 44.95 / EM 36.4%，見 [results/stageA_report.md](results/stageA_report.md)）（2026-07-20）
+- [ ] 第三階段 Stage B–D：QLoRA SFT → 多任務混訓 → RAG
 - [ ] 第四階段：BLEU/ROUGE/詞彙表內率＋人工評估
 
 ## 主要參考資料

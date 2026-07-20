@@ -1,0 +1,23 @@
+{
+  "fewshot": {
+    "BLEU-4": 32.17,
+    "ROUGE-L": 54.87,
+    "ExactMatch%": 24.24,
+    "InVocab%": 80.26,
+    "n": 33
+  },
+  "zero": {
+    "BLEU-4": 23.87,
+    "ROUGE-L": 41.07,
+    "ExactMatch%": 18.18,
+    "InVocab%": 66.67,
+    "n": 33
+  },
+  "rules": {
+    "BLEU-4": 10.44,
+    "ROUGE-L": 21.53,
+    "ExactMatch%": 15.15,
+    "InVocab%": 78.57,
+    "n": 33
+  }
+}

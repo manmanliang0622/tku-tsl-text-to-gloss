@@ -1,0 +1,26 @@
+{
+  "zero": {
+    "BLEU-4": 39.5,
+    "ROUGE-L": 55.1,
+    "ExactMatch%": 27.27,
+    "n": 33,
+    "InVocab%(聯集3585)": 85.54,
+    "InVocab%(自有85)": 68.67
+  },
+  "rules": {
+    "BLEU-4": 42.56,
+    "ROUGE-L": 57.86,
+    "ExactMatch%": 30.3,
+    "n": 33,
+    "InVocab%(聯集3585)": 84.81,
+    "InVocab%(自有85)": 75.95
+  },
+  "fewshot": {
+    "BLEU-4": 44.95,
+    "ROUGE-L": 65.59,
+    "ExactMatch%": 36.36,
+    "n": 33,
+    "InVocab%(聯集3585)": 94.32,
+    "InVocab%(自有85)": 81.82
+  }
+}

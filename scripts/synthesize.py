@@ -52,6 +52,20 @@ DRINKS = ["咖啡", "牛奶", "果汁", "紅茶", "珍珠奶茶"]
 FOODS = ["水果", "蘋果", "香蕉", "麵包", "蛋糕", "早餐", "便當"]
 DESTINATIONS = ["學校", "醫院", "公車站", "火車站"]  # 「車站」為火車站之同義索引名，不另立
 
+# batch4 主題槽位（點餐／交通／問路／日常對話／看病；皆為辭典正式名，
+# 語序證據見 data/refs/tslcorpus_evidence.jsonl 與 data/twtsl/twtsl_sentences.jsonl）
+DRINKS2 = ["汽水", "豆漿", "咖啡", "牛奶", "果汁", "紅茶", "珍珠奶茶"]
+FOODS2 = ["披薩", "漢堡", "三明治", "水餃", "麵", "火鍋", "蛋糕", "麵包"]
+PRICE_ITEMS = ["咖啡", "牛奶", "果汁", "披薩", "漢堡", "三明治", "蛋糕", "麵包", "便當"]
+LOCAL_PLACES = ["廁所", "學校", "醫院", "公車站", "火車站", "餐廳", "夜市", "圖書館", "公園"]
+LOCAL_DEST = ["學校", "醫院", "夜市", "圖書館", "公園"]
+CITY_DEST = ["台北", "台中", "台南", "高雄", "花蓮", "台東"]
+BODY_PARTS = ["頭", "肚子", "牙齒", "腳", "手"]
+OCCUPATIONS = ["老師", "學生", "醫生", "護士"]
+# (中文說法, Gloss 正式名) 對，供 v_slots 用
+VEHICLES_LOCAL = [("公車", "公共汽車"), ("計程車", "計程車")]
+VEHICLES_CITY = [("火車", "火車"), ("高鐵", "高鐵")]
+
 NMS_YESNO = "疑問表情（眉毛上揚、身體微前傾）貫穿全句，不比「嗎」"
 NMS_WH = "疑問表情（眼睛、眉毛、頭部姿勢）搭配句末疑問詞"
 NMS_NEG = "否定可伴隨搖頭、眼睛或嘴部表情"
@@ -214,6 +228,123 @@ TEMPLATES = [
      "confidence": "rule-derived",
      "rule_basis": "T8 之場所槽位版；「今天/我/學校/去/不」即 Jane Tsay 2021 "
                    "TODAY-I-SCHOOL-GO-NOT 原例句，其餘場所為類推，審核優先"},
+    # ---------------------------------------- batch4 主題模板（語料庫查證後合成）
+    # 證據來源：文化部臺灣手語語料庫（tslcorpus.moc.gov.tw，代碼＝篇章ID/句ID，
+    # 摘錄存 data/refs/tslcorpus_evidence.jsonl）＋中正辭典例句（TWS 編號）
+    {"tid": "T26", "name": "想望句（喝）〔點餐〕",
+     "chinese": ["我想喝{P}。"],
+     "gloss": ["{P}", "我", "想", "喝"], "nms": None, "slots": DRINKS2,
+     "confidence": "corpus-attested",
+     "rule_basis": "直接複製中正辭典例句「我想喝汽水…」→汽水/我/想/喝"
+                   "（賓語主題化前置、「想」居動詞前），僅換飲料槽位"},
+    {"tid": "T27", "name": "想望句（吃）〔點餐〕",
+     "chinese": ["我想吃{P}。"],
+     "gloss": ["{P}", "我", "想", "吃"], "nms": None, "slots": FOODS2,
+     "confidence": "rule-derived",
+     "rule_basis": "T26 換動詞；賓語前置 O-V 另見文化部語料庫 G1D16P1/a102 "
+                   "我/素/吃、G1D15P1/a73 早餐/吃++，審核優先"},
+    {"tid": "T28", "name": "價錢句（品項）〔點餐〕",
+     "chinese": ["{P}多少錢？"],
+     "gloss": ["{P}", "多少錢"], "nms": NMS_WH, "slots": PRICE_ITEMS,
+     "confidence": "rule-derived",
+     "rule_basis": "T19＋主題+WH 句末結構（文化部語料庫 G3C12/a94 百貨公司在哪裡"
+                   "→百貨公司/哪裡 同構；規則7），審核優先"},
+    {"tid": "T29", "name": "好吃疑問句〔點餐〕",
+     "chinese": ["{P}好吃嗎？"],
+     "gloss": ["{P}", "好吃"], "nms": NMS_YESNO, "slots": FOODS2,
+     "confidence": "rule-derived",
+     "rule_basis": "規則4 判斷句無繫詞＋形容詞句尾（文化部語料庫 G1C32/a7 "
+                   "吃/健康/對/身體/好、G1D3P1/a72 選擇/火車/好）＋規則3 NMS，審核優先"},
+    {"tid": "T30", "name": "場所 WH 句〔問路〕",
+     "chinese": ["{P}在哪裡？"],
+     "gloss": ["{P}", "哪裡"], "nms": NMS_WH, "slots": LOCAL_PLACES,
+     "confidence": "corpus-attested",
+     "rule_basis": "文化部語料庫 G3C12/a94 百貨公司在哪裡？→百貨公司/哪裡 直接同構"
+                   "（主題＋WH 句末，規則7），僅換場所槽位；廁所版另見 T18 註"},
+    {"tid": "T31", "name": "讀書 WH 句〔問路〕",
+     "chinese": ["你在哪裡讀書？", "你在哪裡上學？"],
+     "gloss": ["你", "唸書", "哪裡"], "nms": NMS_WH, "slots": None,
+     "confidence": "rule-derived",
+     "rule_basis": "類比文化部語料庫 G2C31/a162 你哪裡畢業？→你/畢業/哪裡＋T9 句構；"
+                   "「唸書」＝辭典正式名（讀書＝其同義索引名），審核優先"},
+    {"tid": "T32", "name": "腳踏車移動句〔交通〕",
+     "chinese": ["我每天騎腳踏車去{P}。"],
+     "gloss": ["我", "每天", "自行車", "去", "{P}"], "nms": None,
+     "slots": LOCAL_DEST,
+     "confidence": "corpus-attested",
+     "rule_basis": "直接複製中正辭典例句 TWS0047 我每天騎腳踏車上學→"
+                   "我/每天/騎腳踏車/去/讀書，換目的地槽位；"
+                   "「自行車」＝騎腳踏車之辭典正式名，請審核確認詞形"},
+    {"tid": "T33", "name": "市內搭乘句〔交通〕",
+     "chinese": ["我要坐{V}去{P}。", "我要搭{V}去{P}。"],
+     "gloss": ["我", "{V}", "坐", "去", "{P}", "要"], "nms": None,
+     "slots": LOCAL_DEST, "v_slots": VEHICLES_LOCAL,
+     "confidence": "rule-derived",
+     "rule_basis": "文化部語料庫 G3C39/a143 你每天都坐這班公車上學嗎？→"
+                   "你/每天/公車/公車+這/坐車/去/讀書 之語序＋規則1 情態「要」句尾；"
+                   "「公共汽車」＝公車正式名，審核優先"},
+    {"tid": "T34", "name": "城際搭乘句〔交通〕",
+     "chinese": ["我要坐{V}去{P}。", "我要搭{V}去{P}。"],
+     "gloss": ["我", "{V}", "坐", "去", "{P}", "要"], "nms": None,
+     "slots": CITY_DEST, "v_slots": VEHICLES_CITY,
+     "confidence": "rule-derived",
+     "rule_basis": "同 T33 句構；城際版另證：文化部語料庫 G2D13P1/a163 "
+                   "我以前搭火車去台北唸書→像/我/以前/搭火車/去/台北/唸書，審核優先"},
+    {"tid": "T35", "name": "部位疼痛句〔看病〕",
+     "chinese": ["我{P}痛。", "我{P}很痛。"],
+     "gloss": ["我", "{P}", "疼"], "nms": None, "slots": BODY_PARTS,
+     "confidence": "rule-derived",
+     "rule_basis": "文化部語料庫 G1D13P1/a127 …我/右肩/抬起/痛/會（部位＋痛）；"
+                   "「疼」＝辭典正式名（痛＝其同義索引名），請審核確認詞形"},
+    {"tid": "T36", "name": "吃藥句〔看病〕",
+     "chinese": ["我要吃藥。"],
+     "gloss": ["我", "藥", "吃", "要"], "nms": None, "slots": None,
+     "confidence": "rule-derived",
+     "rule_basis": "中正辭典 TWS0132 咳嗽要記得吃藥→咳嗽/藥/吃/記得（藥/吃 O-V）"
+                   "＋規則1 情態句尾（S14 我/水/喝/要 同構），審核優先"},
+    {"tid": "T37", "name": "吃藥疑問句〔看病〕",
+     "chinese": ["你要吃藥嗎？"],
+     "gloss": ["你", "藥", "吃", "要"], "nms": NMS_YESNO, "slots": None,
+     "confidence": "rule-derived",
+     "rule_basis": "T36 換主語＋規則3 是非問句 NMS（P03），審核優先"},
+    {"tid": "T38", "name": "看醫生疑問句〔看病〕",
+     "chinese": ["你要看醫生嗎？"],
+     "gloss": ["你", "看醫生", "要"], "nms": NMS_YESNO, "slots": None,
+     "confidence": "rule-derived",
+     "rule_basis": "自有實例 S20 我要看醫生→我/看醫生/要 換主語＋規則3，審核優先"},
+    {"tid": "T39", "name": "感冒句〔看病〕",
+     "chinese": ["我感冒了。", "我感冒。"],
+     "gloss": ["我", "感冒"], "nms": None, "slots": None,
+     "confidence": "rule-derived",
+     "rule_basis": "狀態句無繫詞（規則4）；中正辭典 TWS0437 妹妹生病了→妹妹/生病 "
+                   "同構，審核優先"},
+    {"tid": "T40", "name": "感冒疑問句〔看病〕",
+     "chinese": ["你感冒了嗎？"],
+     "gloss": ["你", "感冒"], "nms": NMS_YESNO, "slots": None,
+     "confidence": "rule-derived",
+     "rule_basis": "T39 換主語＋規則3 是非問句 NMS（P03），審核優先"},
+    {"tid": "T41", "name": "天氣句〔日常對話〕",
+     "chinese": ["今天天氣很好。"],
+     "gloss": ["今天", "天氣", "好"], "nms": None, "slots": None,
+     "confidence": "rule-derived",
+     "rule_basis": "規則5 時間詞句首＋形容詞句尾（文化部語料庫 G1C32/a7 "
+                   "…對/身體/好），審核優先"},
+    {"tid": "T42", "name": "名字 WH 句（第三人稱）〔日常對話〕",
+     "chinese": ["他叫什麼名字？"],
+     "gloss": ["他", "名字", "什麼"], "nms": NMS_WH, "slots": None,
+     "confidence": "rule-derived",
+     "rule_basis": "自有實例 S23 你叫什麼名字→你/名字/什麼 換主語＋規則7，審核優先"},
+    {"tid": "T43", "name": "職業判斷句〔日常對話〕",
+     "chinese": ["我是{P}。"],
+     "gloss": ["我", "{P}"], "nms": None, "slots": OCCUPATIONS,
+     "confidence": "rule-derived",
+     "rule_basis": "規則4 判斷句不比「是」（P05 我是桃園人→我/桃園/人 同構），"
+                   "審核優先"},
+    {"tid": "T44", "name": "職業是非問句〔日常對話〕",
+     "chinese": ["你是{P}嗎？"],
+     "gloss": ["你", "{P}"], "nms": NMS_YESNO, "slots": OCCUPATIONS,
+     "confidence": "rule-derived",
+     "rule_basis": "T43 換主語＋規則3 是非問句 NMS（T7 同構），審核優先"},
 ]
 
 
@@ -242,9 +373,15 @@ def expand():
     for t in TEMPLATES:
         slot_vals = t["slots"] or [None]
         time_vals = t.get("time_slots") or [None]
+        # v_slots：中文說法與 Gloss 正式名不同的槽位，元素為 (中文, Gloss) 對
+        # （如 ("公車", "公共汽車")；Gloss 一律用辭典正式名供下游檢索）
+        v_vals = t.get("v_slots") or [None]
         for p in slot_vals:
+          for v in v_vals:
+            v_zh, v_gl = v if v else ("", "")
             for tm in time_vals:
                 gloss = [g.replace("{P}", p or "").replace("{T}", tm or "")
+                         .replace("{V}", v_gl)
                          for g in t["gloss"]]
                 unknown = [g for g in gloss if g not in vocab and g not in external]
                 if unknown:
@@ -253,7 +390,8 @@ def expand():
                     raise ValueError(f"{t['tid']} 產生了詞彙表外 Gloss: {unknown}{hint}")
                 ext_used = [g for g in gloss if g not in vocab]
                 for vi, ch_tpl in enumerate(t["chinese"]):
-                    ch = ch_tpl.replace("{P}", p or "").replace("{T}", tm or "")
+                    ch = (ch_tpl.replace("{P}", p or "").replace("{T}", tm or "")
+                          .replace("{V}", v_zh))
                     if ch in existing_chinese:   # 與真實資料重複（如 T1×台北=P01）
                         continue
                     key = (ch, "/".join(gloss))

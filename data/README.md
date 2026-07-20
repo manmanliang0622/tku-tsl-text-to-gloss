@@ -39,14 +39,23 @@
 
 | 檔案 | 內容 |
 |---|---|
-| `synth/tsl_synth.jsonl` | 合成平行資料 849 句（batch1：T1–T9 共 477 句；batch2：T10–T19 自有詞彙 328 句；batch3：T20–T25 外部詞彙 44 句），**全部 `review_status: pending`，未經審核不得進訓練集** |
+| `synth/tsl_synth.jsonl` | 合成平行資料 967 句（batch1：T1–T9 共 477 句；batch2：T10–T19 自有詞彙 328 句；batch3：T20–T25 外部詞彙 44 句；batch4：T26–T44 主題句型 118 句），**全部 `review_status: pending`，未經審核不得進訓練集** |
 | `synth/review_sheet.xlsx` | batch1（SYN0001–0477）審核表 |
-| `synth/review_sheet_batch{N}.xlsx` | 各增量批次審核表（batch2＝SYN0478–0805、batch3＝SYN0806–0849 含外部詞彙欄） |
+| `synth/review_sheet_batch{N}.xlsx` | 各增量批次審核表（batch2＝SYN0478–0805、batch3＝SYN0806–0849、batch4＝SYN0850–0967，含外部詞彙欄） |
 
-模板各自標註 `rule_basis`（依據計畫 3.3 節的 7 條已查證語法規則＋自有實例句），腳本會驗證不產生表外 Gloss、不與原始 35 句重複。`confidence` 兩級：
+batch4 為主題句型（點餐、交通、問路、日常對話、看病），每個模板做法：先查文化部《臺灣手語語料庫》真實聾人語料（`scripts/query_tslcorpus.py` → `refs/tslcorpus_evidence.jsonl`，1,082 句證據）與中正辭典例句核對語序，再合成；`rule_basis` 附語料庫句代碼（如 G3C12/a94）可回查。
+
+模板各自標註 `rule_basis`（依據計畫 3.3 節的 7 條已查證語法規則＋自有實例句），腳本會驗證不產生表外 Gloss、不與原始 35 句重複。`confidence` 三級：
 
 - `attested-pattern`：句型直接複製自有標記表實例，只換地名槽位
-- `rule-derived`：由規則組合推導、自有資料無實例，**審核優先**（batch2 全屬此級；其中 T13/T14 涉及規則1 與規則7 的順序競合，審核最優先）
+- `corpus-attested`：句型直接複製公開語料庫／辭典的真實例句（非自有資料），只換槽位
+- `rule-derived`：由規則組合推導、無逐字實例，**審核優先**（其中 T13/T14 涉及規則1 與規則7 的順序競合，審核最優先）
+
+注意：Gloss 一律用中正辭典**正式名**（公車→公共汽車、痛→疼、騎腳踏車→自行車、讀書→唸書），下游才檢索得到；對應中文同義說法在 `twtsl/twtsl_words.jsonl` 的 `aliases` 欄。
+
+## refs/ — 語序查證證據
+
+`refs/tslcorpus_evidence.jsonl`：文化部《臺灣手語語料庫》按主題關鍵詞抓取的例句（Gloss＋中文對照＋篇章代碼），僅供句型查證，© 文化部，引用／散布依其著作權聲明。
 
 詞彙採兩層制：第一層為自有詞彙表（有自有動作影片）；第二層為中正大學手語辭典詞條（`twtsl/twtsl_words.jsonl`，T20–T25 的槽位來源）。用到第二層詞彙的句子會在 `external_glosses` 欄列出**尚無自有動作影片**的 Gloss——這些詞下游動作庫檢索不到，需列入拍攝排程或僅供語言模型學句型用。
 

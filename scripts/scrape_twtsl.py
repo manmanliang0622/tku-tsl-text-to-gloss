@@ -132,11 +132,11 @@ def consolidate():
         if not recs:
             continue
         d = recs[0]
-        canonical = d.get("name") or row["name"]
+        canonical = (d.get("name") or row["name"]).strip()
         gloss, variant = split_variant(canonical)
-        aliases = sorted({split_variant(a)[0]
+        aliases = sorted({split_variant(a.strip())[0]
                           for a in aliases_map.get(row["id"], []) + [row["name"]]
-                          if split_variant(a)[0] != gloss})
+                          if split_variant(a.strip())[0] != gloss})
         locations = [d[k] for k in ("location1", "location2", "location3",
                                     "location4", "location5") if d.get(k)]
         handshapes = [d[k] for k in d if k.startswith("lo") and "_hs" in k and d[k]]

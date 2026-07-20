@@ -1,3 +1,5 @@
 .claude/
 .DS_Store
 __pycache__/
+~$*.xlsx
+data/twtsl/raw_details.jsonl

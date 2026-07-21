@@ -5,11 +5,16 @@
 先例 SCOPE（Q-LoRA on Qwen2）[來源3]、SignAlignLM（LoRA on LLaMA3）[來源1]。
 
 資料：scripts/split_data.py 產出的 data/splits/{train,dev}.jsonl。
-提示格式與 Stage A 一致（scripts/prompt_common.py），只在 assistant 段（Gloss）算 loss。
+提示格式與 Stage A 一致（scripts/prompt_common.py）；**只在 assistant 段（Gloss）算 loss**，
+prompt（任務描述＋規則＋中文）以 label=-100 遮罩，避免長 prompt 淹沒學習訊號。
 
-用法（在 VM venv 內）：
+記憶體策略：Gemma 4 E4B 的 Per-Layer Embedding（5.6GB bf16，bnb 量化不到）與視覺／
+音訊塔 offload 到 CPU，GPU 只留量化後的 transformer 層（常駐約 3.4GB），
+以配合本機共用 GPU（RTX 4060 Ti 16GB，另有生產服務佔用）。
+
+用法（VM venv 內，建議設 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True）：
   python scripts/train_qlora.py --epochs 3
-  python scripts/train_qlora.py --model google/gemma-4-E4B-it --output outputs/qlora_e4b
+  python scripts/train_qlora.py --max-steps 2 --batch 1   # 冒煙測試
 """
 import argparse
 import json
@@ -17,26 +22,16 @@ from pathlib import Path
 
 import torch
 from datasets import Dataset
-from transformers import AutoTokenizer, BitsAndBytesConfig
-from peft import LoraConfig
-from trl import SFTConfig, SFTTrainer
+from transformers import (AutoTokenizer, BitsAndBytesConfig, Trainer,
+                          TrainingArguments)
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 
 import prompt_common as pc
 
 BASE = Path(__file__).resolve().parent.parent
 
-
-def load_split(name):
-    rows = [json.loads(l) for l in (BASE / "data" / "splits" / f"{name}.jsonl")
-            .read_text(encoding="utf-8").splitlines() if l.strip()]
-    return Dataset.from_list([
-        {"messages": pc.build_messages(r["chinese"], r["gloss_text"])} for r in rows
-    ])
-
-
-# Gemma 4 E 系列的 Per-Layer Embedding（embed_tokens_per_layer）與視覺／音訊塔
-# 佔大量 bf16 顯存且 bnb 量化不到；text→gloss 用不到視覺／音訊，PLE 表可放 CPU。
-# 把這些 offload 到 CPU，GPU 只留量化後的 transformer 層（常駐約 3.4GB）。
+# Gemma 4 E 系列的 PLE（embed_tokens_per_layer）與視覺／音訊塔佔大量 bf16 顯存，
+# text→gloss 用不到，offload 到 CPU。
 GEMMA4_OFFLOAD_MAP = {
     "model.language_model.embed_tokens_per_layer": "cpu",
     "model.vision_tower": "cpu",
@@ -60,6 +55,46 @@ def load_model(model_id, bnb_config):
         dtype=torch.bfloat16, device_map=GEMMA4_OFFLOAD_MAP)
 
 
+def build_dataset(name, tokenizer, max_len):
+    """把 {chinese, gloss_text} 轉成 input_ids + labels（prompt 段遮罩為 -100）。"""
+    rows = [json.loads(l) for l in (BASE / "data" / "splits" / f"{name}.jsonl")
+            .read_text(encoding="utf-8").splitlines() if l.strip()]
+
+    def encode(r):
+        prompt_ids = tokenizer.apply_chat_template(
+            pc.build_messages(r["chinese"]), add_generation_prompt=True,
+            tokenize=True)
+        full_ids = tokenizer.apply_chat_template(
+            pc.build_messages(r["chinese"], r["gloss_text"]),
+            add_generation_prompt=False, tokenize=True)
+        labels = [-100] * len(prompt_ids) + full_ids[len(prompt_ids):]
+        input_ids = full_ids[:max_len]
+        labels = labels[:max_len]
+        return {"input_ids": input_ids, "labels": labels}
+
+    return Dataset.from_list([encode(r) for r in rows])
+
+
+class MaskedCollator:
+    """動態 padding：input_ids 補 pad、labels 補 -100、建 attention_mask。"""
+    def __init__(self, pad_id):
+        self.pad_id = pad_id
+
+    def __call__(self, feats):
+        maxlen = max(len(f["input_ids"]) for f in feats)
+        input_ids, labels, attn = [], [], []
+        for f in feats:
+            n = maxlen - len(f["input_ids"])
+            input_ids.append(f["input_ids"] + [self.pad_id] * n)
+            labels.append(f["labels"] + [-100] * n)
+            attn.append([1] * len(f["input_ids"]) + [0] * n)
+        return {
+            "input_ids": torch.tensor(input_ids),
+            "labels": torch.tensor(labels),
+            "attention_mask": torch.tensor(attn),
+        }
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default="google/gemma-4-E4B-it")
@@ -72,33 +107,37 @@ def main():
     ap.add_argument("--lora-r", type=int, default=16)
     ap.add_argument("--lora-alpha", type=int, default=32)
     ap.add_argument("--max-steps", type=int, default=-1,
-                    help="限制訓練步數（>0 用於冒煙測試驗證管線）")
+                    help="限制訓練步數（>0 用於冒煙測試）")
     args = ap.parse_args()
 
     bnb = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.bfloat16,
-        bnb_4bit_use_double_quant=True,
-        llm_int8_enable_fp32_cpu_offload=True,  # 允許 PLE/視覺/音訊放 CPU
+        load_in_4bit=True, bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_use_double_quant=True,
+        llm_int8_enable_fp32_cpu_offload=True,
     )
     tokenizer = AutoTokenizer.from_pretrained(args.model)
+    if tokenizer.pad_token_id is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
     model = load_model(args.model, bnb)
     model.config.use_cache = False
-
-    # 用 regex 限定只掛在語言模型的投影層；視覺/音訊塔用的是自訂
-    # Gemma4ClippableLinear（PEFT 不支援），且 text→gloss 用不到，故排除。
+    model = prepare_model_for_kbit_training(
+        model, use_gradient_checkpointing=True,
+        gradient_checkpointing_kwargs={"use_reentrant": False})
     lora = LoraConfig(
         r=args.lora_r, lora_alpha=args.lora_alpha, lora_dropout=0.05,
         bias="none", task_type="CAUSAL_LM",
         target_modules=r".*language_model.*(q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj)",
     )
+    model = get_peft_model(model, lora)
+    model.print_trainable_parameters()
 
-    train_ds, dev_ds = load_split("train"), load_split("dev")
+    train_ds = build_dataset("train", tokenizer, args.max_len)
+    dev_ds = build_dataset("dev", tokenizer, args.max_len)
     print(f"train={len(train_ds)} dev={len(dev_ds)}")
 
     smoke = args.max_steps and args.max_steps > 0
-    cfg = SFTConfig(
+    targs = TrainingArguments(
         output_dir=args.output,
         num_train_epochs=args.epochs,
         max_steps=args.max_steps,
@@ -116,17 +155,15 @@ def main():
         metric_for_best_model="eval_loss",
         greater_is_better=False,
         bf16=True,
-        max_length=args.max_len,
-        assistant_only_loss=True,   # 只在 Gloss（assistant）段算 loss
         gradient_checkpointing=True,
         gradient_checkpointing_kwargs={"use_reentrant": False},
         report_to="none",
         seed=42,
     )
-    trainer = SFTTrainer(
-        model=model, args=cfg,
+    trainer = Trainer(
+        model=model, args=targs,
         train_dataset=train_ds, eval_dataset=dev_ds,
-        processing_class=tokenizer, peft_config=lora,
+        data_collator=MaskedCollator(tokenizer.pad_token_id),
     )
     trainer.train()
     trainer.save_model(args.output)

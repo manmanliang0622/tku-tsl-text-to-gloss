@@ -86,11 +86,12 @@ def main():
     model = load_model(args.model, bnb)
     model.config.use_cache = False
 
+    # 用 regex 限定只掛在語言模型的投影層；視覺/音訊塔用的是自訂
+    # Gemma4ClippableLinear（PEFT 不支援），且 text→gloss 用不到，故排除。
     lora = LoraConfig(
         r=args.lora_r, lora_alpha=args.lora_alpha, lora_dropout=0.05,
         bias="none", task_type="CAUSAL_LM",
-        target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
-                        "gate_proj", "up_proj", "down_proj"],
+        target_modules=r".*language_model.*(q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj)",
     )
 
     train_ds, dev_ds = load_split("train"), load_split("dev")

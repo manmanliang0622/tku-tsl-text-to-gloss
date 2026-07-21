@@ -25,9 +25,18 @@ RULES = (
 )
 
 
+# 微調用精簡 prompt：只給任務描述＋待翻譯句，不含 7 條規則。
+# 理由：(1) 微調後模型從訓練資料學會語法，規則是 Stage A 未微調模型的拐杖；
+# (2) 規則佔 ~260 token，會讓每筆序列變長、Gemma 262k 詞彙的 logits 記憶體暴增，
+#     在共用 GPU 上留不住安全餘裕；(3) 訓練與評估同用此函式，仍保持一致可比。
+INCLUDE_RULES = False
+
+
 def build_user_prompt(chinese: str) -> str:
-    """訓練與推理共用的 user turn 內容（TASK_DESC + RULES + 待翻譯句）。"""
-    return f"{TASK_DESC}\n\n{RULES}\n\n中文：{chinese}\nGloss："
+    """訓練與推理共用的 user turn 內容。"""
+    if INCLUDE_RULES:
+        return f"{TASK_DESC}\n\n{RULES}\n\n中文：{chinese}\nGloss："
+    return f"{TASK_DESC}\n中文：{chinese}\nGloss："
 
 
 def build_messages(chinese: str, gloss_text: str = None) -> list:

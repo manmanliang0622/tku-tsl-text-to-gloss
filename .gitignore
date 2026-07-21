@@ -3,3 +3,7 @@
 __pycache__/
 ~$*.xlsx
 data/twtsl/raw_details.jsonl
+# 訓練產出與環境（VM 端，不入庫）
+.venv/
+outputs/
+*.log

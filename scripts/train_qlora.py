@@ -64,6 +64,8 @@ def main():
     ap.add_argument("--max-len", type=int, default=512)
     ap.add_argument("--lora-r", type=int, default=16)
     ap.add_argument("--lora-alpha", type=int, default=32)
+    ap.add_argument("--max-steps", type=int, default=-1,
+                    help="限制訓練步數（>0 用於冒煙測試驗證管線）")
     args = ap.parse_args()
 
     bnb = BitsAndBytesConfig(
@@ -86,9 +88,11 @@ def main():
     train_ds, dev_ds = load_split("train"), load_split("dev")
     print(f"train={len(train_ds)} dev={len(dev_ds)}")
 
+    smoke = args.max_steps and args.max_steps > 0
     cfg = SFTConfig(
         output_dir=args.output,
         num_train_epochs=args.epochs,
+        max_steps=args.max_steps,
         per_device_train_batch_size=args.batch,
         per_device_eval_batch_size=args.batch,
         gradient_accumulation_steps=args.grad_accum,
@@ -96,10 +100,10 @@ def main():
         lr_scheduler_type="cosine",
         warmup_ratio=0.03,
         logging_steps=10,
-        eval_strategy="epoch",
-        save_strategy="epoch",
+        eval_strategy="no" if smoke else "epoch",
+        save_strategy="no" if smoke else "epoch",
         save_total_limit=2,
-        load_best_model_at_end=True,
+        load_best_model_at_end=not smoke,
         metric_for_best_model="eval_loss",
         greater_is_better=False,
         bf16=True,

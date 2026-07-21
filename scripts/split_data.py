@@ -15,9 +15,14 @@
 本切分產出的 manifest.json 會記錄各來源筆數與審核狀態，供報告據實說明。
 
 用法：
-  python3 scripts/split_data.py                       # 預設：synth 全部 + twtsl 例句
-  python3 scripts/split_data.py --exclude-rule-derived # 只用 attested/corpus + twtsl
+  python3 scripts/split_data.py                       # 預設：synth + twtsl 例句 + 語料庫
+  python3 scripts/split_data.py --exclude-rule-derived # 只用 attested/corpus + twtsl + 語料庫
+  python3 scripts/split_data.py --no-corpus            # 不加文化部語料庫（回到舊組成）
   python3 scripts/split_data.py --include-words 500    # 額外加 N 筆辭典詞→gloss 對
+
+2026-07-21 更新：train/dev 池加入文化部《臺灣手語語料庫》全爬平行語料
+（data/tslcorpus/parallel.jsonl，5,272 句真實 Text↔Gloss）。這是最大宗真實資料，
+預設納入；以 --min-gloss-len 過濾過短碎片（是／爺爺 等單詞句）。
 """
 import argparse
 import json
@@ -53,6 +58,10 @@ def main():
                     help="排除 confidence=rule-derived 的合成句")
     ap.add_argument("--include-words", type=int, default=0,
                     help="額外加入 N 筆辭典詞→gloss 對（0=不加）")
+    ap.add_argument("--no-corpus", action="store_true",
+                    help="不加入文化部語料庫平行語料")
+    ap.add_argument("--min-gloss-len", type=int, default=2,
+                    help="語料庫句最小 Gloss token 數（濾掉過短碎片，預設 2）")
     args = ap.parse_args()
     rng = random.Random(args.seed)
     OUT.mkdir(exist_ok=True)
@@ -73,6 +82,15 @@ def main():
     twtsl_sents = load_jsonl(DATA / "twtsl" / "twtsl_sentences.jsonl")
     for e in twtsl_sents:
         pool.append(norm_record(e, "twtsl-sentence"))
+
+    corpus_dropped_short = 0
+    corpus_path = DATA / "tslcorpus" / "parallel.jsonl"
+    if not args.no_corpus and corpus_path.exists():
+        for e in load_jsonl(corpus_path):
+            if len(e.get("gloss", [])) < args.min_gloss_len:
+                corpus_dropped_short += 1
+                continue
+            pool.append(norm_record(e, "tslcorpus"))
 
     if args.include_words > 0:
         words = load_jsonl(DATA / "twtsl" / "twtsl_words.jsonl")
@@ -129,9 +147,13 @@ def main():
         "dev_composition": compo(dev),
         "test_composition": compo(test),
         "leaked_removed": leaked,
+        "corpus_dropped_short": corpus_dropped_short,
+        "min_gloss_len": args.min_gloss_len,
+        "no_corpus": args.no_corpus,
         "note": ("test=Stage A 相同的 33 句真實已審核句，永不進訓練；"
-                 "train/dev 來源 synth 與 twtsl 目前 review_status=pending，"
-                 "本輪為管線驗證，最終報告需依人工審核結果更新。"),
+                 "train/dev 來源 synth／twtsl／tslcorpus 目前 review_status=pending，"
+                 "本輪為管線驗證，最終報告需依人工審核結果更新。"
+                 "tslcorpus＝文化部語料庫全爬真實平行語料（最大宗真實資料）。"),
     }
     (OUT / "manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")

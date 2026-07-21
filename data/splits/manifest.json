@@ -1,0 +1,29 @@
+{
+  "seed": 42,
+  "dev_ratio": 0.08,
+  "exclude_rule_derived": false,
+  "include_words": 0,
+  "counts": {
+    "train": 5788,
+    "dev": 503,
+    "test": 33
+  },
+  "train_composition": {
+    "tslcorpus": 4405,
+    "synth": 886,
+    "twtsl-sentence": 497
+  },
+  "dev_composition": {
+    "twtsl-sentence": 43,
+    "tslcorpus": 383,
+    "synth": 77
+  },
+  "test_composition": {
+    "real": 33
+  },
+  "leaked_removed": 12,
+  "corpus_dropped_short": 467,
+  "min_gloss_len": 2,
+  "no_corpus": false,
+  "note": "test=Stage A 相同的 33 句真實已審核句，永不進訓練；train/dev 來源 synth／twtsl／tslcorpus 目前 review_status=pending，本輪為管線驗證，最終報告需依人工審核結果更新。tslcorpus＝文化部語料庫全爬真實平行語料（最大宗真實資料）。"
+}

@@ -4,6 +4,8 @@ __pycache__/
 ~$*.xlsx
 data/twtsl/raw_details.jsonl
 data/refs/tslcorpus_raw.jsonl
+# 訓練切分：jsonl 可由 split_data.py 再生，不入庫；僅保留 manifest 供追溯
+data/splits/*.jsonl
 # 訓練產出與環境（VM 端，不入庫）
 .venv/
 outputs/

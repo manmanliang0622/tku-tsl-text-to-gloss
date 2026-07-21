@@ -21,6 +21,7 @@
 | [scripts/synthesize.py](scripts/synthesize.py) | 規則模板資料合成（25 模板 × 詞彙槽位 → 849 句，增量輸出），同步產出各批次人工審核表 |
 | [scripts/scrape_twtsl.py](scripts/scrape_twtsl.py) | 中正大學《台灣手語線上辭典》爬蟲（詞條＋帶 Gloss 例句，可續跑、限速） |
 | [scripts/query_tslcorpus.py](scripts/query_tslcorpus.py) | 文化部《臺灣手語語料庫》主題查詢（合成前的語序查證證據） |
+| [scripts/scrape_tslcorpus_full.py](scripts/scrape_tslcorpus_full.py) | 文化部《臺灣手語語料庫》全爬（407 段→5,272 句真實平行語料，訓練用） |
 
 ## 進度
 
@@ -30,6 +31,7 @@
 - [x] 詞彙擴充：中正手語辭典爬取 3,500 詞＋544 帶 Gloss 例句；句型擴充 T10–T25 共 372 句（batch2/3）（2026-07-20）
 - [x] 分工確認：語言模型端只負責翻譯語序，影片由下游自行爬取；詞彙表改兩層聯集（2026-07-20）
 - [x] 主題句型 batch4：點餐/交通/問路/日常對話/看病 19 模板 118 句，先經文化部手語語料庫＋中正辭典例句語序查證（2026-07-20）
+- [x] 文化部語料庫全爬：407 段落 → 5,272 句真實 Text→Gloss 平行語料（17 主題，訓練用，VM 執行）（2026-07-21）
 - [ ] 第一階段 3.3-C：手語老師／聾人顧問人工審核（`data/synth/review_sheet*.xlsx`＋twtsl 例句）
 - [ ] 第一階段 3.4：train/dev/test 切分（審核通過後）
 - [ ] 第二階段：Gemma 4 E4B＋QLoRA 環境建置

@@ -34,23 +34,30 @@ def load_split(name):
     ])
 
 
+# Gemma 4 E 系列的 Per-Layer Embedding（embed_tokens_per_layer）與視覺／音訊塔
+# 佔大量 bf16 顯存且 bnb 量化不到；text→gloss 用不到視覺／音訊，PLE 表可放 CPU。
+# 把這些 offload 到 CPU，GPU 只留量化後的 transformer 層（常駐約 3.4GB）。
+GEMMA4_OFFLOAD_MAP = {
+    "model.language_model.embed_tokens_per_layer": "cpu",
+    "model.vision_tower": "cpu",
+    "model.audio_tower": "cpu",
+    "model.embed_vision": "cpu",
+    "model.embed_audio": "cpu",
+    "model.language_model.embed_tokens": 0,
+    "model.language_model.layers": 0,
+    "model.language_model.norm": 0,
+    "model.language_model.rotary_emb": 0,
+    "model.language_model.per_layer_model_projection": 0,
+    "model.language_model.per_layer_projection_norm": 0,
+    "lm_head": 0,
+}
+
+
 def load_model(model_id, bnb_config):
-    """Gemma 4 為多模態架構，優先試 CausalLM，失敗改 ImageTextToText。"""
-    last_err = None
-    from transformers import AutoModelForCausalLM
-    try:
-        return AutoModelForCausalLM.from_pretrained(
-            model_id, quantization_config=bnb_config,
-            dtype=torch.bfloat16, device_map="auto")
-    except Exception as e:
-        last_err = e
-    try:
-        from transformers import AutoModelForImageTextToText
-        return AutoModelForImageTextToText.from_pretrained(
-            model_id, quantization_config=bnb_config,
-            dtype=torch.bfloat16, device_map="auto")
-    except Exception as e:
-        raise RuntimeError(f"CausalLM 與 ImageTextToText 皆失敗：{last_err} / {e}")
+    from transformers import Gemma4ForConditionalGeneration
+    return Gemma4ForConditionalGeneration.from_pretrained(
+        model_id, quantization_config=bnb_config,
+        dtype=torch.bfloat16, device_map=GEMMA4_OFFLOAD_MAP)
 
 
 def main():
@@ -73,6 +80,7 @@ def main():
         bnb_4bit_quant_type="nf4",
         bnb_4bit_compute_dtype=torch.bfloat16,
         bnb_4bit_use_double_quant=True,
+        llm_int8_enable_fp32_cpu_offload=True,  # 允許 PLE/視覺/音訊放 CPU
     )
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     model = load_model(args.model, bnb)

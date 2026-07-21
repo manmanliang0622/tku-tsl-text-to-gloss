@@ -30,29 +30,31 @@ import prompt_common as pc
 
 BASE = Path(__file__).resolve().parent.parent
 
-# Gemma 4 E 系列的 PLE（embed_tokens_per_layer）與視覺／音訊塔佔大量 bf16 顯存，
-# text→gloss 用不到，offload 到 CPU。
-GEMMA4_OFFLOAD_MAP = {
-    "model.language_model.embed_tokens_per_layer": "cpu",
-    "model.vision_tower": "cpu",
-    "model.audio_tower": "cpu",
-    "model.embed_vision": "cpu",
-    "model.embed_audio": "cpu",
-    "model.language_model.embed_tokens": 0,
-    "model.language_model.layers": 0,
-    "model.language_model.norm": 0,
-    "model.language_model.rotary_emb": 0,
-    "model.language_model.per_layer_model_projection": 0,
-    "model.language_model.per_layer_projection_norm": 0,
-    "lm_head": 0,
-}
-
-
 def load_model(model_id, bnb_config):
+    """載入 Gemma 4 E4B（4-bit），並把 5.6GB 的 Per-Layer Embedding 表搬到 CPU。
+
+    PLE（embed_tokens_per_layer）是 nn.Embedding，bnb 量化不到、以 bf16 佔 5.6GB。
+    它只是查表：每步輸出僅約 11MB。若用 accelerate device_map offload，前向時
+    整張表會被搬上 GPU（且 fp32＝10.5GB）而 OOM。故改為：整個載入 GPU 後，
+    把 PLE 搬到 CPU 常駐，並改寫其 forward 讓查表在 CPU 進行、只回傳小輸出到 GPU。
+    GPU 常駐從 9.3GB 降到約 3.7GB。
+    """
     from transformers import Gemma4ForConditionalGeneration
-    return Gemma4ForConditionalGeneration.from_pretrained(
+    model = Gemma4ForConditionalGeneration.from_pretrained(
         model_id, quantization_config=bnb_config,
-        dtype=torch.bfloat16, device_map=GEMMA4_OFFLOAD_MAP)
+        dtype=torch.bfloat16, device_map={"": 0})
+
+    ple = model.model.language_model.embed_tokens_per_layer
+    ple.to("cpu")
+    torch.cuda.empty_cache()
+    _orig_forward = ple.forward
+
+    def cpu_lookup(input_ids, *a, **k):
+        dev = input_ids.device
+        return _orig_forward(input_ids.to("cpu"), *a, **k).to(dev)
+
+    ple.forward = cpu_lookup
+    return model
 
 
 def build_dataset(name, tokenizer, max_len):

@@ -60,17 +60,20 @@ def build_dataset(name, tokenizer, max_len):
     rows = [json.loads(l) for l in (BASE / "data" / "splits" / f"{name}.jsonl")
             .read_text(encoding="utf-8").splitlines() if l.strip()]
 
+    def ids(text):
+        # 模板文字已含 <bos> 等特殊標記，故 add_special_tokens=False
+        return tokenizer(text, add_special_tokens=False)["input_ids"]
+
     def encode(r):
-        prompt_ids = tokenizer.apply_chat_template(
+        prompt_text = tokenizer.apply_chat_template(
             pc.build_messages(r["chinese"]), add_generation_prompt=True,
-            tokenize=True)
-        full_ids = tokenizer.apply_chat_template(
+            tokenize=False)
+        full_text = tokenizer.apply_chat_template(
             pc.build_messages(r["chinese"], r["gloss_text"]),
-            add_generation_prompt=False, tokenize=True)
+            add_generation_prompt=False, tokenize=False)
+        prompt_ids, full_ids = ids(prompt_text), ids(full_text)
         labels = [-100] * len(prompt_ids) + full_ids[len(prompt_ids):]
-        input_ids = full_ids[:max_len]
-        labels = labels[:max_len]
-        return {"input_ids": input_ids, "labels": labels}
+        return {"input_ids": full_ids[:max_len], "labels": labels[:max_len]}
 
     return Dataset.from_list([encode(r) for r in rows])
 

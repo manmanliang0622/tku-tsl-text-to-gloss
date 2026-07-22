@@ -16,8 +16,8 @@
 
 ## 2. 學校 VM 與工作流
 
-- 連線：`ssh -p 2288 b310ai@163.13.202.125`（Ubuntu 22.04、RTX 4060 Ti 16GB）。**密碼由團隊保管，不入庫**。
-- VM 已固定主機金鑰（勿用 `StrictHostKeyChecking=no`）。
+- 訓練機：學校實驗室 VM（Ubuntu 22.04、RTX 4060 Ti 16GB）。**連線位址、帳號與密碼由團隊私下保管，不寫入公開 repo**（本 repo 為 public）。
+- VM 已固定主機金鑰（連線勿用 `StrictHostKeyChecking=no`）。
 - **VM 沒有儲存 git 認證**：push 需手動帶 token，或走「VM 跑生成／訓練 → 檔案帶回有 gh 認證的機器 → 由該機器 push」的橋接方式。
 - VM 家目錄 `~/tku-tsl-text-to-gloss` 為 clone；跑訓練前 `git pull` 對應分支即可。
 

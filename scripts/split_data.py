@@ -15,10 +15,14 @@
 本切分產出的 manifest.json 會記錄各來源筆數與審核狀態，供報告據實說明。
 
 用法：
-  python3 scripts/split_data.py                       # 預設：synth + twtsl 例句 + 語料庫
-  python3 scripts/split_data.py --exclude-rule-derived # 只用 attested/corpus + twtsl + 語料庫
+  python3 scripts/split_data.py                       # 預設：排除 rule-derived，只用
+                                                      #   attested/corpus 合成 + twtsl + 語料庫
+  python3 scripts/split_data.py --include-rule-derived # 納回 rule-derived（僅供實驗，非正式訓練）
   python3 scripts/split_data.py --no-corpus            # 不加文化部語料庫（回到舊組成）
   python3 scripts/split_data.py --include-words 500    # 額外加 N 筆辭典詞→gloss 對
+
+2026-07-23 更新：依全資料審核，rule-derived 合成句未經母語者逐句裁定，**預設排除**。
+需納入時明確加 --include-rule-derived，且結果只能作管線驗證、不得作正式訓練報告依據。
 
 2026-07-21 更新：train/dev 池加入文化部《臺灣手語語料庫》全爬平行語料
 （data/tslcorpus/parallel.jsonl，5,272 句真實 Text↔Gloss）。這是最大宗真實資料，
@@ -54,8 +58,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dev-ratio", type=float, default=0.08)
     ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--exclude-rule-derived", action="store_true",
-                    help="排除 confidence=rule-derived 的合成句")
+    ap.add_argument("--include-rule-derived", action="store_true",
+                    help="納入 rule-derived 合成句（預設排除；依 2026-07-23 審核，"
+                         "rule-derived 未經母語者逐句裁定，不得進正式訓練）")
     ap.add_argument("--include-words", type=int, default=0,
                     help="額外加入 N 筆辭典詞→gloss 對（0=不加）")
     ap.add_argument("--no-corpus", action="store_true",
@@ -63,6 +68,7 @@ def main():
     ap.add_argument("--min-gloss-len", type=int, default=2,
                     help="語料庫句最小 Gloss token 數（濾掉過短碎片，預設 2）")
     args = ap.parse_args()
+    exclude_rule_derived = not args.include_rule_derived  # 預設 True（審核安全預設）
     rng = random.Random(args.seed)
     OUT.mkdir(exist_ok=True)
 
@@ -76,7 +82,7 @@ def main():
     pool = []
     synth = load_jsonl(DATA / "synth" / "tsl_synth.jsonl")
     for e in synth:
-        if args.exclude_rule_derived and e.get("confidence") == "rule-derived":
+        if exclude_rule_derived and e.get("confidence") == "rule-derived":
             continue
         pool.append(norm_record(e, "synth"))
     twtsl_sents = load_jsonl(DATA / "twtsl" / "twtsl_sentences.jsonl")
@@ -140,7 +146,7 @@ def main():
     manifest = {
         "seed": args.seed,
         "dev_ratio": args.dev_ratio,
-        "exclude_rule_derived": args.exclude_rule_derived,
+        "exclude_rule_derived": exclude_rule_derived,
         "include_words": args.include_words,
         "counts": {"train": len(train), "dev": len(dev), "test": len(test)},
         "train_composition": compo(train),

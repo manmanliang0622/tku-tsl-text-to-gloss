@@ -1,22 +1,22 @@
 {
   "seed": 42,
   "dev_ratio": 0.08,
-  "exclude_rule_derived": false,
+  "exclude_rule_derived": true,
   "include_words": 0,
   "counts": {
-    "train": 5788,
-    "dev": 503,
+    "train": 5228,
+    "dev": 454,
     "test": 33
   },
   "train_composition": {
+    "twtsl-sentence": 497,
     "tslcorpus": 4405,
-    "synth": 886,
-    "twtsl-sentence": 497
+    "synth": 326
   },
   "dev_composition": {
-    "twtsl-sentence": 43,
     "tslcorpus": 383,
-    "synth": 77
+    "synth": 28,
+    "twtsl-sentence": 43
   },
   "test_composition": {
     "real": 33

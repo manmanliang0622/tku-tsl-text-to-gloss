@@ -174,10 +174,10 @@ def main():
         logging_steps=10,
         eval_strategy="no" if smoke else "epoch",
         save_strategy="no" if smoke else "epoch",
-        save_total_limit=2,
-        load_best_model_at_end=not smoke,
-        metric_for_best_model="eval_loss",
-        greater_is_better=False,
+        save_total_limit=None,      # 留下每個 epoch 的 checkpoint，供事後依 dev loss 挑最佳
+        # 不用 load_best_model_at_end：在 PLE-offloaded model 上 reload adapter 會觸發
+        # accelerate dispatch_model 報錯；改為訓練後由 trainer_state 挑最佳 checkpoint 再評估。
+        load_best_model_at_end=False,
         bf16=True,
         gradient_checkpointing=True,
         gradient_checkpointing_kwargs={"use_reentrant": False},

@@ -1,0 +1,110 @@
+{
+  "audit_version": "tsl-linguistic-audit-v1",
+  "audit_date": "2026-07-23",
+  "scope": {
+    "own_sentences": 35,
+    "own_words": 38,
+    "synth_sentences": 967,
+    "corpus_sentences": 5272,
+    "dictionary_words": 3500,
+    "dictionary_sentences": 544,
+    "gloss_master": 7002,
+    "corpus_evidence": 1082
+  },
+  "statuses": {
+    "own_sentences": {
+      "來源標註可保留": 20,
+      "文字可保留；NMS需影片裁定": 11,
+      "需影片確認語意／動詞形式": 2,
+      "排除直到模板展開": 2
+    },
+    "synth": {
+      "需母語者逐句裁定": 523,
+      "文字層暫可保留": 176,
+      "需修正或追加實證": 115,
+      "需確認中文改寫等值": 87,
+      "句型可暫留；NMS需影片裁定": 66
+    },
+    "corpus": {
+      "官方標註文字可保留": 3279,
+      "需影片／上下文對齊審核": 1846,
+      "重複列：排除或群組化": 147
+    },
+    "dictionary_words": {
+      "辭典來源可保留": 3500
+    },
+    "dictionary_sentences": {
+      "辭典例句來源可保留": 544
+    },
+    "gloss_master": {
+      "詞彙表結構可保留": 7002
+    }
+  },
+  "key_flags": {
+    "synth": {
+      "rule_derived_unattested": 609,
+      "nms_form_and_scope_unverified": 589,
+      "paraphrase_equivalence_unverified": 388,
+      "external_lexeme_variant_and_asset_check": 160,
+      "ride_verb_uses_sit_gloss": 44,
+      "work_vs_shift_lexical_conflation": 29,
+      "negator_bu_vs_meiyou_semantic_mismatch": 29,
+      "source_pattern_with_slot_substitution": 21,
+      "degree_not_encoded": 6,
+      "modal_wh_order_conflict": 5,
+      "study_vs_attend_school_conflation": 1,
+      "change_of_state_aspect_not_encoded": 1
+    },
+    "corpus": {
+      "nms_not_provided": 5272,
+      "alignment_risk_length_gap": 1743,
+      "same_chinese_multiple_gloss": 172,
+      "exact_text_gloss_duplicate": 147,
+      "high_compression_single_gloss": 57
+    },
+    "own_sentences": {
+      "nms_missing": 10,
+      "unexpanded_placeholder": 2,
+      "nms_scope_unverified": 1,
+      "agreement_direction_unverified": 1,
+      "degree_semantics_unverified": 1
+    },
+    "gloss_master": {
+      "no_dictionary_entry": 3244
+    }
+  },
+  "split_audit": {
+    "current_manifest": {
+      "seed": 42,
+      "dev_ratio": 0.08,
+      "exclude_rule_derived": false,
+      "include_words": 0,
+      "counts": {
+        "train": 5788,
+        "dev": 503,
+        "test": 33
+      },
+      "train_composition": {
+        "tslcorpus": 4405,
+        "synth": 886,
+        "twtsl-sentence": 497
+      },
+      "dev_composition": {
+        "twtsl-sentence": 43,
+        "tslcorpus": 383,
+        "synth": 77
+      },
+      "test_composition": {
+        "real": 33
+      },
+      "leaked_removed": 12,
+      "corpus_dropped_short": 467,
+      "min_gloss_len": 2,
+      "no_corpus": false,
+      "note": "test=Stage A 相同的 33 句真實已審核句，永不進訓練；train/dev 來源 synth／twtsl／tslcorpus 目前 review_status=pending，本輪為管線驗證，最終報告需依人工審核結果更新。tslcorpus＝文化部語料庫全爬真實平行語料（最大宗真實資料）。"
+    },
+    "decision": "不可作正式訓練切分",
+    "reason": "train/dev 仍包含 review_status=pending 的 synth、twtsl 與 tslcorpus；exclude_rule_derived=false。此切分只能保留為管線驗證。"
+  },
+  "source_limit": "本審核為可查證的文字與資料來源稽核；需要手形、NMS 時間範圍、地區變體或上下文的判定均未冒充母語者通過。"
+}

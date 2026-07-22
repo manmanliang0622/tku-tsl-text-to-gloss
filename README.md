@@ -32,12 +32,13 @@
 - [x] 分工確認：語言模型端只負責翻譯語序，影片由下游自行爬取；詞彙表改兩層聯集（2026-07-20）
 - [x] 主題句型 batch4：點餐/交通/問路/日常對話/看病 19 模板 118 句，先經文化部手語語料庫＋中正辭典例句語序查證（2026-07-20）
 - [x] 文化部語料庫全爬：407 段落 → 5,272 句真實 Text→Gloss 平行語料（17 主題，訓練用，VM 執行）（2026-07-21）
-- [ ] 第一階段 3.3-C：手語老師／聾人顧問人工審核（`data/synth/review_sheet*.xlsx`＋twtsl 例句）
-- [ ] 第一階段 3.4：train/dev/test 切分（審核通過後）
-- [ ] 第二階段：Gemma 4 E4B＋QLoRA 環境建置
+- [x] 第一階段 3.4：train/dev/test 切分（train 5,788／dev 503／test 33，test=Stage A 同 33 句真實句永不進訓練）（2026-07-21）
+- [x] 第二階段：Gemma 4 E4B＋QLoRA 環境建置（學校 VM，RTX 4060 Ti；含 PLE CPU-offload 記憶體解法）（2026-07-21）
 - [x] 第三階段 Stage A：提示法基線（fewshot BLEU-4 44.95 / EM 36.4%，見 [results/stageA_report.md](results/stageA_report.md)）（2026-07-20）
-- [ ] 第三階段 Stage B–D：QLoRA SFT → 多任務混訓 → RAG
-- [ ] 第四階段：BLEU/ROUGE/詞彙表內率＋人工評估
+- [x] 第三階段 Stage B：QLoRA 微調（**BLEU-4 72.73 / EM 54.5%**，epoch 2 最佳；見 [results/stageB_report.md](results/stageB_report.md)）（2026-07-22）
+- [ ] 第三階段 Stage C–D：多任務混訓 → RAG
+- [ ] 第四階段：人工評估（5 分制）＋以 2 epochs 重訓正式版
+- [ ] 第一階段 3.3-C：手語老師／聾人顧問審核合成/語料庫資料（`data/synth/review_sheet*.xlsx`＋twtsl/tslcorpus 例句，review_status=pending）
 
 ## 主要參考資料
 

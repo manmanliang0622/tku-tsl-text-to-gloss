@@ -8,8 +8,12 @@
   - **train/dev = 合成句（synth）＋ 中正辭典例句（twtsl）**。
     dev 由訓練池分層抽樣（依 source/confidence），供 early stopping。
 
-洩漏防護：train/dev 中若有句子的中文或 gloss_text 與 test 完全相同即剔除。
-（句型會與 test 重疊——這正是要測的泛化；只剔除「完全相同的句」。）
+洩漏防護（兩層）：
+  1. train/dev 中若有句子的中文或 gloss_text 與 test 完全相同即剔除。
+     （句型會與 test 重疊——這正是要測的泛化；只剔除「完全相同的句」。）
+  2. train↔dev 去洩漏（2026-07-23）：dev 依 group 整組留存，同一段對話／詞條／
+     模板不會同時落在 train 與 dev，避免同源近似句造成 dev 分數虛高、影響 early
+     stopping。manifest 的 dev_group_leakage 應為 0。
 
 資料品質標記：synth 與 twtsl 目前 review_status=pending（未經本團隊人工審核）。
 本切分產出的 manifest.json 會記錄各來源筆數與審核狀態，供報告據實說明。
@@ -31,6 +35,7 @@
 import argparse
 import json
 import random
+import re
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent.parent
@@ -42,6 +47,22 @@ def load_jsonl(path):
     return [json.loads(l) for l in Path(path).read_text(encoding="utf-8").splitlines() if l.strip()]
 
 
+def group_key(e, source):
+    """去洩漏切分的分組鍵：同組資料只會整組落在 train 或 dev，不跨兩邊。
+
+    語料庫按對話分組（seg_uuid 去掉段落號 P\\d+，讓同一段對話的各段落／句子
+    同進退）；辭典例句按詞條；合成句按模板；其餘每筆自成一組。
+    """
+    if source == "tslcorpus":
+        u = e.get("seg_uuid") or (e.get("corpus_id", "").split("/")[0]) or e["id"]
+        return "corpus:" + re.sub(r"P\d+$", "", u)
+    if source == "twtsl-sentence":
+        return "twtsl:" + str(e.get("headword") or e["id"])
+    if source == "synth":
+        return "synth:" + str(e.get("template_id") or e["id"])
+    return f"{source}:{e['id']}"
+
+
 def norm_record(e, split_source):
     """統一訓練用欄位。"""
     return {
@@ -49,6 +70,7 @@ def norm_record(e, split_source):
         "chinese": e["chinese"],
         "gloss_text": e["gloss_text"],
         "source": split_source,
+        "group": group_key(e, split_source),
         "confidence": e.get("confidence"),
         "review_status": e.get("review_status", "n/a"),
     }
@@ -120,19 +142,35 @@ def main():
         seen.add(key)
         dedup.append(e)
 
-    # --- 分層抽 dev（依 source 分層，確保各來源都有 dev 樣本） ---
+    # --- 依 source 分層、依 group 去洩漏抽 dev（整組進 train 或 dev） ---
     from collections import defaultdict
     by_src = defaultdict(list)
     for e in dedup:
         by_src[e["source"]].append(e)
     train, dev = [], []
     for src, items in by_src.items():
-        rng.shuffle(items)
-        n_dev = max(1, round(len(items) * args.dev_ratio)) if len(items) >= 10 else 0
-        dev.extend(items[:n_dev])
-        train.extend(items[n_dev:])
+        groups = defaultdict(list)
+        for e in items:
+            groups[e["group"]].append(e)
+        gkeys = list(groups.keys())
+        rng.shuffle(gkeys)
+        target = round(len(items) * args.dev_ratio) if len(items) >= 10 else 0
+        dev_groups, dev_count = set(), 0
+        for gk in gkeys:
+            if dev_count >= target:
+                break
+            dev_groups.add(gk)
+            dev_count += len(groups[gk])
+        for gk in gkeys:
+            (dev if gk in dev_groups else train).extend(groups[gk])
     rng.shuffle(train)
     rng.shuffle(dev)
+
+    # 去洩漏驗證：同一 group 不得同時出現在 train 與 dev
+    train_groups = {e["group"] for e in train}
+    dev_groups_all = {e["group"] for e in dev}
+    group_leak = len(train_groups & dev_groups_all)
+    assert group_leak == 0, f"分組洩漏 {group_leak} 組同時在 train/dev"
 
     for name, rows in [("train", train), ("dev", dev), ("test", test)]:
         with (OUT / f"{name}.jsonl").open("w", encoding="utf-8") as f:
@@ -153,6 +191,9 @@ def main():
         "dev_composition": compo(dev),
         "test_composition": compo(test),
         "leaked_removed": leaked,
+        "split_method": "group-holdout（語料庫按對話 seg_uuid、twtsl 按詞條、synth 按模板整組留存）",
+        "dev_group_leakage": group_leak,
+        "n_groups": {"train": len(train_groups), "dev": len(dev_groups_all)},
         "corpus_dropped_short": corpus_dropped_short,
         "min_gloss_len": args.min_gloss_len,
         "no_corpus": args.no_corpus,

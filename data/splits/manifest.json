@@ -4,24 +4,30 @@
   "exclude_rule_derived": true,
   "include_words": 0,
   "counts": {
-    "train": 5228,
-    "dev": 454,
+    "train": 5129,
+    "dev": 553,
     "test": 33
   },
   "train_composition": {
+    "tslcorpus": 4392,
     "twtsl-sentence": 497,
-    "tslcorpus": 4405,
-    "synth": 326
+    "synth": 240
   },
   "dev_composition": {
-    "tslcorpus": 383,
-    "synth": 28,
+    "synth": 114,
+    "tslcorpus": 396,
     "twtsl-sentence": 43
   },
   "test_composition": {
     "real": 33
   },
   "leaked_removed": 12,
+  "split_method": "group-holdout（語料庫按對話 seg_uuid、twtsl 按詞條、synth 按模板整組留存）",
+  "dev_group_leakage": 0,
+  "n_groups": {
+    "train": 677,
+    "dev": 57
+  },
   "corpus_dropped_short": 467,
   "min_gloss_len": 2,
   "no_corpus": false,

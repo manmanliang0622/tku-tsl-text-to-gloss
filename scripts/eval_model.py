@@ -37,17 +37,13 @@ def load_vocab():
 
 
 def load_model(base, adapter, four_bit):
-    from transformers import AutoModelForCausalLM
-    kw = dict(dtype=torch.bfloat16, device_map="auto")
-    if four_bit:
-        kw["quantization_config"] = BitsAndBytesConfig(
-            load_in_4bit=True, bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_use_double_quant=True)
-    try:
-        model = AutoModelForCausalLM.from_pretrained(base, **kw)
-    except Exception:
-        from transformers import AutoModelForImageTextToText
-        model = AutoModelForImageTextToText.from_pretrained(base, **kw)
+    # 與 train_qlora 相同的 PLE CPU-offload 載入法（避免 E4B 的 5.6GB PLE 表 OOM）
+    from train_qlora import load_model as load_base
+    bnb = BitsAndBytesConfig(
+        load_in_4bit=True, bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_use_double_quant=True,
+        llm_int8_enable_fp32_cpu_offload=True)
+    model = load_base(base, bnb)
     if adapter:
         from peft import PeftModel
         model = PeftModel.from_pretrained(model, adapter)

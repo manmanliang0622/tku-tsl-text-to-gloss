@@ -35,7 +35,8 @@
 - [x] 第一階段 3.4：train/dev/test 切分（train 5,788／dev 503／test 33，test=Stage A 同 33 句真實句永不進訓練）（2026-07-21）
 - [x] 第二階段：Gemma 4 E4B＋QLoRA 環境建置（學校 VM，RTX 4060 Ti；含 PLE CPU-offload 記憶體解法）（2026-07-21）
 - [x] 第三階段 Stage A：提示法基線（fewshot BLEU-4 44.95 / EM 36.4%，見 [results/stageA_report.md](results/stageA_report.md)）（2026-07-20）
-- [x] 第三階段 Stage B：QLoRA 微調（**BLEU-4 72.73 / EM 54.5%**，epoch 2 最佳；見 [results/stageB_report.md](results/stageB_report.md)）（2026-07-22）
+- [x] 第三階段 Stage B v1：QLoRA 微調首輪（EM 54.5%；見 [results/stageB_report.md](results/stageB_report.md)）（2026-07-22）
+- [x] 第三階段 Stage B v2：乾淨切分重訓（排除 rule-derived＋dev 無洩漏，**EM 57.6% / ROUGE-L 79.75**，epoch 2 最佳；見 [results/stageB_v2_report.md](results/stageB_v2_report.md)）（2026-07-24）
 - [ ] 第三階段 Stage C–D：多任務混訓 → RAG
 - [ ] 第四階段：人工評估（5 分制）＋以 2 epochs 重訓正式版
 

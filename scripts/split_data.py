@@ -36,6 +36,7 @@ import argparse
 import json
 import random
 import re
+from collections import Counter, defaultdict
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent.parent
@@ -89,6 +90,10 @@ def main():
                     help="不加入文化部語料庫平行語料")
     ap.add_argument("--min-gloss-len", type=int, default=2,
                     help="語料庫句最小 Gloss token 數（濾掉過短碎片，預設 2）")
+    ap.add_argument("--corpus-test-ratio", type=float, default=0.0,
+                    help="從文化部語料庫依對話群組留存這比例的真實句作『擴大真實 test 集』"
+                         "（test_corpus.jsonl）；整段對話移出訓練池以杜絕洩漏。0=不留存（預設，"
+                         "沿用舊行為）。擴大 test 集以穩定 BLEU 時設 0.12 左右。")
     args = ap.parse_args()
     exclude_rule_derived = not args.include_rule_derived  # 預設 True（審核安全預設）
     rng = random.Random(args.seed)
@@ -111,14 +116,50 @@ def main():
     for e in twtsl_sents:
         pool.append(norm_record(e, "twtsl-sentence"))
 
+    # --- 文化部語料庫：可先依對話群組留存一批當「擴大真實 test 集」，其餘進訓練池 ---
     corpus_dropped_short = 0
+    test_corpus = []
     corpus_path = DATA / "tslcorpus" / "parallel.jsonl"
     if not args.no_corpus and corpus_path.exists():
+        corpus_recs = []
         for e in load_jsonl(corpus_path):
             if len(e.get("gloss", [])) < args.min_gloss_len:
                 corpus_dropped_short += 1
                 continue
-            pool.append(norm_record(e, "tslcorpus"))
+            corpus_recs.append(norm_record(e, "tslcorpus"))
+
+        holdout_groups = set()
+        if args.corpus_test_ratio > 0:
+            # 依對話群組（seg_uuid 去段落號）整組留存，確保 test 對話不出現在 train
+            cgroups = defaultdict(list)
+            for e in corpus_recs:
+                cgroups[e["group"]].append(e)
+            gkeys = list(cgroups.keys())
+            rng.shuffle(gkeys)
+            target = round(len(corpus_recs) * args.corpus_test_ratio)
+            picked_seen, picked = set(), 0
+            for gk in gkeys:
+                if picked >= target:
+                    break
+                holdout_groups.add(gk)
+                for e in cgroups[gk]:
+                    # test_corpus 自身去重，且不與核心 33 句 test 重複
+                    k = (e["chinese"], e["gloss_text"])
+                    if k in picked_seen or e["chinese"] in test_chinese \
+                            or e["gloss_text"] in test_gloss:
+                        continue
+                    picked_seen.add(k)
+                    test_corpus.append(e)
+                picked += len(cgroups[gk])
+
+        for e in corpus_recs:
+            if e["group"] in holdout_groups:
+                continue  # 留存作 test_corpus，不進訓練池
+            pool.append(e)
+
+    # test_corpus 的句也納入洩漏過濾集，確保訓練池不含與其完全相同的句
+    tc_chinese = {e["chinese"] for e in test_corpus}
+    tc_gloss = {e["gloss_text"] for e in test_corpus}
 
     if args.include_words > 0:
         words = load_jsonl(DATA / "twtsl" / "twtsl_words.jsonl")
@@ -133,7 +174,8 @@ def main():
     # --- 去重 + 洩漏防護 ---
     seen, dedup, leaked = set(), [], 0
     for e in pool:
-        if e["chinese"] in test_chinese or e["gloss_text"] in test_gloss:
+        if e["chinese"] in test_chinese or e["gloss_text"] in test_gloss \
+                or e["chinese"] in tc_chinese or e["gloss_text"] in tc_gloss:
             leaked += 1
             continue
         key = (e["chinese"], e["gloss_text"])
@@ -143,7 +185,7 @@ def main():
         dedup.append(e)
 
     # --- 依 source 分層、依 group 去洩漏抽 dev（整組進 train 或 dev） ---
-    from collections import defaultdict
+
     by_src = defaultdict(list)
     for e in dedup:
         by_src[e["source"]].append(e)
@@ -172,13 +214,29 @@ def main():
     group_leak = len(train_groups & dev_groups_all)
     assert group_leak == 0, f"分組洩漏 {group_leak} 組同時在 train/dev"
 
-    for name, rows in [("train", train), ("dev", dev), ("test", test)]:
+    # test.jsonl = 核心 33 句（向後相容，eval 預設讀此檔）；另出 test_corpus.jsonl
+    out_splits = [("train", train), ("dev", dev), ("test", test)]
+    if test_corpus:
+        out_splits.append(("test_corpus", test_corpus))
+    for name, rows in out_splits:
         with (OUT / f"{name}.jsonl").open("w", encoding="utf-8") as f:
             for e in rows:
                 f.write(json.dumps(e, ensure_ascii=False) + "\n")
 
+    # 洩漏驗證：test_corpus 的對話群組不得出現在 train/dev
+    tc_groups = {e["group"] for e in test_corpus}
+    tc_group_leak = len(tc_groups & (train_groups | dev_groups_all))
+    assert tc_group_leak == 0, f"test_corpus 群組洩漏 {tc_group_leak} 組進 train/dev"
+
+    def ngram4_count(rows):
+        n = 0
+        for e in rows:
+            toks = e["gloss_text"].split("/")
+            n += max(len(toks) - 3, 0)
+        return n
+
     def compo(rows):
-        from collections import Counter
+
         return dict(Counter(e["source"] for e in rows))
 
     manifest = {
@@ -186,11 +244,17 @@ def main():
         "dev_ratio": args.dev_ratio,
         "exclude_rule_derived": exclude_rule_derived,
         "include_words": args.include_words,
-        "counts": {"train": len(train), "dev": len(dev), "test": len(test)},
+        "counts": {"train": len(train), "dev": len(dev), "test": len(test),
+                   "test_corpus": len(test_corpus)},
         "train_composition": compo(train),
         "dev_composition": compo(dev),
         "test_composition": compo(test),
         "leaked_removed": leaked,
+        "corpus_test_ratio": args.corpus_test_ratio,
+        "test_corpus_groups": len(tc_groups),
+        "test_corpus_group_leakage": tc_group_leak,
+        "test_4gram_count": ngram4_count(test),
+        "test_corpus_4gram_count": ngram4_count(test_corpus),
         "split_method": "group-holdout（語料庫按對話 seg_uuid、twtsl 按詞條、synth 按模板整組留存）",
         "dev_group_leakage": group_leak,
         "n_groups": {"train": len(train_groups), "dev": len(dev_groups_all)},

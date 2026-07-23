@@ -58,6 +58,11 @@ def main():
     ap.add_argument("--four-bit", action="store_true", default=True)
     ap.add_argument("--max-new", type=int, default=64)
     ap.add_argument("--tag", default=None)
+    ap.add_argument("--test-file", default="test.jsonl",
+                    help="data/splits/ 下的 test 檔名（預設 test.jsonl 核心 33 句；"
+                         "擴大真實 test 集用 test_corpus.jsonl）")
+    ap.add_argument("--resume", action="store_true",
+                    help="沿用已存在的結果，略過已評估過的 id（長 test 集中斷可續跑）")
     args = ap.parse_args()
     RESULTS.mkdir(exist_ok=True)
 
@@ -66,13 +71,23 @@ def main():
     model = load_model(args.base, args.adapter, args.four_bit)
     own, union = load_vocab()
 
-    test = [json.loads(l) for l in (BASE / "data" / "splits" / "test.jsonl")
+    test = [json.loads(l) for l in (BASE / "data" / "splits" / args.test_file)
             .read_text(encoding="utf-8").splitlines() if l.strip()]
 
     out_path = RESULTS / f"{tag}_test.jsonl"
     recs = []
-    with out_path.open("w", encoding="utf-8") as f:
+    done = set()
+    if args.resume and out_path.exists():
+        for l in out_path.read_text(encoding="utf-8").splitlines():
+            if l.strip():
+                r = json.loads(l)
+                recs.append(r)
+                done.add(r["id"])
+        print(f"resume：已有 {len(done)} 筆，續跑剩餘")
+    with out_path.open("a" if args.resume else "w", encoding="utf-8") as f:
         for i, item in enumerate(test):
+            if item["id"] in done:
+                continue
             msgs = pc.build_messages(item["chinese"])
             inputs = tokenizer.apply_chat_template(
                 msgs, add_generation_prompt=True, return_tensors="pt",

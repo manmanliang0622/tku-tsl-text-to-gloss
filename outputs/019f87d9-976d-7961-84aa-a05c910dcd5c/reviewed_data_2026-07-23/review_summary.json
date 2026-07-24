@@ -106,5 +106,31 @@
     "decision": "不可作正式訓練切分",
     "reason": "train/dev 仍包含 review_status=pending 的 synth、twtsl 與 tslcorpus；exclude_rule_derived=false。此切分只能保留為管線驗證。"
   },
-  "source_limit": "本審核為可查證的文字與資料來源稽核；需要手形、NMS 時間範圍、地區變體或上下文的判定均未冒充母語者通過。"
+  "source_limit": "本審核為可查證的文字與資料來源稽核；需要手形、NMS 時間範圍、地區變體或上下文的判定均未冒充母語者通過。",
+  "teacher_review": {
+    "reviewer": "手語老師人工審核（依中正辭典第五版＋文化部語料庫實證）",
+    "date": "2026-07-24",
+    "layer": "詞彙與語序（文字層）；NMS／手形／地區變體／逐句影片對齊為另一影片軌，未冒充母語者影片通過",
+    "not_changed": "review_status 與 train/dev/test 切分未動；教師處置為顧問層，納入訓練須另行受控重切＋授權",
+    "synth": {
+      "corrected": 108,
+      "text_pass": 852,
+      "hold_for_video": 7
+    },
+    "own_sentences": {
+      "pass": 32,
+      "excluded_placeholder": 2,
+      "recommend_reorder": 1
+    },
+    "own_words": {
+      "pass": 38,
+      "note": "21 為地名／方位專有名詞，辭典快照未收非缺失"
+    },
+    "corpus": {
+      "official_text_pass": 3279,
+      "retained_alignment_track": 1846,
+      "duplicate_excluded": 147,
+      "duplicate_canonical_kept": 68
+    }
+  }
 }

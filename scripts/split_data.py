@@ -84,6 +84,11 @@ def main():
     ap.add_argument("--include-rule-derived", action="store_true",
                     help="納入 rule-derived 合成句（預設排除；依 2026-07-23 審核，"
                          "rule-derived 未經母語者逐句裁定，不得進正式訓練）")
+    ap.add_argument("--use-teacher-reviewed", action="store_true",
+                    help="依 2026-07-24 手語老師人工審核結果：synth 只納入 "
+                         "teacher_train_eligible=True（gloss 層通過者，含已修正與 gloss-passed "
+                         "rule-derived；排除 7 句待影片裁定者），並使用已修正 gloss。"
+                         "詞彙層可用於 Text→Gloss；NMS 仍屬影片軌。")
     ap.add_argument("--include-words", type=int, default=0,
                     help="額外加入 N 筆辭典詞→gloss 對（0=不加）")
     ap.add_argument("--no-corpus", action="store_true",
@@ -108,10 +113,18 @@ def main():
     # --- train 池：synth + twtsl 例句 ---
     pool = []
     synth = load_jsonl(DATA / "synth" / "tsl_synth.jsonl")
+    synth_source_note = "review_status=pending（管線驗證）"
     for e in synth:
-        if exclude_rule_derived and e.get("confidence") == "rule-derived":
+        if args.use_teacher_reviewed:
+            # 依手語老師 2026-07-24 審核：只納入 gloss 層通過者，gloss 已含教師修正
+            if not e.get("teacher_train_eligible"):
+                continue
+        elif exclude_rule_derived and e.get("confidence") == "rule-derived":
             continue
         pool.append(norm_record(e, "synth"))
+    if args.use_teacher_reviewed:
+        synth_source_note = ("手語老師 2026-07-24 gloss 層審核通過（含108句修正；"
+                             "排除7句待影片裁定；NMS 屬影片軌）")
     twtsl_sents = load_jsonl(DATA / "twtsl" / "twtsl_sentences.jsonl")
     for e in twtsl_sents:
         pool.append(norm_record(e, "twtsl-sentence"))
@@ -242,7 +255,12 @@ def main():
     manifest = {
         "seed": args.seed,
         "dev_ratio": args.dev_ratio,
-        "exclude_rule_derived": exclude_rule_derived,
+        # use_teacher_reviewed 模式下，synth 納入與否改由 teacher_train_eligible 決定
+        # （gloss 層通過的 rule-derived 會納入），故此欄位以實際生效邏輯回報。
+        "exclude_rule_derived": (False if args.use_teacher_reviewed
+                                 else exclude_rule_derived),
+        "synth_selection": ("teacher_train_eligible（2026-07-24 手語老師 gloss 層審核）"
+                            if args.use_teacher_reviewed else "confidence-based"),
         "include_words": args.include_words,
         "counts": {"train": len(train), "dev": len(dev), "test": len(test),
                    "test_corpus": len(test_corpus)},
@@ -261,10 +279,20 @@ def main():
         "corpus_dropped_short": corpus_dropped_short,
         "min_gloss_len": args.min_gloss_len,
         "no_corpus": args.no_corpus,
-        "note": ("test=Stage A 相同的 33 句真實已審核句，永不進訓練；"
-                 "train/dev 來源 synth／twtsl／tslcorpus 目前 review_status=pending，"
-                 "本輪為管線驗證，最終報告需依人工審核結果更新。"
-                 "tslcorpus＝文化部語料庫全爬真實平行語料（最大宗真實資料）。"),
+        "use_teacher_reviewed": args.use_teacher_reviewed,
+        "synth_source_note": synth_source_note,
+        "note": (
+            ("test=Stage A 相同的 33 句真實已審核句，永不進訓練；"
+             "synth 依手語老師 2026-07-24 gloss 層審核（含修正、排除待影片句），"
+             "tslcorpus／twtsl 為官方／辭典來源文字層可保留；"
+             "重複列由 (中文,gloss) 去重、對話依 seg_uuid 群組化防洩漏。"
+             "詞彙層可用於 Text→Gloss；NMS／手形／地區變體屬影片軌，未納入亦不輸出。"
+             "散布仍須另補文化部語料＋中正辭典授權。")
+            if args.use_teacher_reviewed else
+            ("test=Stage A 相同的 33 句真實已審核句，永不進訓練；"
+             "train/dev 來源 synth／twtsl／tslcorpus 目前 review_status=pending，"
+             "本輪為管線驗證，最終報告需依人工審核結果更新。"
+             "tslcorpus＝文化部語料庫全爬真實平行語料（最大宗真實資料）。")),
     }
     (OUT / "manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")

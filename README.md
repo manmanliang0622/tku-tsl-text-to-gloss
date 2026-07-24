@@ -45,7 +45,7 @@
 - 已以可回查的中正大學臺灣手語研究文獻、博士／碩士論文、教育部／國教院資源重新校正規則描述。
 - 老師具體審核量：T13/T14 競合 5 句；`rule-derived` 609 句；詞形 27 句；現有真實句 NMS 11 句；文化部語料固定風險抽查 170 句。各維度有重疊，不能相加。
 - 詳見 [資料來源.md](資料來源.md)、[臺灣手語資料審核報告_2026-07-22.md](臺灣手語資料審核報告_2026-07-22.md) 與 `outputs/019f87d9-976d-7961-84aa-a05c910dcd5c/臺灣手語老師具體審核清單_2026-07-22.xlsx`。
-- [ ] 第一階段 3.3-C：手語老師／聾人顧問審核合成/語料庫資料（`data/synth/review_sheet*.xlsx`＋twtsl/tslcorpus 例句，review_status=pending）
+- [~] 第一階段 3.3-C：手語老師審核（進行中）——已逐句審 115 flagged 句、修正 108（見「2026-07-24 手語老師審核落實」）；其餘 852 句合成句與 twtsl/tslcorpus 例句仍 `pending`
 
 ## 2026-07-23 全資料逐筆審核
 
@@ -54,6 +54,14 @@
 - 文化部語料 5,272 句中，1,846 句需影片／上下文對齊，147 筆完全重複列需排除或群組化。
 - 現有 split 只能作管線驗證，不得作正式訓練；原因是 `exclude_rule_derived=false` 且 train/dev 仍含 pending 資料。
 - 詳見 [全資料審核報告](臺灣手語全資料審核報告_2026-07-23.md) 與 `outputs/019f87d9-976d-7961-84aa-a05c910dcd5c/臺灣手語全資料逐筆審核_2026-07-23.xlsx`。
+
+## 2026-07-24 手語老師審核落實
+
+- 手語老師依中正辭典第五版＋文化部語料庫，逐句審核 07-23 標記的 115 句「需修正或追加實證」：**修正 108 句、7 句留待母語者影片裁定**（T13/T14 競合 5、上學/唸書 1、感冒狀態 1）。
+- 修正已套進訓練資料（`scripts/apply_teacher_review.py`，原 Gloss 保留於 `pre_review_gloss_text`）：`review_status` = teacher-reviewed 108／reviewed-pending-video 7／pending 852。其中 **29 句 attested-pattern 修正（如 上班→工作）實際改善訓練集**。
+- 切分已改安全預設：`exclude_rule_derived=true` ＋ dev 去洩漏（`dev_group_leakage=0`），train 5,130／dev 553／test 33。
+- **界線（勿誤解「審核完＝可正式訓練」）**：967 句中僅 108 句經老師逐句審核，其餘 852 仍 `pending`、791 句需影片；合成資料整體 `training_status` 仍暫停。現況仍為**管線驗證**，正式成果尚需更全面審核＋影片裁定＋資料授權。
+- 分支：main/data 已含本次落實（commit a3be340）；model 分支由訓練端維護。
 
 ## 主要參考資料
 

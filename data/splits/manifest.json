@@ -4,35 +4,35 @@
   "exclude_rule_derived": true,
   "include_words": 0,
   "counts": {
-    "train": 4659,
-    "dev": 412,
+    "train": 5130,
+    "dev": 553,
     "test": 33,
-    "test_corpus": 585
+    "test_corpus": 0
   },
   "train_composition": {
-    "tslcorpus": 3838,
-    "synth": 324,
-    "twtsl-sentence": 497
+    "tslcorpus": 4392,
+    "twtsl-sentence": 497,
+    "synth": 241
   },
   "dev_composition": {
-    "synth": 29,
-    "tslcorpus": 340,
+    "synth": 114,
+    "tslcorpus": 396,
     "twtsl-sentence": 43
   },
   "test_composition": {
     "real": 33
   },
-  "leaked_removed": 43,
-  "corpus_test_ratio": 0.12,
-  "test_corpus_groups": 37,
+  "leaked_removed": 11,
+  "corpus_test_ratio": 0.0,
+  "test_corpus_groups": 0,
   "test_corpus_group_leakage": 0,
   "test_4gram_count": 5,
-  "test_corpus_4gram_count": 1070,
+  "test_corpus_4gram_count": 0,
   "split_method": "group-holdout（語料庫按對話 seg_uuid、twtsl 按詞條、synth 按模板整組留存）",
   "dev_group_leakage": 0,
   "n_groups": {
-    "train": 651,
-    "dev": 46
+    "train": 677,
+    "dev": 57
   },
   "corpus_dropped_short": 467,
   "min_gloss_len": 2,

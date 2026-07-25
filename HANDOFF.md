@@ -1,91 +1,172 @@
 # 專案交接（HANDOFF）
 
 淡江大學專題：中文 → 臺灣手語 Gloss 翻譯模型（Gemma 4 微調）。
-本檔給接手／並行的 session 快速掌握現況。最後更新：2026-07-25。
+本檔供接手／並行 session 快速掌握現況。最後更新：2026-07-26。
 
-> **最新（2026-07-25）**：完成教師審核資料＋擴大真實 test 的 Stage B v4 資料管線。
-> 585 句候選經既有老師判定保留 584 句，並加入可重現 sidecar、SHA-256 與 leakage 檢查。
-> VM 已同步至 GitHub `00d78a8`；訓練等待管理者修復 NVIDIA driver/library mismatch。
+> **最新（2026-07-26）**：Stage B v4 教師審核資料、正式 2 epochs 訓練與核心 33 句評估已完成。
+> 最佳模型為 epoch 1 `checkpoint-630`；核心 BLEU-4 80.00（95% CI 65.74–88.77）、ROUGE-L 73.92、EM 48.48%。
+> 教師通過的 584 句／37 對話群組正在 VM 以 batch 8、獨立 v4 tag 與 `--resume` 評估，尚未產生完整 summary。
 
-## 1. 分支結構（工作流分流）
+## 1. 分支與版本狀態
 
 | 分支 | 用途 |
 |---|---|
-| `main` | 整合線。兩邊工作完成後併回這裡 |
-| `model` | 模型／訓練工作（train_qlora、eval_model、metrics、results） |
-| `data` | 資料／爬蟲／審核工作（data/、scripts/scrape_*、synthesize、build_vocab、split_data、審核報告） |
+| `main` | 整合線；資料與模型工作完成後 fast-forward 回此分支 |
+| `model` | 模型、訓練、評估、metrics 與 results |
+| `data` | 資料、爬蟲、審核、詞彙表與 split |
 
-- 模型工作在 `model` 提交、資料工作在 `data` 提交，各自完成再併回 `main`；避免多 session 同時改 `main` 衝突。
-- 2026-07-25 VM 三分支已先 fast-forward 對齊 GitHub `00d78a8`；v4 資料變更仍依 data → main → model 流程整合。
-- 開工前務必 `git pull`；在 VM 上跑訓練前 `git checkout model && git merge --ff-only main` 對齊。
+- GitHub 同步基準：`00d78a8`。
+- Stage B v4 資料 commit：`6a05cf8`。
+- Stage B v4 初始模型／資料整合 commit：`68e84cd`。
+- VM `model` 目前 HEAD：`c362c33`（加入安全的 batch generation 評估）。
+- `model` 目前領先 `origin/model` 3 commits；尚未推送公開 repo。
+- 資料修改依 data → main → model 整合；584 句完成前先不 fast-forward 本輪未完成結果回 `main`。
 
-## 2. 學校 VM 與工作流
+## 2. 學校 VM 與安全界線
 
-- 訓練機：學校實驗室 VM（Ubuntu 22.04、RTX 4060 Ti 16GB）。**連線位址、帳號與密碼由團隊私下保管，不寫入公開 repo**（本 repo 為 public）。
-- VM 已固定主機金鑰（連線勿用 `StrictHostKeyChecking=no`）。
-- **VM 沒有儲存 git 認證**：push 需手動帶 token，或走「VM 跑生成／訓練 → 檔案帶回有 gh 認證的機器 → 由該機器 push」的橋接方式。
-- VM 家目錄 `~/tku-tsl-text-to-gloss` 為 clone；跑訓練前 `git pull` 對應分支即可。
+- 訓練機：Ubuntu 22.04、NVIDIA GeForce RTX 4060 Ti 16GB；SSH alias 為 `tku-gpu`。
+- 連線位址、帳號與憑證不寫入 public repo；SSH 已固定主機金鑰，不使用 `StrictHostKeyChecking=no`。
+- VM repo：`/home/b310ai/tku-tsl-text-to-gloss`。
+- 管理者重開機後，核心模組、磁碟驅動與 NVML 均為 `580.173.02`；PyTorch `2.7.1+cu126`，CUDA 可用。
+- 訓練／評估啟動前門檻：NVML 正常、`torch.cuda.is_available() == True`、至少 10 GiB 可用顯存。
+- 不停止共用服務、不自行重開 VM、不覆蓋既有 adapter。GPU 被其他工作占用或顯存不足時停止啟動新工作。
+- VM 沒有 git push 認證；採「VM 執行 → 小型結果與 bundle 帶回本機 → 由有認證的機器推送」。
 
-## 3. 目前資料與切分狀態
+## 3. 教師審核資料與切分
 
-- **Stage B v4 正式重跑切分指令**：`python3 scripts/split_data.py --use-teacher-reviewed --corpus-test-ratio 0.12 --seed 42`
-  - 輸出 `data/splits/`；`train/dev/test.jsonl` 不入庫（可重生），只 `manifest.json` 入庫。
-  - `--use-teacher-reviewed`：synth 只納入 `teacher_train_eligible`（gloss 層通過者，含 108 句修正與已 gloss-pass 的 rule-derived；排除 7 句待影片裁定者），並使用已修正 gloss。
-  - 組成：**train 5,038／dev 636／核心 test 33／擴大 test 584**。
-  - 擴大 test 原候選 585 句／37 對話群組；老師排除重複列 `TC01419`（保留正本 `TC00378`），最終仍有 1,070 個 4-gram。
-  - 審核 sidecar：`data/splits/test_corpus_teacher_review_2026-07-24.json`；manifest 記錄 sidecar 與 test ID SHA-256。
-  - 去洩漏：train/dev、test_corpus 群組、中文、Gloss、`(中文,gloss)` 交集均為 0。
-- 若不需要擴大 test，舊的教師審核切分仍可用 `--use-teacher-reviewed` 重生為 train 5,680／dev 605／test 33。
-- 舊行為（管線驗證，不帶旗標）：`python3 scripts/split_data.py` 仍以 confidence 排除 rule-derived；`--include-rule-derived` 僅供實驗。
+正式切分指令：
 
-## 4. 審核狀態與報告界線（務必遵守）
+```bash
+python3 scripts/split_data.py \
+  --use-teacher-reviewed \
+  --corpus-test-ratio 0.12 \
+  --seed 42
+```
 
-- AI 逐筆預審＋規則實證：見 `臺灣手語全資料審核報告_2026-07-23.md`、`臺灣手語規則實證與審核複核_2026-07-23.md`、可查證來源 `資料來源.md`。
-- 規則語序已用 5,272 句真實語料實證（`scripts/verify_rules_corpus.py`）：否定句尾 76%、時間句首 82%、情態句尾 68%、WH 句末 63%。
-- **手語老師人工審核（2026-07-24，已完成）**：8 類全部逐筆給處置。報告 `臺灣手語老師審核修正_2026-07-24.md`；處置寫在 reviewed jsonl 的 `teacher_*` 欄位、Excel 工作簿各分頁與 `data/synth/tsl_synth.jsonl` 的 `teacher_train_eligible`。
-  - 實際修正 108 句（坐→坐車 44、上班→工作 29、不→沒有 29、補程度詞「很」6）；7 句待影片維持原樣。
-  - **審核只裁定「詞彙與語序（文字層）」；NMS／手形／地區變體／逐句影片對齊屬「影片軌」，一律未冒充母語者影片通過。**
-  - 因 Text→Gloss 不輸出 NMS，「NMS 待影片」不阻擋 gloss 層作訓練標的。
+| split | 句數 |
+|---|---:|
+| train | 5,038 |
+| dev | 636 |
+| 核心 test | 33 |
+| 擴大 test | 584 |
 
-| 想宣稱的事 | 是否已可宣稱 |
-|---|---|
-| 「在固定 33 句真實 test 上 BLEU/EM = X」 | ✅ 有效（test Gloss 為真實標注；Text→Gloss 不輸出 NMS） |
-| 「訓練資料 gloss 已經手語老師詞彙／語序層審核」 | ✅ 有效（synth 已審；tslcorpus／twtsl 為官方／辭典來源文字層可保留） |
-| 「模型輸出語法正確的臺灣手語」 | ❌ 需人工評估（計畫 6.2，5 分制） |
-| 「NMS／非手部表達正確」 | ❌ 屬影片軌，需母語者看影片，未做 |
-| 對外發表／散布模型 | ❌ 需文化部語料＋中正辭典的訓練／散布授權 |
+- Synth 只納入 `teacher_train_eligible`；108 句教師修正已生效，7 句待影片裁定者不進 synth 訓練池。
+- 擴大 test 原候選為 585 句／37 群組。老師排除重複列 `TC01419`，保留正本 `TC00378`，最終為 584 句與 1,070 個 reference 4-gram。
+- Sidecar：`data/splits/test_corpus_teacher_review_2026-07-24.json`。
+- Sidecar SHA-256：`4f305cc44c37ed4c329b71c009f4418ce6c3c744ac1532e164cb7ea62f5a549a`。
+- 584 筆 test ID SHA-256：`c10b42b59698c46374d33bc9b43a2de777e03eda8cda8869f650c326218c57c8`。
+- Train/dev 與 test_corpus 的群組、中文、Gloss、`(中文, Gloss)` 洩漏均為 0；排除的重複 pair 仍留在 blocklist，不回流 train/dev。
 
-- 定位：資料 gloss 層已具老師審核基礎，可跑 Stage B 正式訓練候選並量 BLEU；宣稱「NMS 正確／對外散布」仍須補影片軌與授權。
+老師審核只裁定文字層詞彙與語序。NMS、手形、地區變體及影片對齊仍屬獨立影片軌，不得描述為已通過母語者影片審核。
 
-## 5. 主要腳本
+## 4. Stage B v4 訓練結果
+
+2-step 冒煙測試先以 batch 1、gradient accumulation 4、max length 192 執行，2/2 steps 通過，無 OOM、NaN 或 CUDA 錯誤。
+
+正式設定：
+
+```bash
+PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
+python3 scripts/train_qlora.py \
+  --output outputs/qlora_e4b_v4_teacher_holdout \
+  --epochs 2 \
+  --batch 2 \
+  --grad-accum 4 \
+  --max-len 192 \
+  --lr 2e-4 \
+  --seed 42
+```
+
+- Gemma 4 E4B QLoRA：LoRA r=16、alpha=32、dropout=0.05；4-bit nf4＋double quant、bf16 compute。
+- 共 1,260 steps，約 2,611 秒（43 分 31 秒），最終 train loss 3.459。
+- `checkpoint-630`：epoch 1 dev loss **0.9821940660**。
+- `checkpoint-1260`：epoch 2 dev loss 1.0088934898。
+- 最佳 checkpoint 僅由最低 dev loss 決定，因此固定使用 `outputs/qlora_e4b_v4_teacher_holdout/checkpoint-630`；未用 test 選模。
+
+Adapter 只保留在 VM，不放入 git bundle、不推送或散布。
+
+## 5. 評估結果與執行中工作
+
+核心 33 句已完成：
+
+| 指標 | 結果 |
+|---|---:|
+| BLEU-4 | 80.00 |
+| BLEU-4 95% CI | 65.74–88.77 |
+| ROUGE-L | 73.92 |
+| Exact Match | 48.48% |
+| 自有 85 詞詞彙表內率 | 86.59% |
+| 聯集詞彙表內率 | 95.12% |
+| reference／hypothesis 4-gram | 5／3 |
+
+核心產物：
+
+- `results/finetuned_e4b_v4_teacher_ep1_test.jsonl`
+- `results/summary_finetuned_e4b_v4_teacher_ep1.json`
+- 詳細設定與錯誤分析：`results/stageB_v4_report.md`
+
+584 句長評估執行命令：
+
+```bash
+python3 scripts/eval_model.py \
+  --adapter outputs/qlora_e4b_v4_teacher_holdout/checkpoint-630 \
+  --test-file test_corpus.jsonl \
+  --tag finetuned_e4b_v4_teacher_ep1_corpus \
+  --batch-size 8 \
+  --resume \
+  --bootstrap-samples 1000 \
+  --bootstrap-seed 42
+```
+
+截至 2026-07-26 00:45（Asia/Taipei）：
+
+- 背景程序 PID 記錄於 `results/finetuned_e4b_v4_teacher_ep1_corpus_eval.pid`。
+- 預測輸出為 `results/finetuned_e4b_v4_teacher_ep1_corpus_test.jsonl`；每批 8 筆 flush。
+- Summary 完成後會寫到 `results/summary_finetuned_e4b_v4_teacher_ep1_corpus.json`。
+- 第一批尚未 flush，完整 584 句指標仍為 pending；不得拿部分 JSONL 計算並宣稱最終 BLEU。
+- 若程序中斷，先確認無舊 PID存活，再用完全相同的 tag、checkpoint、batch size 與 `--resume` 續跑。
+
+v3 的 `results/finetuned_e4b_v3_ep1_corpus_test.jsonl` 僅有 16 筆歷史結果，必須保留，但禁止改名或混入 v4。
+
+## 6. 評估效能決策
+
+`scripts/eval_model.py` 新增 `--batch-size`，預設仍為 1；本次 v4 明確使用 8。
+
+- Batch 8 已完整跑完核心 33 句，並和保留的單筆 v4 前三句逐字一致。
+- Batch 32 曾使 MKLDNN 嘗試配置約 40 GiB CPU RAM；VM 僅 30 GiB，雖 fallback 成功仍不安全，因此禁止用於正式 584 句。
+- Gemma 4 E4B 的 Per-Layer Embedding 需 CPU offload，自回歸生成很慢；584 句預估約 24–36 小時。
+- 單筆、batch 8 與 batch 32 的診斷檔集中在 `results/stageB_v4_diagnostics/`，不作正式指標。
+
+## 7. 主要腳本
 
 | 腳本 | 作用 |
 |---|---|
-| `scripts/build_jsonl.py` | 標記表 → JSONL（自有 35 句 / 38 詞 / 85 Gloss） |
-| `scripts/synthesize.py` | 規則模板合成（T1–T44，967 句，增量輸出＋審核表） |
-| `scripts/scrape_twtsl.py` | 中正辭典爬蟲（3,500 詞 / 544 例句） |
-| `scripts/scrape_tslcorpus_full.py` | 文化部語料庫全爬（5,272 句真實平行語料） |
-| `scripts/build_vocab.py` | 統一 Gloss 主詞彙表（7,002 詞）＋覆蓋率 |
-| `scripts/split_data.py` | train/dev/test 切分（`--use-teacher-reviewed` 用教師審核結果＋去洩漏） |
-| `scripts/verify_rules_corpus.py` | 用真實語料實證規則語序（可重現） |
+| `scripts/split_data.py` | 教師審核切分、sidecar、manifest 與 leakage 驗證 |
+| `scripts/train_qlora.py` | Gemma 4 E4B QLoRA 訓練、seed 與 smoke `max_steps` |
+| `scripts/eval_model.py` | 核心／corpus greedy generation、batch 與 resume |
+| `scripts/metrics.py` | BLEU-4、ROUGE-L、EM、詞彙表內率、group bootstrap CI |
+| `scripts/verify_rules_corpus.py` | 以 5,272 句真實語料實證規則語序 |
 
-## 6. 階段進度
+## 8. 階段進度
 
 - ✅ 資料建置、爬取、合成、AI 預審、去洩漏切分
-- ✅ **手語老師人工審核（8 類全數）＋依審核受控重切**（train 5,680／dev 605／test 33）
-- ✅ Stage A 提示法基線（BLEU-4 44.95 / EM 36.4%）
-- ✅ Stage B QLoRA 首輪（BLEU-4 72.73 / EM 54.5%，管線驗證定位）
-- ✅ Stage B v3 核心 33 句（EM 63.6% / ROUGE-L 82.37）；舊 585 句評估保留 16 筆歷史結果，不續跑
-- ✅ **Stage B v4 資料與穩定 BLEU 評估管線**（教師審核＋584 句真實 test＋group bootstrap CI）
-- ⛔ **Stage B v4 訓練／評估**：等待管理者修復 VM NVIDIA 580.159.03／580.173.02 版本不一致
-- ⬜ 影片軌：NMS／手形／地區變體由母語者看影片裁定（獨立於 Text→Gloss）
-- ⬜ 授權：文化部語料＋中正辭典訓練／散布書面依據
-- ⬜ Stage C 多任務混訓、Stage D RAG、計畫 6.2 人工評估（5 分制）
+- ✅ 手語老師文字層審核與 108 句修正
+- ✅ Stage A 提示法基線（BLEU-4 44.95／EM 36.4%）
+- ✅ Stage B QLoRA 首輪（BLEU-4 72.73／EM 54.5%，管線驗證定位）
+- ✅ Stage B v3 核心 33 句；舊 585 句評估保留 16 筆歷史結果
+- ✅ Stage B v4 教師審核資料、可重現切分、group bootstrap 管線
+- ✅ Stage B v4 2 epochs 訓練與核心 33 句評估
+- ⏳ Stage B v4 教師通過 584 句評估與穩定 BLEU CI
+- ⬜ 計畫 6.2 手語老師人工評估（5 分制）
+- ⬜ 影片軌：NMS／手形／地區變體由母語者看影片裁定
+- ⬜ 文化部語料與中正辭典訓練／模型散布書面授權
+- ⬜ Stage C 多任務混訓、Stage D RAG
 
-## 7. 接手第一步（TL;DR）
+## 9. 接手第一步（TL;DR）
 
-1. `git pull`；資料工作切 `data`、模型工作切 `model`，完成再 ff 併回 `main`。
-2. 重生 v4 切分：`python3 scripts/split_data.py --use-teacher-reviewed --corpus-test-ratio 0.12 --seed 42`。
-3. GPU preflight：`nvidia-smi` 正常、`torch.cuda.is_available()` 為 true、可用顯存至少 10 GiB；否則不啟動訓練。
-4. 要看審核細節：`臺灣手語老師審核修正_2026-07-24.md`＋ `outputs/.../reviewed_data_2026-07-23/`（`teacher_*` 欄位）＋工作簿 `臺灣手語全資料逐筆審核_2026-07-23.xlsx`。
-5. 守界線：可講 BLEU 與「gloss 詞彙／語序層已老師審核」；**不可**講「NMS 正確」或「可對外散布」。
+1. 先確認長評估程序是否仍存活，以及 v4 corpus JSONL 已完成幾筆；不要同時啟動第二個相同 tag 的程序。
+2. 程序中斷時以第 5 節命令及 `--resume` 續跑；不可混用 v3 的 16 筆結果。
+3. 完成後驗證 JSONL 為 584 筆、ID 唯一且與 `test_corpus.jsonl` 完全相符，並由 JSONL 重算 summary。
+4. 將 584 句 BLEU-4、37 群組 bootstrap 95% CI、ROUGE-L、EM、詞彙表內率及耗時補入 `stageB_v4_report.md`。
+5. 只提交小型 JSONL、summary、report 與 handoff；adapter 留在 VM。重建 bundle 並複製回本機後，再依授權決定是否推送。
+6. 可宣稱「老師文字／Gloss 層審核」與固定 test 自動指標；不可宣稱 NMS 正確、所有輸出皆為正確臺灣手語或可對外散布。

@@ -5,34 +5,46 @@
   "synth_selection": "teacher_train_eligible（2026-07-24 手語老師 gloss 層審核）",
   "include_words": 0,
   "counts": {
-    "train": 5680,
-    "dev": 605,
+    "train": 5038,
+    "dev": 636,
     "test": 33,
-    "test_corpus": 0
+    "test_corpus": 584
   },
   "train_composition": {
-    "tslcorpus": 4398,
-    "twtsl-sentence": 497,
-    "synth": 785
+    "tslcorpus": 3713,
+    "synth": 829,
+    "twtsl-sentence": 496
   },
   "dev_composition": {
-    "synth": 172,
-    "tslcorpus": 390,
-    "twtsl-sentence": 43
+    "tslcorpus": 465,
+    "synth": 127,
+    "twtsl-sentence": 44
   },
   "test_composition": {
     "real": 33
   },
-  "leaked_removed": 11,
-  "corpus_test_ratio": 0.0,
-  "test_corpus_groups": 0,
+  "leaked_removed": 42,
+  "corpus_test_ratio": 0.12,
+  "test_corpus_candidate_count": 585,
+  "test_corpus_reviewed_count": 584,
+  "test_corpus_review_excluded_count": 1,
+  "test_corpus_review_rejected_ids": [
+    "TC01419"
+  ],
+  "test_corpus_review_file": "data/splits/test_corpus_teacher_review_2026-07-24.json",
+  "test_corpus_review_sha256": "4f305cc44c37ed4c329b71c009f4418ce6c3c744ac1532e164cb7ea62f5a549a",
+  "test_corpus_ids_sha256": "c10b42b59698c46374d33bc9b43a2de777e03eda8cda8869f650c326218c57c8",
+  "test_corpus_groups": 37,
   "test_corpus_group_leakage": 0,
+  "test_corpus_chinese_leakage": 0,
+  "test_corpus_gloss_leakage": 0,
+  "test_corpus_pair_leakage": 0,
   "test_4gram_count": 5,
-  "test_corpus_4gram_count": 0,
+  "test_corpus_4gram_count": 1070,
   "split_method": "group-holdout（語料庫按對話 seg_uuid、twtsl 按詞條、synth 按模板整組留存）",
   "dev_group_leakage": 0,
   "n_groups": {
-    "train": 704,
+    "train": 667,
     "dev": 63
   },
   "corpus_dropped_short": 467,

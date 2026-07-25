@@ -19,6 +19,8 @@
 本切分產出的 manifest.json 會記錄各來源筆數與審核狀態，供報告據實說明。
 
 用法：
+  python3 scripts/split_data.py --use-teacher-reviewed --corpus-test-ratio 0.12 --seed 42
+                                                    # Stage B v4：教師審核資料＋584句真實test
   python3 scripts/split_data.py                       # 預設：排除 rule-derived，只用
                                                       #   attested/corpus 合成 + twtsl + 語料庫
   python3 scripts/split_data.py --include-rule-derived # 納回 rule-derived（僅供實驗，非正式訓練）
@@ -33,6 +35,7 @@
 預設納入；以 --min-gloss-len 過濾過短碎片（是／爺爺 等單詞句）。
 """
 import argparse
+import hashlib
 import json
 import random
 import re
@@ -42,10 +45,40 @@ from pathlib import Path
 BASE = Path(__file__).resolve().parent.parent
 DATA = BASE / "data"
 OUT = DATA / "splits"
+CORPUS_TEST_REVIEW = OUT / "test_corpus_teacher_review_2026-07-24.json"
 
 
 def load_jsonl(path):
     return [json.loads(l) for l in Path(path).read_text(encoding="utf-8").splitlines() if l.strip()]
+
+
+def sha256_file(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def ids_sha256(rows):
+    payload = "".join(f"{e['id']}\n" for e in rows).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def load_corpus_test_review(path):
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    records = payload.get("records", [])
+    by_id = {}
+    for row in records:
+        rid = row.get("id")
+        if not rid or rid in by_id:
+            raise ValueError(f"test review sidecar ID 缺失或重複：{rid!r}")
+        by_id[rid] = row
+    declared = payload.get("counts", {})
+    eligible = sum(bool(r.get("teacher_test_eligible")) for r in records)
+    if declared != {
+        "candidate": len(records),
+        "eligible": eligible,
+        "excluded": len(records) - eligible,
+    }:
+        raise ValueError("test review sidecar counts 與 records 不一致")
+    return payload, by_id
 
 
 def group_key(e, source):
@@ -131,7 +164,10 @@ def main():
 
     # --- 文化部語料庫：可先依對話群組留存一批當「擴大真實 test 集」，其餘進訓練池 ---
     corpus_dropped_short = 0
+    test_corpus_candidates = []
     test_corpus = []
+    test_corpus_review_payload = None
+    test_corpus_rejected = []
     corpus_path = DATA / "tslcorpus" / "parallel.jsonl"
     if not args.no_corpus and corpus_path.exists():
         corpus_recs = []
@@ -162,7 +198,7 @@ def main():
                             or e["gloss_text"] in test_gloss:
                         continue
                     picked_seen.add(k)
-                    test_corpus.append(e)
+                    test_corpus_candidates.append(e)
                 picked += len(cgroups[gk])
 
         for e in corpus_recs:
@@ -170,9 +206,46 @@ def main():
                 continue  # 留存作 test_corpus，不進訓練池
             pool.append(e)
 
-    # test_corpus 的句也納入洩漏過濾集，確保訓練池不含與其完全相同的句
+    # 教師審核 sidecar 固定 seed=42、ratio=0.12 產生的 585 句候選。
+    # 先選群組再套審核：被老師排除者雖不輸出到 test_corpus，原候選群組與 pair
+    # 仍維持 holdout，避免 rejected duplicate 回流 train/dev 改變切分。
+    test_corpus_blocklist = list(test_corpus_candidates)
+    test_corpus = list(test_corpus_candidates)
+    if args.use_teacher_reviewed and test_corpus_candidates:
+        if not CORPUS_TEST_REVIEW.exists():
+            raise FileNotFoundError(
+                f"教師審核擴大 test sidecar 不存在：{CORPUS_TEST_REVIEW}")
+        test_corpus_review_payload, review_by_id = load_corpus_test_review(
+            CORPUS_TEST_REVIEW)
+        candidate_ids = [e["id"] for e in test_corpus_candidates]
+        review_ids = [e["id"] for e in test_corpus_review_payload["records"]]
+        if candidate_ids != review_ids:
+            raise ValueError(
+                "目前 corpus test 候選 ID／順序與教師審核 sidecar 不一致；"
+                "請使用 --seed 42 --corpus-test-ratio 0.12 與同一資料版本")
+        test_corpus = []
+        for e in test_corpus_candidates:
+            rv = review_by_id[e["id"]]
+            for field in ("group", "chinese", "gloss_text"):
+                if rv.get(field) != e.get(field):
+                    raise ValueError(
+                        f"教師審核 sidecar 與候選內容不一致：{e['id']} / {field}")
+            if rv.get("teacher_test_eligible"):
+                reviewed = dict(e)
+                reviewed["review_status"] = "teacher-reviewed-2026-07-24"
+                reviewed["teacher_final"] = rv["teacher_final"]
+                reviewed["teacher_note"] = rv["teacher_note"]
+                test_corpus.append(reviewed)
+            else:
+                if not rv.get("canonical_id"):
+                    raise ValueError(f"排除列缺 canonical_id：{e['id']}")
+                test_corpus_rejected.append(rv)
+
+    # 原始候選（含教師排除列）也納入洩漏 blocklist，確保訓練池不含其相同句。
     tc_chinese = {e["chinese"] for e in test_corpus}
     tc_gloss = {e["gloss_text"] for e in test_corpus}
+    tc_block_chinese = {e["chinese"] for e in test_corpus_blocklist}
+    tc_block_gloss = {e["gloss_text"] for e in test_corpus_blocklist}
 
     if args.include_words > 0:
         words = load_jsonl(DATA / "twtsl" / "twtsl_words.jsonl")
@@ -188,7 +261,8 @@ def main():
     seen, dedup, leaked = set(), [], 0
     for e in pool:
         if e["chinese"] in test_chinese or e["gloss_text"] in test_gloss \
-                or e["chinese"] in tc_chinese or e["gloss_text"] in tc_gloss:
+                or e["chinese"] in tc_block_chinese \
+                or e["gloss_text"] in tc_block_gloss:
             leaked += 1
             continue
         key = (e["chinese"], e["gloss_text"])
@@ -241,6 +315,18 @@ def main():
     tc_group_leak = len(tc_groups & (train_groups | dev_groups_all))
     assert tc_group_leak == 0, f"test_corpus 群組洩漏 {tc_group_leak} 組進 train/dev"
 
+    train_dev = train + dev
+    train_dev_chinese = {e["chinese"] for e in train_dev}
+    train_dev_gloss = {e["gloss_text"] for e in train_dev}
+    train_dev_pairs = {(e["chinese"], e["gloss_text"]) for e in train_dev}
+    tc_pairs = {(e["chinese"], e["gloss_text"]) for e in test_corpus}
+    tc_chinese_leak = len(tc_chinese & train_dev_chinese)
+    tc_gloss_leak = len(tc_gloss & train_dev_gloss)
+    tc_pair_leak = len(tc_pairs & train_dev_pairs)
+    assert tc_chinese_leak == 0, f"test_corpus 中文洩漏 {tc_chinese_leak}"
+    assert tc_gloss_leak == 0, f"test_corpus Gloss 洩漏 {tc_gloss_leak}"
+    assert tc_pair_leak == 0, f"test_corpus pair 洩漏 {tc_pair_leak}"
+
     def ngram4_count(rows):
         n = 0
         for e in rows:
@@ -269,8 +355,23 @@ def main():
         "test_composition": compo(test),
         "leaked_removed": leaked,
         "corpus_test_ratio": args.corpus_test_ratio,
+        "test_corpus_candidate_count": len(test_corpus_candidates),
+        "test_corpus_reviewed_count": len(test_corpus),
+        "test_corpus_review_excluded_count": len(test_corpus_rejected),
+        "test_corpus_review_rejected_ids": [
+            e["id"] for e in test_corpus_rejected],
+        "test_corpus_review_file": (
+            str(CORPUS_TEST_REVIEW.relative_to(BASE))
+            if test_corpus_review_payload else None),
+        "test_corpus_review_sha256": (
+            sha256_file(CORPUS_TEST_REVIEW)
+            if test_corpus_review_payload else None),
+        "test_corpus_ids_sha256": ids_sha256(test_corpus) if test_corpus else None,
         "test_corpus_groups": len(tc_groups),
         "test_corpus_group_leakage": tc_group_leak,
+        "test_corpus_chinese_leakage": tc_chinese_leak,
+        "test_corpus_gloss_leakage": tc_gloss_leak,
+        "test_corpus_pair_leakage": tc_pair_leak,
         "test_4gram_count": ngram4_count(test),
         "test_corpus_4gram_count": ngram4_count(test_corpus),
         "split_method": "group-holdout（語料庫按對話 seg_uuid、twtsl 按詞條、synth 按模板整組留存）",

@@ -3,8 +3,9 @@
 淡江大學專題：中文 → 臺灣手語 Gloss 翻譯模型（Gemma 4 微調）。
 本檔給接手／並行的 session 快速掌握現況。最後更新：2026-07-25。
 
-> **最新（2026-07-24～25）**：完成手語老師逐筆人工審核（8 類全部給處置）＋依審核結果受控重切。
-> 三分支已對齊 `583cfd7`。詳見 §3、§4、[臺灣手語老師審核修正_2026-07-24.md](臺灣手語老師審核修正_2026-07-24.md)。
+> **最新（2026-07-25）**：完成教師審核資料＋擴大真實 test 的 Stage B v4 資料管線。
+> 585 句候選經既有老師判定保留 584 句，並加入可重現 sidecar、SHA-256 與 leakage 檢查。
+> VM 已同步至 GitHub `00d78a8`；訓練等待管理者修復 NVIDIA driver/library mismatch。
 
 ## 1. 分支結構（工作流分流）
 
@@ -15,7 +16,7 @@
 | `data` | 資料／爬蟲／審核工作（data/、scripts/scrape_*、synthesize、build_vocab、split_data、審核報告） |
 
 - 模型工作在 `model` 提交、資料工作在 `data` 提交，各自完成再併回 `main`；避免多 session 同時改 `main` 衝突。
-- **三分支目前對齊 `583cfd7`**（含教師審核＋新切分）。併回 `main` 用 fast-forward。
+- 2026-07-25 VM 三分支已先 fast-forward 對齊 GitHub `00d78a8`；v4 資料變更仍依 data → main → model 流程整合。
 - 開工前務必 `git pull`；在 VM 上跑訓練前 `git checkout model && git merge --ff-only main` 對齊。
 
 ## 2. 學校 VM 與工作流
@@ -27,12 +28,14 @@
 
 ## 3. 目前資料與切分狀態
 
-- **正式重跑切分指令（教師審核後）**：`python3 scripts/split_data.py --use-teacher-reviewed`
+- **Stage B v4 正式重跑切分指令**：`python3 scripts/split_data.py --use-teacher-reviewed --corpus-test-ratio 0.12 --seed 42`
   - 輸出 `data/splits/`；`train/dev/test.jsonl` 不入庫（可重生），只 `manifest.json` 入庫。
   - `--use-teacher-reviewed`：synth 只納入 `teacher_train_eligible`（gloss 層通過者，含 108 句修正與已 gloss-pass 的 rule-derived；排除 7 句待影片裁定者），並使用已修正 gloss。
-  - 組成：**train 5,680／dev 605／test 33**。test = Stage A 相同 33 句真實已審核句，永不進訓練。
-  - synth 納入 957（其中 rule-derived 602 已 gloss-pass）；「坐→坐車」等修正已進訓練。
-  - 去洩漏：`dev_group_leakage = 0`、`test_corpus_group_leakage = 0`；重複列由 `(中文,gloss)` 去重、對話依 `seg_uuid` 群組化。
+  - 組成：**train 5,038／dev 636／核心 test 33／擴大 test 584**。
+  - 擴大 test 原候選 585 句／37 對話群組；老師排除重複列 `TC01419`（保留正本 `TC00378`），最終仍有 1,070 個 4-gram。
+  - 審核 sidecar：`data/splits/test_corpus_teacher_review_2026-07-24.json`；manifest 記錄 sidecar 與 test ID SHA-256。
+  - 去洩漏：train/dev、test_corpus 群組、中文、Gloss、`(中文,gloss)` 交集均為 0。
+- 若不需要擴大 test，舊的教師審核切分仍可用 `--use-teacher-reviewed` 重生為 train 5,680／dev 605／test 33。
 - 舊行為（管線驗證，不帶旗標）：`python3 scripts/split_data.py` 仍以 confidence 排除 rule-derived；`--include-rule-derived` 僅供實驗。
 
 ## 4. 審核狀態與報告界線（務必遵守）
@@ -72,7 +75,9 @@
 - ✅ **手語老師人工審核（8 類全數）＋依審核受控重切**（train 5,680／dev 605／test 33）
 - ✅ Stage A 提示法基線（BLEU-4 44.95 / EM 36.4%）
 - ✅ Stage B QLoRA 首輪（BLEU-4 72.73 / EM 54.5%，管線驗證定位）
-- ⬜ **Stage B 正式候選：用新切分（`--use-teacher-reviewed`）重跑訓練＋量 BLEU**（gloss 層已具老師審核基礎）
+- ✅ Stage B v3 核心 33 句（EM 63.6% / ROUGE-L 82.37）；舊 585 句評估保留 16 筆歷史結果，不續跑
+- ✅ **Stage B v4 資料與穩定 BLEU 評估管線**（教師審核＋584 句真實 test＋group bootstrap CI）
+- ⛔ **Stage B v4 訓練／評估**：等待管理者修復 VM NVIDIA 580.159.03／580.173.02 版本不一致
 - ⬜ 影片軌：NMS／手形／地區變體由母語者看影片裁定（獨立於 Text→Gloss）
 - ⬜ 授權：文化部語料＋中正辭典訓練／散布書面依據
 - ⬜ Stage C 多任務混訓、Stage D RAG、計畫 6.2 人工評估（5 分制）
@@ -80,6 +85,7 @@
 ## 7. 接手第一步（TL;DR）
 
 1. `git pull`；資料工作切 `data`、模型工作切 `model`，完成再 ff 併回 `main`。
-2. 重生切分：`python3 scripts/split_data.py --use-teacher-reviewed`（VM 上訓練前先 pull＋對齊 model）。
-3. 要看審核細節：`臺灣手語老師審核修正_2026-07-24.md`＋ `outputs/.../reviewed_data_2026-07-23/`（`teacher_*` 欄位）＋工作簿 `臺灣手語全資料逐筆審核_2026-07-23.xlsx`。
-4. 守界線：可講 BLEU 與「gloss 詞彙／語序層已老師審核」；**不可**講「NMS 正確」或「可對外散布」。
+2. 重生 v4 切分：`python3 scripts/split_data.py --use-teacher-reviewed --corpus-test-ratio 0.12 --seed 42`。
+3. GPU preflight：`nvidia-smi` 正常、`torch.cuda.is_available()` 為 true、可用顯存至少 10 GiB；否則不啟動訓練。
+4. 要看審核細節：`臺灣手語老師審核修正_2026-07-24.md`＋ `outputs/.../reviewed_data_2026-07-23/`（`teacher_*` 欄位）＋工作簿 `臺灣手語全資料逐筆審核_2026-07-23.xlsx`。
+5. 守界線：可講 BLEU 與「gloss 詞彙／語序層已老師審核」；**不可**講「NMS 正確」或「可對外散布」。

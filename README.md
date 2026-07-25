@@ -37,6 +37,9 @@
 - [x] 第三階段 Stage A：提示法基線（fewshot BLEU-4 44.95 / EM 36.4%，見 [results/stageA_report.md](results/stageA_report.md)）（2026-07-20）
 - [x] 第三階段 Stage B v1：QLoRA 微調首輪（EM 54.5%；見 [results/stageB_report.md](results/stageB_report.md)）（2026-07-22）
 - [x] 第三階段 Stage B v2：乾淨切分重訓（排除 rule-derived＋dev 無洩漏，**EM 57.6% / ROUGE-L 79.75**，epoch 2 最佳；見 [results/stageB_v2_report.md](results/stageB_v2_report.md)）（2026-07-24）
+- [x] 第三階段 Stage B v3：擴大真實 test 留存＋核心評估（**EM 63.6% / ROUGE-L 82.37**；585 句長評估因 GPU 驅動問題停於 16 筆）（2026-07-25）
+- [x] 第三階段 Stage B v4 資料：教師審核後重切（train 5,038／dev 636／核心 test 33／擴大 test 584），加入 group bootstrap BLEU CI 與完整 leakage 檢查
+- [ ] 第三階段 Stage B v4 訓練／評估：等待 VM 管理者修復 NVIDIA driver/library mismatch
 - [ ] 第三階段 Stage C–D：多任務混訓 → RAG
 - [ ] 第四階段：人工評估（5 分制）＋以 2 epochs 重訓正式版
 
@@ -62,6 +65,14 @@
 - 切分已改安全預設：`exclude_rule_derived=true` ＋ dev 去洩漏（`dev_group_leakage=0`），train 5,130／dev 553／test 33。
 - **界線（勿誤解「審核完＝可正式訓練」）**：967 句中僅 108 句經老師逐句審核，其餘 852 仍 `pending`、791 句需影片；合成資料整體 `training_status` 仍暫停。現況仍為**管線驗證**，正式成果尚需更全面審核＋影片裁定＋資料授權。
 - 分支：main/data 已含本次落實（commit a3be340）；model 分支由訓練端維護。
+
+## 2026-07-25 Stage B v4
+
+- 以 `--use-teacher-reviewed --corpus-test-ratio 0.12 --seed 42` 結合老師審核後的 synth 與擴大真實 test。
+- 585 句候選全部對到老師工作簿判定；保留 584 句、排除重複列 `TC01419`，並以 machine-readable sidecar 與 SHA-256 固定評測集合。
+- 擴大 test 含 37 個對話群組、1,070 個 4-gram；train/dev/test 的群組、中文、Gloss 與 pair 洩漏均為 0。
+- 自動評估新增以對話群組為抽樣單位的 BLEU-4 95% bootstrap CI。詳見 [results/stageB_v4_report.md](results/stageB_v4_report.md)。
+- VM 仍載入 NVIDIA 核心模組 580.159.03、磁碟／NVML 為 580.173.02，CUDA 不可用；不自行重開共用 VM，待管理者修復後再跑 2 epochs v4。
 
 ## 主要參考資料
 

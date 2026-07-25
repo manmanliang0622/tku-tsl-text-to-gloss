@@ -63,14 +63,22 @@ def main():
                          "擴大真實 test 集用 test_corpus.jsonl）")
     ap.add_argument("--resume", action="store_true",
                     help="沿用已存在的結果，略過已評估過的 id（長 test 集中斷可續跑）")
+    ap.add_argument("--batch-size", type=int, default=1,
+                    help="greedy generation 批次大小（預設 1；擴大 test 可提高吞吐量）")
     ap.add_argument("--bootstrap-samples", type=int, default=1000,
                     help="BLEU 95%% CI 的 group bootstrap 次數（0=不計；預設1000）")
     ap.add_argument("--bootstrap-seed", type=int, default=42)
     args = ap.parse_args()
+    if args.batch_size < 1:
+        ap.error("--batch-size 必須至少為 1")
     RESULTS.mkdir(exist_ok=True)
 
     tag = args.tag or ("finetuned_e4b" if args.adapter else "base_e4b_hf")
     tokenizer = AutoTokenizer.from_pretrained(args.base)
+    if tokenizer.pad_token_id is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    # decoder-only 批次 generation 必須 left-pad，確保每筆輸入的最後位置都是 prompt 尾端。
+    tokenizer.padding_side = "left"
     model = load_model(args.base, args.adapter, args.four_bit)
     own, union = load_vocab()
 
@@ -87,30 +95,35 @@ def main():
                 recs.append(r)
                 done.add(r["id"])
         print(f"resume：已有 {len(done)} 筆，續跑剩餘")
+    pending = [(i, item) for i, item in enumerate(test) if item["id"] not in done]
     with out_path.open("a" if args.resume else "w", encoding="utf-8") as f:
-        for i, item in enumerate(test):
-            if item["id"] in done:
-                continue
-            msgs = pc.build_messages(item["chinese"])
+        for start in range(0, len(pending), args.batch_size):
+            batch = pending[start:start + args.batch_size]
+            msgs = [pc.build_messages(item["chinese"]) for _, item in batch]
             inputs = tokenizer.apply_chat_template(
                 msgs, add_generation_prompt=True, return_tensors="pt",
-                return_dict=True).to(model.device)
+                return_dict=True, padding=True).to(model.device)
             t0 = time.time()
             with torch.no_grad():
                 out = model.generate(**inputs, max_new_tokens=args.max_new,
                                      do_sample=False)
-            gen = tokenizer.decode(out[0][inputs["input_ids"].shape[1]:],
-                                   skip_special_tokens=True)
-            pred = pc.parse_gloss(gen)
-            rec = {"id": item["id"], "chinese": item["chinese"],
-                   "ref": item["gloss_text"], "pred": pred,
-                   "raw": gen.strip(), "seconds": round(time.time() - t0, 1),
-                   "group": item.get("group") or f"row:{item['id']}"}
-            recs.append(rec)
-            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
-            f.flush()
-            print(f"[{i+1}/{len(test)}] {item['id']} {item['chinese']} → {pred}",
-                  flush=True)
+            batch_seconds = round(time.time() - t0, 1)
+            input_len = inputs["input_ids"].shape[1]
+            gens = tokenizer.batch_decode(
+                out[:, input_len:], skip_special_tokens=True)
+            for (i, item), gen in zip(batch, gens):
+                pred = pc.parse_gloss(gen)
+                rec = {"id": item["id"], "chinese": item["chinese"],
+                       "ref": item["gloss_text"], "pred": pred,
+                       "raw": gen.strip(), "seconds": batch_seconds,
+                       "batch_size": len(batch),
+                       "group": item.get("group") or f"row:{item['id']}"}
+                recs.append(rec)
+                f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+                f.flush()
+                print(
+                    f"[{i+1}/{len(test)}] {item['id']} "
+                    f"{item['chinese']} → {pred}", flush=True)
 
     test_by_id = {item["id"]: item for item in test}
     if len(test_by_id) != len(test):

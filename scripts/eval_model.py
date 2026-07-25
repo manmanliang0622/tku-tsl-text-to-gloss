@@ -63,6 +63,9 @@ def main():
                          "擴大真實 test 集用 test_corpus.jsonl）")
     ap.add_argument("--resume", action="store_true",
                     help="沿用已存在的結果，略過已評估過的 id（長 test 集中斷可續跑）")
+    ap.add_argument("--bootstrap-samples", type=int, default=1000,
+                    help="BLEU 95%% CI 的 group bootstrap 次數（0=不計；預設1000）")
+    ap.add_argument("--bootstrap-seed", type=int, default=42)
     args = ap.parse_args()
     RESULTS.mkdir(exist_ok=True)
 
@@ -101,18 +104,44 @@ def main():
             pred = pc.parse_gloss(gen)
             rec = {"id": item["id"], "chinese": item["chinese"],
                    "ref": item["gloss_text"], "pred": pred,
-                   "raw": gen.strip(), "seconds": round(time.time() - t0, 1)}
+                   "raw": gen.strip(), "seconds": round(time.time() - t0, 1),
+                   "group": item.get("group") or f"row:{item['id']}"}
             recs.append(rec)
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
             f.flush()
             print(f"[{i+1}/{len(test)}] {item['id']} {item['chinese']} → {pred}",
                   flush=True)
 
+    test_by_id = {item["id"]: item for item in test}
+    if len(test_by_id) != len(test):
+        raise ValueError("test file 含重複 ID")
+    rec_by_id = {}
+    for rec in recs:
+        if rec["id"] in rec_by_id:
+            raise ValueError(f"結果含重複 ID：{rec['id']}")
+        rec_by_id[rec["id"]] = rec
+    unexpected = sorted(set(rec_by_id) - set(test_by_id))
+    missing = sorted(set(test_by_id) - set(rec_by_id))
+    if unexpected or missing:
+        raise ValueError(
+            f"結果 ID 與 test 不一致：unexpected={unexpected[:5]} missing={missing[:5]}")
+
+    # 依 test 檔順序重排；舊版 resume 結果沒有 group 時由當前 test 補上。
+    recs = [rec_by_id[item["id"]] for item in test]
+    for rec in recs:
+        rec.setdefault(
+            "group", test_by_id[rec["id"]].get("group") or f"row:{rec['id']}")
     refs = [r["ref"] for r in recs]
     hyps = [r["pred"] for r in recs]
-    m = metrics.evaluate(refs, hyps, own)
+    groups = [r["group"] for r in recs]
+    m = metrics.evaluate(
+        refs, hyps, own, groups=groups,
+        bootstrap_samples=args.bootstrap_samples,
+        bootstrap_seed=args.bootstrap_seed)
     m["InVocab%(自有85)"] = m.pop("InVocab%")
     m["InVocab%(聯集)"] = metrics.evaluate(refs, hyps, union)["InVocab%"]
+    m["test_file"] = args.test_file
+    m["tag"] = tag
     summary_path = RESULTS / f"summary_{tag}.json"
     summary_path.write_text(json.dumps(m, ensure_ascii=False, indent=2), encoding="utf-8")
     print("==", tag, "==", json.dumps(m, ensure_ascii=False))

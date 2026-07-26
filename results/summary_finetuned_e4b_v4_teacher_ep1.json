@@ -1,0 +1,20 @@
+{
+  "BLEU-4": 80.0,
+  "ROUGE-L": 73.92,
+  "ExactMatch%": 48.48,
+  "n": 33,
+  "n_groups": 33,
+  "Reference4Grams": 5,
+  "Hypothesis4Grams": 3,
+  "BLEU-4_95%CI": [
+    65.74,
+    88.77
+  ],
+  "BLEU-bootstrap-samples": 1000,
+  "BLEU-bootstrap-seed": 42,
+  "BLEU-bootstrap-unit": "group",
+  "InVocab%(自有85)": 86.59,
+  "InVocab%(聯集)": 95.12,
+  "test_file": "test.jsonl",
+  "tag": "finetuned_e4b_v4_teacher_ep1"
+}

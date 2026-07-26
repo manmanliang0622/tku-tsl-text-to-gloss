@@ -10,9 +10,9 @@
 - ✅ 管理者重開 VM 後，NVIDIA 核心模組、驅動與 NVML 已一致為 `580.173.02`；CUDA 恢復正常。
 - ✅ 2-step 冒煙測試及正式 2 epochs QLoRA 訓練完成，無 OOM、NaN 或 CUDA 錯誤。
 - ✅ 只依 dev `eval_loss` 選出 epoch 1 的 `checkpoint-630`，核心 33 句評估已完成。
-- ⏳ 教師通過的 584 句評估以 batch 8、獨立 v4 tag 與 `--resume` 執行中；summary 尚未產生，不先填入未完成指標。
+- ✅ 教師通過的 584 句評估已以 batch 8、獨立 v4 tag 與 `--resume` 完成；BLEU-4 18.61（37 群組 bootstrap 95% CI 15.48–22.49）。
 
-VM 程式基準為 `model` commit `c362c33`。舊 v3 的 16/585 筆 corpus 預測仍獨立保留，未混入 v4。
+VM 評估程式基準為 `model` commit `c362c33`，結果文件更新前基準為 `d5ed2ea`。舊 v3 的 16/585 筆 corpus 預測仍獨立保留，未混入 v4。
 
 ## 2. 資料與切分
 
@@ -104,9 +104,11 @@ python3 scripts/eval_model.py \
 | 評測集 | BLEU-4 | 95% CI | ROUGE-L | Exact Match | 自有詞彙表內率 | 聯集詞彙表內率 |
 |---|---:|---:|---:|---:|---:|---:|
 | 核心 33 句 | **80.00** | 65.74–88.77 | 73.92 | 48.48% | 86.59% | 95.12% |
-| 擴大 584 句 | 執行中 | 待完整 summary | 待完整 summary | 待完整 summary | 待完整 summary | 待完整 summary |
+| 擴大 584 句 | **18.61** | **15.48–22.49** | 55.40 | 9.25% | 16.83% | 69.74% |
 
-核心 test 只有 5 個 reference 4-gram，bootstrap 單位實際為 33 個 singleton 群組，因此 CI 仍寬；較穩定的 BLEU 結論應以 584 句／37 個真實對話群組的完整結果為主。
+核心 test 只有 5 個 reference 4-gram，bootstrap 單位實際為 33 個 singleton 群組，因此 CI 寬 23.03 點。擴大 test 含 1,070 個 reference 4-gram，37 個真實對話群組的 CI 寬 7.01 點，提供更穩定的 corpus BLEU 估計。
+
+同一 checkpoint 在兩套 test 上的差距反映資料難度與涵蓋範圍：核心集多為短句與常用句，擴大集包含較長、較多樣的真實敘事及對話。兩者不是同分布抽樣，不把 80.00→18.61 描述成模型在訓練後退步；對較廣真實語料的泛化能力應以 584 句結果為主。
 
 擴大 test 使用獨立 tag，不讀取 v3 的 16 筆歷史結果：
 
@@ -121,7 +123,14 @@ python3 scripts/eval_model.py \
   --bootstrap-seed 42
 ```
 
-截至 2026-07-26 00:45（Asia/Taipei），背景程序仍在執行，第一批尚未寫入 JSONL，corpus summary 尚未產生。批次結果每 8 筆 flush；若程序中斷，以相同 tag 和 `--resume` 續跑即可。完成後必須核對 584 筆數量與 ID 集合，再將 summary 指標填回本報告。
+評估於 2026-07-26 00:39:48（Asia/Taipei）啟動，14:08:24 完成，wall-clock 為 13 小時 28 分 36 秒；程序正常退出，未曾中斷或續跑。
+
+完成後驗證：
+
+- 584 筆 JSONL 均可解析，ID 唯一、順序與固定 ID SHA-256 `c10b42b59698c46374d33bc9b43a2de777e03eda8cda8869f650c326218c57c8` 完全一致。
+- `chinese`、`ref`、`group` 逐筆等於 `test_corpus.jsonl`；37 群組、零空預測。
+- 以相同 `scripts/metrics.py`、雙層詞彙表、1,000 次 group bootstrap 與 seed 42 獨立重算，與 summary 全欄位一致。
+- 預測／summary SHA-256 分別為 `d651612159a95ad4bd127470abd992e7fd05c501e347c277c9317028c5b290e3`、`7305f819859c60c29d6f7151e051f932bffb3ad108b26019740f272a6d4dc8af`。
 
 ### 批次評估的資源決策
 
@@ -131,7 +140,7 @@ Gemma 4 E4B 的 Per-Layer Embedding 需 CPU offload，自回歸生成速度遠�
 - batch 32 診斷曾使 MKLDNN 嘗試配置約 40 GiB CPU 記憶體；雖 fallback 成功，但不符合共用 VM 安全界線，因此正式 corpus 評估固定使用 batch 8。
 - 單筆、batch 8 與 batch 32 診斷結果保留在 `results/stageB_v4_diagnostics/`，不列入正式指標。
 
-## 5. 核心 33 句錯誤分析
+## 5. 錯誤分析
 
 自動指標之外仍可觀察到下列問題：
 
@@ -142,12 +151,14 @@ Gemma 4 E4B 的 Per-Layer Embedding 需 CPU offload，自回歸生成速度遠�
 
 這些案例說明 BLEU、ROUGE-L 與 EM 只能作自動比較；「語法正確」與可接受變體仍需計畫 6.2 的手語老師人工評分。
 
+擴大 584 句有 54 句完全匹配；平均 reference 4.70 tokens、hypothesis 4.41 tokens。模型輸出較 reference 短 218 句、等長 236 句、較長 130 句，沒有空預測，4 句有相鄰重複 token。聯集詞彙表內率 69.74% 顯示真實敘事中的低頻詞、複合詞及標記差異仍是主要限制；後續人工評估應優先區分可接受變體、Gloss 缺失／多增、語序錯誤與真正的表外詞。
+
 ## 6. 產物與宣稱界線
 
 - VM adapter：`outputs/qlora_e4b_v4_teacher_holdout/checkpoint-630`
 - 核心預測：`results/finetuned_e4b_v4_teacher_ep1_test.jsonl`
 - 核心摘要：`results/summary_finetuned_e4b_v4_teacher_ep1.json`
-- 擴大評估：`results/finetuned_e4b_v4_teacher_ep1_corpus_test.jsonl`（進行中）
-- 擴大摘要：`results/summary_finetuned_e4b_v4_teacher_ep1_corpus.json`（完成後產生）
+- 擴大評估：`results/finetuned_e4b_v4_teacher_ep1_corpus_test.jsonl`
+- 擴大摘要：`results/summary_finetuned_e4b_v4_teacher_ep1_corpus.json`
 
 本輪可宣稱「在固定、老師文字／Gloss 層審核之真實 test 上的自動指標」。不可宣稱 NMS 正確、所有模型輸出皆為正確臺灣手語，亦不可在文化部語料與中正辭典授權未釐清前散布 adapter。

@@ -1,0 +1,20 @@
+{
+  "BLEU-4": 18.61,
+  "ROUGE-L": 55.4,
+  "ExactMatch%": 9.25,
+  "n": 584,
+  "n_groups": 37,
+  "Reference4Grams": 1070,
+  "Hypothesis4Grams": 901,
+  "BLEU-4_95%CI": [
+    15.48,
+    22.49
+  ],
+  "BLEU-bootstrap-samples": 1000,
+  "BLEU-bootstrap-seed": 42,
+  "BLEU-bootstrap-unit": "group",
+  "InVocab%(自有85)": 16.83,
+  "InVocab%(聯集)": 69.74,
+  "test_file": "test_corpus.jsonl",
+  "tag": "finetuned_e4b_v4_teacher_ep1_corpus"
+}

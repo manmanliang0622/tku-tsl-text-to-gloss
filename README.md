@@ -39,9 +39,9 @@
 - [x] 第三階段 Stage B v2：乾淨切分重訓（排除 rule-derived＋dev 無洩漏，**EM 57.6% / ROUGE-L 79.75**，epoch 2 最佳；見 [results/stageB_v2_report.md](results/stageB_v2_report.md)）（2026-07-24）
 - [x] 第三階段 Stage B v3：擴大真實 test 留存＋核心評估（**EM 63.6% / ROUGE-L 82.37**；585 句長評估因 GPU 驅動問題停於 16 筆）（2026-07-25）
 - [x] 第三階段 Stage B v4 資料：教師審核後重切（train 5,038／dev 636／核心 test 33／擴大 test 584），加入 group bootstrap BLEU CI 與完整 leakage 檢查
-- [ ] 第三階段 Stage B v4 訓練／評估：等待 VM 管理者修復 NVIDIA driver/library mismatch
+- [x] 第三階段 Stage B v4 訓練／評估：2 epochs 完成，epoch 1 最佳；核心 33 句 **BLEU-4 80.00 / EM 48.48%**，教師審核 584 句 **BLEU-4 18.61（95% CI 15.48–22.49）/ EM 9.25%**（2026-07-26）
 - [ ] 第三階段 Stage C–D：多任務混訓 → RAG
-- [ ] 第四階段：人工評估（5 分制）＋以 2 epochs 重訓正式版
+- [ ] 第四階段：手語老師人工評估（5 分制）＋影片軌／授權釐清
 
 ## 2026-07-22 語言資料稽核
 
@@ -71,8 +71,12 @@
 - 以 `--use-teacher-reviewed --corpus-test-ratio 0.12 --seed 42` 結合老師審核後的 synth 與擴大真實 test。
 - 585 句候選全部對到老師工作簿判定；保留 584 句、排除重複列 `TC01419`，並以 machine-readable sidecar 與 SHA-256 固定評測集合。
 - 擴大 test 含 37 個對話群組、1,070 個 4-gram；train/dev/test 的群組、中文、Gloss 與 pair 洩漏均為 0。
-- 自動評估新增以對話群組為抽樣單位的 BLEU-4 95% bootstrap CI。詳見 [results/stageB_v4_report.md](results/stageB_v4_report.md)。
-- VM 仍載入 NVIDIA 核心模組 580.159.03、磁碟／NVML 為 580.173.02，CUDA 不可用；不自行重開共用 VM，待管理者修復後再跑 2 epochs v4。
+- 管理者重開 VM 後，NVIDIA 核心模組、磁碟驅動與 NVML 已一致為 `580.173.02`，CUDA 恢復正常；2-step 冒煙測試無 OOM／NaN。
+- Gemma 4 E4B QLoRA 正式訓練 2 epochs（batch 2、gradient accumulation 4、max length 192、lr `2e-4`、seed 42）完成。Epoch 1 dev loss `0.982194` 低於 epoch 2 的 `1.008893`，因此只依 dev loss 選用 `checkpoint-630`。
+- 核心 33 句：**BLEU-4 80.00（95% CI 65.74–88.77）／ROUGE-L 73.92／Exact Match 48.48%**。核心 test 只有 5 個 reference 4-gram，CI 仍寬，不單獨作穩定 BLEU 結論。
+- 教師審核 584 句：**BLEU-4 18.61（37 群組 bootstrap 95% CI 15.48–22.49）／ROUGE-L 55.40／Exact Match 9.25%**；自有 85 詞／聯集詞彙表內率分別為 16.83%／69.74%。
+- 584 筆預測 ID 唯一且與 `test_corpus.jsonl` 完全一致；評估使用獨立 v4 tag、batch 8 與 `--resume`，未混入 v3 的 16 筆歷史結果。
+- 模型定位仍為內部 Text→Gloss 詞彙／語序候選；自動指標不代表 NMS、手形或所有輸出均正確，文化部語料與中正辭典授權未釐清前不散布 adapter。詳見 [results/stageB_v4_report.md](results/stageB_v4_report.md)。
 
 ## 主要參考資料
 

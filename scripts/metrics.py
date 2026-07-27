@@ -10,6 +10,7 @@
 Token 化：Gloss 字串以「/」切分（與標記表格式一致），不做其他正規化。
 """
 import math
+import random
 from collections import Counter
 
 
@@ -80,13 +81,73 @@ def in_vocab_rate(hypotheses: list, vocab: set) -> float:
     return sum(1 for t in toks if t in vocab) / len(toks) * 100
 
 
-def evaluate(refs_text: list, hyps_text: list, vocab: set) -> dict:
+def ngram_count(sequences: list, n: int) -> int:
+    return sum(max(len(tokens) - n + 1, 0) for tokens in sequences)
+
+
+def _percentile(sorted_values: list, q: float) -> float:
+    if not sorted_values:
+        return 0.0
+    pos = (len(sorted_values) - 1) * q
+    lo, hi = math.floor(pos), math.ceil(pos)
+    if lo == hi:
+        return sorted_values[lo]
+    weight = pos - lo
+    return sorted_values[lo] * (1 - weight) + sorted_values[hi] * weight
+
+
+def bootstrap_bleu_ci(references: list, hypotheses: list, groups: list,
+                      n_samples: int = 1000, seed: int = 42) -> list:
+    """以 group 為抽樣單位計算 corpus BLEU-4 的 percentile 95% CI。
+
+    同一對話的句子高度相關，故擴大真實 test 不以逐句 bootstrap，而以 37 個
+    seg_uuid 對話群組整組重抽樣；核心 test 每句自成一組。
+    """
+    assert len(references) == len(hypotheses) == len(groups)
+    if not references or n_samples <= 0:
+        return [0.0, 0.0]
+    by_group = {}
+    for i, group in enumerate(groups):
+        by_group.setdefault(group, []).append(i)
+    units = list(by_group)
+    rng = random.Random(seed)
+    scores = []
+    for _ in range(n_samples):
+        indices = []
+        for _ in units:
+            indices.extend(by_group[rng.choice(units)])
+        scores.append(corpus_bleu(
+            [references[i] for i in indices],
+            [hypotheses[i] for i in indices],
+        ))
+    scores.sort()
+    return [
+        round(_percentile(scores, 0.025), 2),
+        round(_percentile(scores, 0.975), 2),
+    ]
+
+
+def evaluate(refs_text: list, hyps_text: list, vocab: set, groups: list = None,
+             bootstrap_samples: int = 0, bootstrap_seed: int = 42) -> dict:
     refs = [tokenize(r) for r in refs_text]
     hyps = [tokenize(h) for h in hyps_text]
-    return {
+    if groups is None:
+        groups = [f"row:{i}" for i in range(len(refs))]
+    assert len(groups) == len(refs)
+    result = {
         "BLEU-4": round(corpus_bleu(refs, hyps), 2),
         "ROUGE-L": round(rouge_l_f1(refs, hyps), 2),
         "ExactMatch%": round(exact_match(refs, hyps), 2),
         "InVocab%": round(in_vocab_rate(hyps, vocab), 2),
         "n": len(refs),
+        "n_groups": len(set(groups)),
+        "Reference4Grams": ngram_count(refs, 4),
+        "Hypothesis4Grams": ngram_count(hyps, 4),
     }
+    if bootstrap_samples > 0:
+        result["BLEU-4_95%CI"] = bootstrap_bleu_ci(
+            refs, hyps, groups, bootstrap_samples, bootstrap_seed)
+        result["BLEU-bootstrap-samples"] = bootstrap_samples
+        result["BLEU-bootstrap-seed"] = bootstrap_seed
+        result["BLEU-bootstrap-unit"] = "group"
+    return result

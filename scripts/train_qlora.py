@@ -130,6 +130,7 @@ def main():
     ap.add_argument("--max-len", type=int, default=512)
     ap.add_argument("--lora-r", type=int, default=16)
     ap.add_argument("--lora-alpha", type=int, default=32)
+    ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--max-steps", type=int, default=-1,
                     help="限制訓練步數（>0 用於冒煙測試）")
     args = ap.parse_args()
@@ -182,7 +183,7 @@ def main():
         gradient_checkpointing=True,
         gradient_checkpointing_kwargs={"use_reentrant": False},
         report_to="none",
-        seed=42,
+        seed=args.seed,
     )
     trainer = Trainer(
         model=model, args=targs,

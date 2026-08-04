@@ -1,7 +1,7 @@
 # Stage B v4：教師審核資料＋擴大真實 Test
 
 日期：2026-07-26
-定位：**內部正式候選（Text→Gloss 詞彙／語序層）**。NMS、手形、地區變體與模型散布授權不在本輪宣稱範圍。
+定位：**內部正式候選（Text→Gloss 詞彙／語序層）**。NMS、手形、地區變體不在本輪宣稱範圍（品質界線）。資料授權已確認合法（訓練＋散布，標明出處，2026-08-04）。
 
 ## 1. 執行摘要
 
@@ -191,4 +191,4 @@ Gemma 4 E4B 的 Per-Layer Embedding 需 CPU offload，自回歸生成速度遠�
 - 擴大評估：`results/finetuned_e4b_v4_teacher_ep1_corpus_test.jsonl`
 - 擴大摘要：`results/summary_finetuned_e4b_v4_teacher_ep1_corpus.json`
 
-本輪可宣稱「在固定、老師文字／Gloss 層審核之真實 test 上的自動指標」。不可宣稱 NMS 正確、所有模型輸出皆為正確臺灣手語，亦不可在文化部語料與中正辭典授權未釐清前散布 adapter。
+本輪可宣稱「在固定、老師文字／Gloss 層審核之真實 test 上的自動指標」。不可宣稱 NMS 正確或所有模型輸出皆為正確臺灣手語（品質界線）。資料授權已確認合法（訓練＋散布，標明出處，2026-08-04）；adapter 是否散布為團隊操作決定。

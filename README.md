@@ -41,7 +41,7 @@
 - [x] 第三階段 Stage B v4 資料：教師審核後重切（train 5,038／dev 636／核心 test 33／擴大 test 584），加入 group bootstrap BLEU CI 與完整 leakage 檢查
 - [x] 第三階段 Stage B v4 訓練／評估：2 epochs 完成，epoch 1 最佳；核心 33 句 **BLEU-4 80.00 / EM 48.48%**，教師審核 584 句 **BLEU-4 18.61（95% CI 15.48–22.49）/ EM 9.25%**（2026-07-26）
 - [ ] 第三階段 Stage C–D：多任務混訓 → RAG
-- [ ] 第四階段：手語老師人工評估（5 分制）＋影片軌／授權釐清
+- [ ] 第四階段：手語老師人工評估（5 分制）＋影片軌（NMS／手形／地區變體）。資料授權已確認合法（訓練＋散布，標明出處，2026-08-04）
 
 ## 2026-07-22 語言資料稽核
 
@@ -63,7 +63,7 @@
 - 手語老師依中正辭典第五版＋文化部語料庫，逐句審核 07-23 標記的 115 句「需修正或追加實證」：**修正 108 句、7 句留待母語者影片裁定**（T13/T14 競合 5、上學/唸書 1、感冒狀態 1）。
 - 修正已套進訓練資料（`scripts/apply_teacher_review.py`，原 Gloss 保留於 `pre_review_gloss_text`）：`review_status` = teacher-reviewed 108／reviewed-pending-video 7／pending 852。其中 **29 句 attested-pattern 修正（如 上班→工作）實際改善訓練集**。
 - 切分已改安全預設：`exclude_rule_derived=true` ＋ dev 去洩漏（`dev_group_leakage=0`），train 5,130／dev 553／test 33。
-- **界線（勿誤解「審核完＝可正式訓練」）**：967 句中僅 108 句經老師逐句審核，其餘 852 仍 `pending`、791 句需影片；合成資料整體 `training_status` 仍暫停。現況仍為**管線驗證**，正式成果尚需更全面審核＋影片裁定＋資料授權。
+- **界線（勿誤解「審核完＝可正式訓練」）**：967 句中僅 108 句經老師逐句審核，其餘 852 仍 `pending`、791 句需影片；合成資料整體 `training_status` 仍暫停。現況仍為**管線驗證**，正式成果尚需更全面審核＋影片裁定。（資料授權已於 2026-08-04 確認合法，訓練＋散布皆可，標明出處即可。）
 - 分支：main/data 已含本次落實（commit a3be340）；model 分支由訓練端維護。
 
 ## 2026-07-25 Stage B v4
@@ -76,7 +76,7 @@
 - 核心 33 句：**BLEU-4 80.00（95% CI 65.74–88.77）／ROUGE-L 73.92／Exact Match 48.48%**。核心 test 只有 5 個 reference 4-gram，CI 仍寬，不單獨作穩定 BLEU 結論。
 - 教師審核 584 句：**BLEU-4 18.61（37 群組 bootstrap 95% CI 15.48–22.49）／ROUGE-L 55.40／Exact Match 9.25%**；自有 85 詞／聯集詞彙表內率分別為 16.83%／69.74%。
 - 584 筆預測 ID 唯一且與 `test_corpus.jsonl` 完全一致；評估使用獨立 v4 tag、batch 8 與 `--resume`，未混入 v3 的 16 筆歷史結果。
-- 模型定位仍為內部 Text→Gloss 詞彙／語序候選；自動指標不代表 NMS、手形或所有輸出均正確，文化部語料與中正辭典授權未釐清前不散布 adapter。詳見 [results/stageB_v4_report.md](results/stageB_v4_report.md)。
+- 模型定位仍為內部 Text→Gloss 詞彙／語序候選；自動指標不代表 NMS、手形或所有輸出均正確（品質界線）。文化部語料與中正辭典授權已確認合法（訓練＋散布，標明出處即可，2026-08-04），散布與否為團隊操作決定。詳見 [results/stageB_v4_report.md](results/stageB_v4_report.md)。
 
 ## 主要參考資料
 

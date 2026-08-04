@@ -21,7 +21,7 @@
 - Stage B v4 初始模型／資料整合 commit：`68e84cd`。
 - 本輪結果提交前的 VM `model` 基準：`d5ed2ea`（Stage B v4 訓練與評估進度文件）。
 - 最終結果提交後 `model` 領先 `origin/model` 5 commits；公開遠端仍停在 `00d78a8`。
-- 依本輪授權範圍不推送公開 repo、不 fast-forward `main`；最終 commit 由本機 handoff bundle 記錄。
+- 資料與文件依常規推送並 fast-forward `main`。訓練出的 adapter 目前留在 VM 為**團隊操作決定**（非授權限制——資料授權已允許訓練與散布，見 §8）。
 
 ## 2. 學校 VM 與安全界線
 
@@ -84,7 +84,7 @@ python3 scripts/train_qlora.py \
 - `checkpoint-1260`：epoch 2 dev loss 1.0088934898。
 - 最佳 checkpoint 僅由最低 dev loss 決定，因此固定使用 `outputs/qlora_e4b_v4_teacher_holdout/checkpoint-630`；未用 test 選模。
 
-Adapter 只保留在 VM，不放入 git bundle、不推送或散布。
+Adapter 目前只保留在 VM、暫不推送（團隊操作決定；資料授權已允許散布，見 §8）。
 
 ## 5. 評估結果
 
@@ -167,7 +167,7 @@ v3 的 `results/finetuned_e4b_v3_ep1_corpus_test.jsonl` 僅有 16 筆歷史結�
 - ✅ Stage B v4 教師通過 584 句評估與穩定 BLEU CI（18.61，95% CI 15.48–22.49）
 - ⬜ 計畫 6.2 手語老師人工評估（5 分制）
 - ⬜ 影片軌：NMS／手形／地區變體由母語者看影片裁定
-- ⬜ 文化部語料與中正辭典訓練／模型散布書面授權
+- ✅ 文化部語料與中正辭典訓練／散布授權：**已確認合法（2026-08-04，負責人確認），條件為標明出處**
 - ⬜ Stage C 多任務混訓、Stage D RAG
 
 ## 9. 接手第一步（TL;DR）
@@ -175,6 +175,6 @@ v3 的 `results/finetuned_e4b_v3_ep1_corpus_test.jsonl` 僅有 16 筆歷史結�
 1. Stage B v4 自動評估已完成並驗證；不再用固定 test 調參或選模。
 2. 下一個模型品質步驟為計畫 6.2：將固定 v4 輸出交由手語老師／聾人評估者做 5 分制人工評估。
 3. NMS、手形、地區變體及下游可播放性須走獨立影片軌，由母語者看片裁定。
-4. 文化部語料與中正辭典的訓練／模型散布授權仍須取得書面依據。
-5. Adapter 留在 VM；本輪小型結果與 bundle 已帶回本機，但依授權範圍不推遠端、不整合 `main`。
-6. 可宣稱「老師文字／Gloss 層審核」與固定 test 自動指標；不可宣稱 NMS 正確、所有輸出皆為正確臺灣手語或可對外散布。
+4. 文化部語料與中正辭典的訓練／散布授權已確認合法（2026-08-04），**標明出處即可**（辭典：蔡素娟等 2026，中正大學；語料：文化部臺灣手語語料庫）。
+5. Adapter 目前留在 VM、暫不推遠端（團隊操作決定，非授權限制）；本輪小型結果與 bundle 已帶回本機。
+6. 可宣稱「老師文字／Gloss 層審核」與固定 test 自動指標；**授權允許對外散布（需標明出處）**。仍不可宣稱 NMS 正確或所有輸出皆為正確臺灣手語（品質界線，屬影片軌）。

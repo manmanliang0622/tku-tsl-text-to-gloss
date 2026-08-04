@@ -61,6 +61,43 @@ CASES = [
 ]
 
 
+def build_vocab_rows():
+    """比對 v_slots 詞形與語料庫真實用法，列出訊號矛盾的句子。"""
+    corpus = [json.loads(l) for l in (BASE / "data/tslcorpus/parallel.jsonl")
+              .read_text(encoding="utf-8").splitlines() if l.strip()]
+    synth = [json.loads(l) for l in (BASE / "data/synth/tsl_synth.jsonl")
+             .read_text(encoding="utf-8").splitlines() if l.strip()]
+    twtsl = [json.loads(l) for l in (BASE / "data/twtsl/twtsl_words.jsonl")
+             .read_text(encoding="utf-8").splitlines() if l.strip()]
+
+    def cfreq(w):
+        return sum(1 for r in corpus if w in r["gloss"])
+
+    def status(w):
+        if any(x.get("gloss_text") == w for x in twtsl):
+            return "正式詞條"
+        if any(w in (x.get("aliases") or []) for x in twtsl):
+            return "同義索引名"
+        return "未收錄"
+
+    rows = []
+    for used, alt in [("唸書", "讀書"), ("公共汽車", "公車"), ("疼", "痛")]:
+        hits = [r for r in synth if used in r.get("gloss", [])]
+        if not hits:
+            continue
+        ex = hits[0]
+        rows.append([
+            used, alt, f"{used} {cfreq(used)} vs {alt} {cfreq(alt)}",
+            f"{used}={status(used)}／{alt}={status(alt)}",
+            len(hits), "、".join(r["id"] for r in hits),
+            f"{ex['chinese']} → {ex['gloss_text']}",
+        ])
+    return rows
+
+
+VOCAB_ROWS = build_vocab_rows()
+
+
 def main():
     OUT.mkdir(exist_ok=True)
     wb = openpyxl.Workbook()
@@ -109,6 +146,25 @@ def main():
     for i, w in enumerate([16, 46, 52], 1):
         ws2.column_dimensions[openpyxl.utils.get_column_letter(i)].width = w
     ws2.freeze_panes = "A3"
+
+    # 第三分頁：詞形一致性（v_slots 採辭典正式名，但語料庫偏好同義索引名）
+    ws3 = wb.create_sheet("詞形一致性22句")
+    ws3.append(["合成句採「辭典正式名」，但文化部語料庫（真實聾人用法）偏好另一詞形 —— "
+                "兩者皆為同一辭典詞條（正式名／同義索引名），下游可播放性不受影響；"
+                "問題在於訓練訊號互相矛盾（4,392 句語料教 A、22 句合成教 B）"])
+    ws3.append(["合成句採用", "語料庫偏好", "語料庫詞頻", "辭典地位",
+                "受影響句數", "受影響代碼", "例句", "【裁定】", "【裁定後詞形】", "【備註】"])
+    for c in ws3[2]:
+        c.font = Font(bold=True)
+        c.fill = PatternFill("solid", fgColor="DDDDDD")
+    for row in VOCAB_ROWS:
+        ws3.append(row + ["", "", ""])
+    for i, w in enumerate([14, 14, 14, 26, 12, 46, 40, 14, 18, 20], 1):
+        ws3.column_dimensions[openpyxl.utils.get_column_letter(i)].width = w
+    for row in ws3.iter_rows(min_row=3):
+        for c in row:
+            c.alignment = Alignment(wrap_text=True, vertical="top")
+    ws3.freeze_panes = "A3"
 
     path = OUT / "待影片裁定7句_人工裁定表.xlsx"
     wb.save(path)

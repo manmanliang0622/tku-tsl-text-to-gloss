@@ -11,6 +11,8 @@
 
 本 repo 負責前兩段：以 **Gemma 4** 微調的 Text-to-Gloss 翻譯模型。
 
+> 模型配方、資料出處與授權、評估結果與重現方式見 **[MODEL_CARD.md](MODEL_CARD.md)**。
+
 ## 目錄
 
 | 路徑 | 內容 |

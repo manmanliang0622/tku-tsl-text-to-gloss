@@ -10,3 +10,6 @@ data/splits/*.jsonl
 .venv/
 outputs/
 *.log
+
+# 評估詞彙表（可由 build_eval_vocab.py 再生；依賴 splits）
+data/vocab/eval_vocab.json

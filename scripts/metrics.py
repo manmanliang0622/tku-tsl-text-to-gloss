@@ -4,18 +4,40 @@
 - BLEU-4：Papineni et al. 2002，corpus-level，n≥2 采 add-1 平滑，含 brevity penalty
 - ROUGE-L：Lin 2004，LCS 為基礎的 F1（β=1），句級平均
 - Exact Match：Gloss 序列完全一致比例
-- In-Vocabulary Rate（詞彙表內率，本專案自訂）：輸出 token 落在 Gloss 詞彙總表
-  （data/tsl_gloss_vocab.json）內的比例；表外 Gloss 下游動作庫檢索不到
+- In-Vocabulary Rate（詞彙表內率，本專案自訂）：輸出 token 落在 Gloss 詞彙表內的比例。
 
-Token 化：Gloss 字串以「/」切分（與標記表格式一致），不做其他正規化。
+  ⚠️ 2026-08-04 修正（重要）：此指標必須與**參考答案的天花板**一起看。
+  診斷（v4 擴大 584 句 test）發現：模型內率 69.74%、**參考答案內率僅 69.29%**，
+  即完美複製標準答案也只有 69.29%——低內率反映的是「詞彙表收錄不足」，
+  不是「模型亂造詞」。專案 coverage.json 佐證：文化部語料庫 Gloss token
+  僅 70.7% 在辭典內。故 evaluate() 一律回報 InVocabRef%（天花板）與
+  InVocabGap（模型−天花板，>0 表示模型用詞比標準答案更保守）。
+
+Token 化：Gloss 字串以「/」切分（與標記表格式一致）。
+詞彙比對正規化（normalize_gloss）：臺→台、去重複記號 ++、去 _N/_B 轉寫後綴、
+去括號註、去頭尾標點。僅用於「詞彙表內率」比對，不影響 BLEU/ROUGE/EM 的字面比較。
 """
 import math
 import random
+import re
 from collections import Counter
 
 
 def tokenize(gloss_text: str) -> list:
     return [t for t in gloss_text.replace("／", "/").split("/") if t.strip()]
+
+
+def normalize_gloss(token: str) -> str:
+    """詞彙表比對用的正規化（不改變 BLEU/ROUGE/EM 的字面比較）。
+
+    處理實測發現的系統性落差，例如「臺灣」因辭典收「台灣」而被誤判表外、
+    語料庫轉寫的重複記號（颱風++）與句末標點（什麼?）。
+    """
+    t = str(token).replace("臺", "台")
+    t = re.sub(r"\+\+$", "", t)          # 語料庫重複動作記號
+    t = re.sub(r"_[A-Za-z]+$", "", t)    # 辭典轉寫後綴 _N/_B
+    t = re.sub(r"[（(][^）)]*[）)]", "", t)  # 括號註
+    return t.strip(" ?？。，、!！") or str(token)
 
 
 def _ngrams(tokens, n):
@@ -74,11 +96,17 @@ def exact_match(references: list, hypotheses: list) -> float:
     return hits / len(references) * 100 if references else 0.0
 
 
-def in_vocab_rate(hypotheses: list, vocab: set) -> float:
+def in_vocab_rate(hypotheses: list, vocab: set, normalize: bool = True) -> float:
+    """token 落在詞彙表內的比例；預設做 normalize_gloss 正規化後比對。"""
     toks = [t for h in hypotheses for t in h]
     if not toks:
         return 0.0
-    return sum(1 for t in toks if t in vocab) / len(toks) * 100
+    if normalize:
+        v = {normalize_gloss(x) for x in vocab}
+        hit = sum(1 for t in toks if normalize_gloss(t) in v)
+    else:
+        hit = sum(1 for t in toks if t in vocab)
+    return hit / len(toks) * 100
 
 
 def ngram_count(sequences: list, n: int) -> int:
@@ -138,7 +166,12 @@ def evaluate(refs_text: list, hyps_text: list, vocab: set, groups: list = None,
         "BLEU-4": round(corpus_bleu(refs, hyps), 2),
         "ROUGE-L": round(rouge_l_f1(refs, hyps), 2),
         "ExactMatch%": round(exact_match(refs, hyps), 2),
+        # 內率一律附上參考答案天花板：低內率多半是詞彙表收錄不足，非模型亂造詞
         "InVocab%": round(in_vocab_rate(hyps, vocab), 2),
+        "InVocabRef%": round(in_vocab_rate(refs, vocab), 2),
+        "InVocabGap": round(in_vocab_rate(hyps, vocab)
+                            - in_vocab_rate(refs, vocab), 2),
+        "InVocab%(raw)": round(in_vocab_rate(hyps, vocab, normalize=False), 2),
         "n": len(refs),
         "n_groups": len(set(groups)),
         "Reference4Grams": ngram_count(refs, 4),

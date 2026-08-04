@@ -6,7 +6,7 @@
 5,272 句真實聾人語料回查，其中 6 句的**文字層（Gloss token 序列）**已可據
 實證裁定；NMS（疑問表情範圍、狀態變化）仍屬影片軌，不阻擋 gloss 層訓練。
 
-輸出：outputs/待影片裁定7句_人工裁定表.xlsx
+輸出：data/synth/待影片裁定7句_人工裁定表.xlsx
 """
 import json
 from pathlib import Path
@@ -15,7 +15,7 @@ import openpyxl
 from openpyxl.styles import Alignment, Font, PatternFill
 
 BASE = Path(__file__).resolve().parent.parent
-OUT = BASE / "outputs"
+OUT = BASE / "data" / "synth"
 
 # 每句：現行 gloss、語料庫實證、建議、待影片項目
 CASES = [

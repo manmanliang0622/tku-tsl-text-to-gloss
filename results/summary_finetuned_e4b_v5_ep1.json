@@ -1,0 +1,23 @@
+{
+  "BLEU-4": 66.84,
+  "ROUGE-L": 73.92,
+  "ExactMatch%": 48.48,
+  "InVocabRef%": 100.0,
+  "InVocabGap": -14.77,
+  "InVocab%(raw)": 85.23,
+  "n": 33,
+  "n_groups": 33,
+  "Reference4Grams": 5,
+  "Hypothesis4Grams": 6,
+  "BLEU-4_95%CI": [
+    43.12,
+    83.6
+  ],
+  "BLEU-bootstrap-samples": 1000,
+  "BLEU-bootstrap-seed": 42,
+  "BLEU-bootstrap-unit": "group",
+  "InVocab%(自有85)": 85.23,
+  "InVocab%(聯集)": 94.32,
+  "test_file": "test.jsonl",
+  "tag": "finetuned_e4b_v5_ep1"
+}

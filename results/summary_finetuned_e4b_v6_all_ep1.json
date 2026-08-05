@@ -1,0 +1,23 @@
+{
+    "BLEU-4": 72.59,
+    "ROUGE-L": 80.52,
+    "ExactMatch%": 63.64,
+    "InVocabRef%": 100.0,
+    "InVocabGap": -11.43,
+    "InVocab%(raw)": 88.57,
+    "n": 33,
+    "n_groups": 33,
+    "Reference4Grams": 5,
+    "Hypothesis4Grams": 3,
+    "BLEU-4_95%CI": [
+        55.77,
+        86.77
+    ],
+    "BLEU-bootstrap-samples": 1000,
+    "BLEU-bootstrap-seed": 42,
+    "BLEU-bootstrap-unit": "group",
+    "InVocab%(\u81ea\u670985)": 88.57,
+    "InVocab%(\u806f\u96c6)": 94.29,
+    "test_file": "test.jsonl",
+    "tag": "finetuned_e4b_v6_all_ep1"
+}

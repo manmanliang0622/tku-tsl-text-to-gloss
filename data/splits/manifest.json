@@ -5,20 +5,20 @@
   "synth_selection": "teacher_train_eligible（2026-07-24 手語老師 gloss 層審核）",
   "include_words": 0,
   "counts": {
-    "train": 5038,
-    "dev": 636,
+    "train": 5043,
+    "dev": 638,
     "test": 33,
     "test_corpus": 584
   },
   "train_composition": {
     "tslcorpus": 3713,
-    "synth": 829,
+    "synth": 834,
     "twtsl-sentence": 496
   },
   "dev_composition": {
     "tslcorpus": 465,
-    "synth": 127,
-    "twtsl-sentence": 44
+    "twtsl-sentence": 44,
+    "synth": 129
   },
   "test_composition": {
     "real": 33
@@ -45,7 +45,7 @@
   "dev_group_leakage": 0,
   "n_groups": {
     "train": 667,
-    "dev": 63
+    "dev": 65
   },
   "corpus_dropped_short": 467,
   "min_gloss_len": 2,

@@ -13,3 +13,12 @@ outputs/
 
 # 評估詞彙表（可由 build_eval_vocab.py 再生；依賴 splits）
 data/vocab/eval_vocab.json
+
+# HF model repo 的權重與訓練狀態：本機備妥供上傳 Hugging Face（走 HF LFS），不進本 git repo。
+# checkpoint-* 為訓練產出的完整快照（含權重＋optimizer 等），整包不入庫；
+# 只保留 model card（models/tsl-gloss-e4b-v4-lora/README.md）追蹤。
+models/**/checkpoint-*/
+models/**/*.safetensors
+models/**/*.bin
+models/**/*.pt
+models/**/*.pth

@@ -94,6 +94,8 @@ def group_key(e, source):
         return "twtsl:" + str(e.get("headword") or e["id"])
     if source == "synth":
         return "synth:" + str(e.get("template_id") or e["id"])
+    if source == "paper":
+        return "paper:" + str(e.get("paper") or e["id"])
     return f"{source}:{e['id']}"
 
 
@@ -128,12 +130,24 @@ def main():
                     help="不加入文化部語料庫平行語料")
     ap.add_argument("--min-gloss-len", type=int, default=2,
                     help="語料庫句最小 Gloss token 數（濾掉過短碎片，預設 2）")
+    ap.add_argument("--use-all", action="store_true",
+                    help="【2026-08-05 使用者決策】不做任何人工審核閘門：辭典、語料庫、"
+                         "論文例句、合成句全部直接使用；語料庫全部 5,272 句納入訓練"
+                         "（不留存 test_corpus）；不濾單詞句。test 仍保留自有 33 句真實"
+                         "錄影句以維持與 Stage A/B 的可比性。授權已確認（標明出處即可）。")
+    ap.add_argument("--no-papers", action="store_true",
+                    help="不納入中正大學手語論文例句（預設在 --use-all 下納入）")
     ap.add_argument("--corpus-test-ratio", type=float, default=0.0,
                     help="從文化部語料庫依對話群組留存這比例的真實句作『擴大真實 test 集』"
                          "（test_corpus.jsonl）；整段對話移出訓練池以杜絕洩漏。0=不留存（預設，"
                          "沿用舊行為）。擴大 test 集以穩定 BLEU 時設 0.12 左右。")
     args = ap.parse_args()
     exclude_rule_derived = not args.include_rule_derived  # 預設 True（審核安全預設）
+    if args.use_all:
+        # 使用者決策：不設任何審核閘門、語料庫全數進訓練、不濾單詞句
+        exclude_rule_derived = False
+        args.corpus_test_ratio = 0.0
+        args.min_gloss_len = 1
     rng = random.Random(args.seed)
     OUT.mkdir(exist_ok=True)
 
@@ -148,7 +162,9 @@ def main():
     synth = load_jsonl(DATA / "synth" / "tsl_synth.jsonl")
     synth_source_note = "review_status=pending（管線驗證）"
     for e in synth:
-        if args.use_teacher_reviewed:
+        if args.use_all:
+            pass                      # 無審核閘門：全部納入
+        elif args.use_teacher_reviewed:
             # 依手語老師 2026-07-24 審核：只納入 gloss 層通過者，gloss 已含教師修正
             if not e.get("teacher_train_eligible"):
                 continue
@@ -158,9 +174,21 @@ def main():
     if args.use_teacher_reviewed:
         synth_source_note = ("手語老師 2026-07-24 gloss 層審核通過（含108句修正；"
                              "排除7句待影片裁定；NMS 屬影片軌）")
+    if args.use_all:
+        synth_source_note = "無審核閘門，全數納入（2026-08-05 使用者決策）"
     twtsl_sents = load_jsonl(DATA / "twtsl" / "twtsl_sentences.jsonl")
     for e in twtsl_sents:
         pool.append(norm_record(e, "twtsl-sentence"))
+
+    # --- 中正大學手語論文例句（語言學家標註；含呼應/分類詞標記者排除） ---
+    papers_added = 0
+    papers_path = DATA / "papers" / "paper_examples.jsonl"
+    if args.use_all and not args.no_papers and papers_path.exists():
+        for e in load_jsonl(papers_path):
+            if e.get("has_notation"):
+                continue              # 代形詞／呼應下標，下游無法檢索
+            pool.append(norm_record(e, "paper"))
+            papers_added += 1
 
     # --- 文化部語料庫：可先依對話群組留存一批當「擴大真實 test 集」，其餘進訓練池 ---
     corpus_dropped_short = 0

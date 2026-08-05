@@ -9,7 +9,12 @@
 作法（皆為網站前端實際使用的公開 API）：
   1. /api/pinSearch?field=stroke&value=N  按筆畫列舉全部詞條 id（同前端「筆畫查詢」）
   2. /api/querySearch?id=I               詞條詳情：手形、位置、筆畫、動作描述、影片路徑
-  3. /api/sentence?id=I                  常用詞例句：Gloss 標記＋中文翻譯（約 560 詞有）
+  3. /api/sentence?id=I                  常用詞例句：Gloss 標記＋中文翻譯
+
+官網所稱「4,600 個詞彙」是中文檢索名稱的約數，不等於獨立手語詞條 id：
+2026-08-05 API 實測為 3,500 個詞條 id、4,636 個名稱索引（去空白後 4,618 個不重複名稱）。
+官網所稱「560 個常用詞之例句」亦非 API 去重後的句數；同日 API 回傳 546 筆，
+以 (Gloss, 中文翻譯) 去重後為 544 句。
 
 輸出：
   data/twtsl/twtsl_words.jsonl      詞彙（一詞一行）
@@ -83,6 +88,9 @@ def enumerate_words():
     (OUT / "enum_names.json").write_text(
         json.dumps({str(k): v for k, v in words.items()}, ensure_ascii=False),
         encoding="utf-8")
+    indexed_names = [name.strip() for names in words.values() for name in names]
+    print(f"列舉完成：{len(words)} 個詞條 id、{len(indexed_names)} 個名稱索引、"
+          f"{len(set(indexed_names))} 個不重複名稱", flush=True)
     return words
 
 
@@ -126,6 +134,7 @@ def consolidate():
         aliases_map = {int(k): v for k, v in
                        json.loads(enum_file.read_text(encoding="utf-8")).items()}
     words_out, sents_out, seen_sent = [], [], set()
+    raw_sentence_count = 0
     for line in RAW.read_text(encoding="utf-8").splitlines():
         row = json.loads(line)
         recs = (row["detail"].get("Record") or [])
@@ -150,7 +159,9 @@ def consolidate():
             "video_url": f"{SITE}/{d['clip']}.mp4" if d.get("clip") else None,
             "has_own_video": False, "batch": "twtsl-ccu-v5", "source": SOURCE,
         })
-        for s in (row["sentence"].get("Record") or []):
+        sentence_records = row["sentence"].get("Record") or []
+        raw_sentence_count += len(sentence_records)
+        for s in sentence_records:
             key = (s.get("gloss"), s.get("translation"))
             if key in seen_sent or not s.get("gloss"):
                 continue
@@ -177,6 +188,8 @@ def consolidate():
             f.write(json.dumps(s, ensure_ascii=False) + "\n")
     print(f"OK: {len(words_out)} 詞 → data/twtsl/twtsl_words.jsonl", flush=True)
     print(f"OK: {len(sents_out)} 例句 → data/twtsl/twtsl_sentences.jsonl", flush=True)
+    print(f"例句 API 原始 {raw_sentence_count} 筆；"
+          f"(Gloss, 中文翻譯) 去重移除 {raw_sentence_count - len(sents_out)} 筆", flush=True)
 
 
 def main():

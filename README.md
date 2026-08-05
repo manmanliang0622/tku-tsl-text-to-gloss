@@ -18,7 +18,7 @@
 | 路徑 | 內容 |
 |---|---|
 | [臺灣手語翻譯語言模型_微調訓練計畫.md](臺灣手語翻譯語言模型_微調訓練計畫.md) | 完整微調訓練計畫（任務定義、資料建置、模型選型、訓練流程、評估），所有方法均標註可查證出處 |
-| [data/](data/) | 第一階段產出：句級平行資料 JSONL（35 句）、地名詞彙 JSONL（38 詞）、Gloss 詞彙總表（85 個 Gloss）＋中正手語辭典本地快照（`data/twtsl/`，3,500 詞、544 例句；2026-07-22 官網已顯示 4,600 詞、560 例句，重建前需更新），欄位說明見 [data/README.md](data/README.md) |
+| [data/](data/) | 第一階段產出：句級平行資料 JSONL（35 句）、地名詞彙 JSONL（38 詞）、Gloss 詞彙總表（85 個 Gloss）＋中正手語辭典本地快照（`data/twtsl/`；2026-08-05 已與 API 同步：3,500 個詞條 ID、4,636 個名稱索引、544 個去重例句），欄位說明見 [data/README.md](data/README.md) |
 | [scripts/build_jsonl.py](scripts/build_jsonl.py) | 標記表（xlsx/docx）→ JSONL 轉換腳本，含一致性驗證，可重跑 |
 | [scripts/synthesize.py](scripts/synthesize.py) | 規則模板資料合成（25 模板 × 詞彙槽位 → 849 句，增量輸出），同步產出各批次人工審核表 |
 | [scripts/scrape_twtsl.py](scripts/scrape_twtsl.py) | 中正大學《台灣手語線上辭典》爬蟲（詞條＋帶 Gloss 例句，可續跑、限速） |

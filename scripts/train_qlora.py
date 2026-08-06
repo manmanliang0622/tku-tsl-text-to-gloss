@@ -49,16 +49,16 @@ GEMMA4_OFFLOAD_MAP = {
 }
 
 
-PLE_BYTES = 5.25 * 1024 ** 3        # 實測 PLE 大小（bf16）
-PLE_GPU_MARGIN = 1.5 * 1024 ** 3    # 放上 GPU 後至少要留給共用生產服務的餘裕
+FULL_GPU_BYTES = 9.1 * 1024 ** 3    # 實測全模型放 GPU 所需（PLE 5.25＋層 3.1＋視聽 0.89）
+FULL_GPU_MARGIN = 1.0 * 1024 ** 3   # 共用生產機至少保留的餘裕
 
 
 def can_fit_ple_on_gpu():
-    """顯存是否足以把 PLE 放上 GPU（此機為共用生產機，需保留餘裕）。"""
+    """顯存是否足以把整個模型放 GPU（此機為共用生產機，需保留餘裕）。"""
     if not torch.cuda.is_available():
         return False
     free, _ = torch.cuda.mem_get_info()
-    return free > PLE_BYTES + PLE_GPU_MARGIN
+    return free > FULL_GPU_BYTES + FULL_GPU_MARGIN
 
 
 def load_model(model_id, bnb_config, ple_on_gpu=False):
@@ -70,17 +70,28 @@ def load_model(model_id, bnb_config, ple_on_gpu=False):
       GPU，GPU 常駐約 3.1GB。訓練時顯存吃緊，用這個。
       注意 accelerate 的 offload hook 預設會在前向把整張表搬上 GPU（且 fp32＝10.5GB）
       而 OOM，故需移除該 hook 並改寫 forward。
-    - `ple_on_gpu=True`（推論加速）：直接讓 accelerate 把 PLE 放 GPU，免去每個 token
-      的 CPU↔GPU 往返。**實測 2026-08-06：CPU 查表約 36 秒/token，是推論的主要瓶頸**
-      （已排除 use_cache 因素：True/False 皆約 36–37 秒/token）。
-      代價是 GPU 常駐升到約 8.4GB，僅在 `can_fit_ple_on_gpu()` 為真時使用。
+    - `ple_on_gpu=True`（推論加速）：**整個模型放 GPU（device_map={"":0}），
+      完全不用 accelerate offload**。
+
+      ⚠️ 2026-08-06 實測，這是本專案最重要的效能發現：
+      瓶頸不是 PLE 放哪裡，而是 **只要 device_map 內有任何 "cpu" 項目，
+      accelerate 就會為整個模型掛上 offload hook，使每個 token 慢到約 35 秒**。
+      對照數據（同一台機、同一模型）：
+
+        device_map 含 cpu 項目（PLE 在 CPU）→ 36.0 秒/token
+        device_map 含 cpu 項目（PLE 移到 GPU）→ 35.0 秒/token（幾乎無改善）
+        device_map={"":0} 全部放 GPU        →  0.06 秒/token（快約 580 倍）
+
+      另：載入時間也從約 2 分鐘降到 7 秒。GPU 需約 9GB（含 PLE 5.25GB、
+      層 3.1GB、視覺/音訊塔 0.89GB），僅在 `can_fit_ple_on_gpu()` 為真時使用。
     """
     from transformers import Gemma4ForConditionalGeneration
     from accelerate.hooks import remove_hook_from_module
 
-    device_map = dict(GEMMA4_OFFLOAD_MAP)
     if ple_on_gpu:
-        device_map["model.language_model.embed_tokens_per_layer"] = 0
+        device_map = {"": 0}          # 全部放 GPU：唯一能避開 offload hook 的做法
+    else:
+        device_map = dict(GEMMA4_OFFLOAD_MAP)
 
     model = Gemma4ForConditionalGeneration.from_pretrained(
         model_id, quantization_config=bnb_config,

@@ -96,6 +96,8 @@ def group_key(e, source):
         return "synth:" + str(e.get("template_id") or e["id"])
     if source == "paper":
         return "paper:" + str(e.get("paper") or e["id"])
+    if source == "correction":
+        return "correction:" + str(e["id"])
     return f"{source}:{e['id']}"
 
 
@@ -179,6 +181,18 @@ def main():
     twtsl_sents = load_jsonl(DATA / "twtsl" / "twtsl_sentences.jsonl")
     for e in twtsl_sents:
         pool.append(norm_record(e, "twtsl-sentence"))
+
+    # --- 人工修正回饋（scripts/add_correction.py 產出）---
+    # 少數修正混在數千句裡幾乎沒有影響力，故依 weight 複製多份加權。
+    # 這些是使用者實測後親自確認的正確答案，優先度最高，一律進 train（不抽到 dev）。
+    corrections, corrections_rows = 0, []
+    corr_path = DATA / "corrections" / "corrections.jsonl"
+    if corr_path.exists():
+        for e in load_jsonl(corr_path):
+            w = max(1, int(e.get("weight", 1)))
+            rec = norm_record(e, "correction")
+            corrections_rows.extend([dict(rec) for _ in range(w)])
+            corrections += 1
 
     # --- 中正大學手語論文例句（語言學家標註；含呼應/分類詞標記者排除） ---
     papers_added = 0
@@ -320,6 +334,7 @@ def main():
             dev_count += len(groups[gk])
         for gk in gkeys:
             (dev if gk in dev_groups else train).extend(groups[gk])
+    train.extend(corrections_rows)   # 修正資料一律進 train，不抽到 dev
     rng.shuffle(train)
     rng.shuffle(dev)
 
@@ -383,6 +398,7 @@ def main():
         "test_composition": compo(test),
         "leaked_removed": leaked,
         "corpus_test_ratio": args.corpus_test_ratio,
+        "corrections": {"unique": corrections, "rows_after_weighting": len(corrections_rows)},
         "test_corpus_candidate_count": len(test_corpus_candidates),
         "test_corpus_reviewed_count": len(test_corpus),
         "test_corpus_review_excluded_count": len(test_corpus_rejected),

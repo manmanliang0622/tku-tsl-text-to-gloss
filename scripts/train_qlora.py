@@ -49,30 +49,54 @@ GEMMA4_OFFLOAD_MAP = {
 }
 
 
-def load_model(model_id, bnb_config):
-    """載入 Gemma 4 E4B（4-bit），PLE 表常駐 CPU、查表在 CPU 執行。
+PLE_BYTES = 5.25 * 1024 ** 3        # 實測 PLE 大小（bf16）
+PLE_GPU_MARGIN = 1.5 * 1024 ** 3    # 放上 GPU 後至少要留給共用生產服務的餘裕
 
-    PLE（embed_tokens_per_layer）是 nn.Embedding，bnb 量化不到、bf16 佔 5.6GB，
-    但每步查表輸出僅約 11MB。accelerate 的 device_map offload 預設會在前向把整張表
-    搬上 GPU（且 fp32＝10.5GB）而 OOM；故移除該 hook 並改寫 forward，
-    讓查表在 CPU 進行、只回傳小輸出到 GPU。GPU 常駐約 3.7GB。
+
+def can_fit_ple_on_gpu():
+    """顯存是否足以把 PLE 放上 GPU（此機為共用生產機，需保留餘裕）。"""
+    if not torch.cuda.is_available():
+        return False
+    free, _ = torch.cuda.mem_get_info()
+    return free > PLE_BYTES + PLE_GPU_MARGIN
+
+
+def load_model(model_id, bnb_config, ple_on_gpu=False):
+    """載入 Gemma 4 E4B（4-bit）。
+
+    PLE（embed_tokens_per_layer）是 nn.Embedding，bnb 量化不到、bf16 實測 5.25GB。
+
+    - `ple_on_gpu=False`（訓練預設）：PLE 常駐 CPU、查表在 CPU 執行，只回傳小輸出到
+      GPU，GPU 常駐約 3.1GB。訓練時顯存吃緊，用這個。
+      注意 accelerate 的 offload hook 預設會在前向把整張表搬上 GPU（且 fp32＝10.5GB）
+      而 OOM，故需移除該 hook 並改寫 forward。
+    - `ple_on_gpu=True`（推論加速）：直接讓 accelerate 把 PLE 放 GPU，免去每個 token
+      的 CPU↔GPU 往返。**實測 2026-08-06：CPU 查表約 36 秒/token，是推論的主要瓶頸**
+      （已排除 use_cache 因素：True/False 皆約 36–37 秒/token）。
+      代價是 GPU 常駐升到約 8.4GB，僅在 `can_fit_ple_on_gpu()` 為真時使用。
     """
     from transformers import Gemma4ForConditionalGeneration
     from accelerate.hooks import remove_hook_from_module
+
+    device_map = dict(GEMMA4_OFFLOAD_MAP)
+    if ple_on_gpu:
+        device_map["model.language_model.embed_tokens_per_layer"] = 0
+
     model = Gemma4ForConditionalGeneration.from_pretrained(
         model_id, quantization_config=bnb_config,
-        dtype=torch.bfloat16, device_map=GEMMA4_OFFLOAD_MAP)
+        dtype=torch.bfloat16, device_map=device_map)
 
-    ple = model.model.language_model.embed_tokens_per_layer
-    remove_hook_from_module(ple, recurse=True)  # 拿掉會把表搬上 GPU 的 hook
-    ple.to("cpu")
-    _orig_forward = ple.forward
+    if not ple_on_gpu:
+        ple = model.model.language_model.embed_tokens_per_layer
+        remove_hook_from_module(ple, recurse=True)  # 拿掉會把表搬上 GPU 的 hook
+        ple.to("cpu")
+        _orig_forward = ple.forward
 
-    def cpu_lookup(input_ids, *a, **k):
-        dev = input_ids.device
-        return _orig_forward(input_ids.to("cpu"), *a, **k).to(dev)
+        def cpu_lookup(input_ids, *a, **k):
+            dev = input_ids.device
+            return _orig_forward(input_ids.to("cpu"), *a, **k).to(dev)
 
-    ple.forward = cpu_lookup
+        ple.forward = cpu_lookup
     return model
 
 

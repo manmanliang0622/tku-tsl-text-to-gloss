@@ -35,14 +35,19 @@ BASE = Path(__file__).resolve().parent.parent
 STATE = {"model": None, "tokenizer": None, "adapter": None, "max_new": 64}
 
 
-def load(base_model, adapter):
-    from train_qlora import load_model as load_base
+def load(base_model, adapter, ple_on_gpu=None):
+    """ple_on_gpu=None 時自動判斷（顯存夠就放 GPU，快約 30 倍）。"""
+    from train_qlora import load_model as load_base, can_fit_ple_on_gpu
     bnb = BitsAndBytesConfig(
         load_in_4bit=True, bnb_4bit_quant_type="nf4",
         bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_use_double_quant=True,
         llm_int8_enable_fp32_cpu_offload=True)
     tok = AutoTokenizer.from_pretrained(base_model)
-    model = load_base(base_model, bnb)
+    if ple_on_gpu is None:
+        ple_on_gpu = can_fit_ple_on_gpu()
+    print(f"[serve] PLE 放置：{'GPU（加速）' if ple_on_gpu else 'CPU（省顯存，較慢）'}",
+          flush=True)
+    model = load_base(base_model, bnb, ple_on_gpu=ple_on_gpu)
     if adapter:
         from peft import PeftModel
         model = PeftModel.from_pretrained(model, adapter)
@@ -116,10 +121,13 @@ def main():
     ap.add_argument("--adapter", required=True)
     ap.add_argument("--port", type=int, default=8018)
     ap.add_argument("--max-new", type=int, default=64)
+    ap.add_argument("--ple", choices=["auto", "gpu", "cpu"], default="auto",
+                    help="PLE 放置：auto 依顯存自動判斷（預設）；gpu 強制加速；cpu 省顯存")
     args = ap.parse_args()
     STATE["max_new"] = args.max_new
     print(f"[serve] 載入模型中…（adapter={args.adapter}）", flush=True)
-    load(args.base, args.adapter)
+    load(args.base, args.adapter,
+         ple_on_gpu={"auto": None, "gpu": True, "cpu": False}[args.ple])
     srv = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
     print(f"[serve] 監聽 127.0.0.1:{args.port}", flush=True)
     srv.serve_forever()

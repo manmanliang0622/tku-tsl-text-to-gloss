@@ -111,10 +111,21 @@ def load_model(model_id, bnb_config, ple_on_gpu=False):
     return model
 
 
-def build_dataset(name, tokenizer, max_len):
-    """把 {chinese, gloss_text} 轉成 input_ids + labels（prompt 段遮罩為 -100）。"""
-    rows = [json.loads(l) for l in (BASE / "data" / "splits" / f"{name}.jsonl")
-            .read_text(encoding="utf-8").splitlines() if l.strip()]
+def build_dataset(name, tokenizer, max_len, target="gloss"):
+    """把資料轉成 input_ids + labels（prompt 段遮罩為 -100）。
+
+    target="gloss"：讀 data/splits/，目標為「我/台北/住」純 Gloss。
+    target="json" ：讀 data/splits_json/（scripts/build_json_targets.py 產出），
+                    目標為含 gloss/question_type/negation/nonmanual 的結構化 JSON，
+                    讓下游虛擬人可直接取用非手部標記（計畫第 1 節）。
+    """
+    if target == "json":
+        rows = [json.loads(l) for l in (BASE / "data" / "splits_json" / f"{name}.jsonl")
+                .read_text(encoding="utf-8").splitlines() if l.strip()]
+        rows = [{"chinese": r["input"], "gloss_text": r["output"]} for r in rows]
+    else:
+        rows = [json.loads(l) for l in (BASE / "data" / "splits" / f"{name}.jsonl")
+                .read_text(encoding="utf-8").splitlines() if l.strip()]
 
     def ids(text):
         # 模板文字已含 <bos> 等特殊標記，故 add_special_tokens=False
@@ -166,6 +177,8 @@ def main():
     ap.add_argument("--lora-r", type=int, default=16)
     ap.add_argument("--lora-alpha", type=int, default=32)
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--target", choices=["gloss", "json"], default="gloss",
+                    help="訓練目標格式：gloss=純 Gloss；json=結構化（含 NMS）")
     ap.add_argument("--max-steps", type=int, default=-1,
                     help="限制訓練步數（>0 用於冒煙測試）")
     args = ap.parse_args()
@@ -192,8 +205,8 @@ def main():
     model = get_peft_model(model, lora)
     model.print_trainable_parameters()
 
-    train_ds = build_dataset("train", tokenizer, args.max_len)
-    dev_ds = build_dataset("dev", tokenizer, args.max_len)
+    train_ds = build_dataset("train", tokenizer, args.max_len, args.target)
+    dev_ds = build_dataset("dev", tokenizer, args.max_len, args.target)
     print(f"train={len(train_ds)} dev={len(dev_ds)}")
 
     smoke = args.max_steps and args.max_steps > 0

@@ -22,3 +22,4 @@ models/**/*.safetensors
 models/**/*.bin
 models/**/*.pt
 models/**/*.pth
+data/splits_json/*.jsonl

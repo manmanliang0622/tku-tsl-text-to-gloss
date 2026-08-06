@@ -111,6 +111,9 @@ def norm_record(e, split_source):
         "group": group_key(e, split_source),
         "confidence": e.get("confidence"),
         "review_status": e.get("review_status", "n/a"),
+        # 保留 NMS（非手部標記）：JSON 目標格式的 nonmanual 欄位需要，
+        # 且下游虛擬人的表情同步也要用（計畫第 1 節）。
+        "nms": e.get("nms"),
     }
 
 

@@ -14,7 +14,7 @@ cd ~/tku-tsl-text-to-gloss
 . .venv/bin/activate
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 setsid nohup python3 scripts/serve_model.py \
-  --adapter outputs/qlora_e4b_v8_json/checkpoint-763 \
+  --adapter outputs/qlora_e4b_v9_whfix/checkpoint-763 \
   --target json --port 8018 --ple gpu > serve.log 2>&1 < /dev/null &
 ```
 
@@ -56,7 +56,7 @@ curl -s -X POST http://127.0.0.1:8018/translate \
 - 換 API 位址：瀏覽器 console 執行
   `localStorage.setItem('glossApi','http://127.0.0.1:9000')` 後重整。
 
-## 目前上線模型：v8（JSON 目標，2026-08-07）
+## 目前上線模型：v9（JSON 目標＋WH 標註修正，2026-08-07）
 
 v8 在 33 句 test 上每項指標都優於 v6，且會額外輸出下游虛擬人需要的語法資訊：
 

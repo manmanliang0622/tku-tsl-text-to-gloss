@@ -42,6 +42,9 @@ def main():
     ap.add_argument("--adapter", required=True)
     ap.add_argument("--tag", required=True)
     ap.add_argument("--max-new", type=int, default=160)   # JSON 目標較長
+    ap.add_argument("--ple", choices=["auto", "gpu", "cpu"], default="auto",
+                    help="PLE 放置；gpu=全模型放 GPU（快約 300 倍）。"
+                         "auto 在可用顯存剛好卡門檻時會誤退回慢速模式，評估建議明指 gpu")
     args = ap.parse_args()
     RESULTS.mkdir(exist_ok=True)
 
@@ -51,7 +54,11 @@ def main():
         bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_use_double_quant=True,
         llm_int8_enable_fp32_cpu_offload=True)
     tok = AutoTokenizer.from_pretrained(args.base)
-    model = load_base(args.base, bnb, ple_on_gpu=can_fit_ple_on_gpu())
+    ple_on_gpu = {"auto": None, "gpu": True, "cpu": False}[args.ple]
+    if ple_on_gpu is None:
+        ple_on_gpu = can_fit_ple_on_gpu()
+    print(f"[eval] PLE 放置：{'GPU（快）' if ple_on_gpu else 'CPU（慢，約 35 秒/token）'}", flush=True)
+    model = load_base(args.base, bnb, ple_on_gpu=ple_on_gpu)
     from peft import PeftModel
     model = PeftModel.from_pretrained(model, args.adapter)
     model.eval()

@@ -32,26 +32,31 @@ RULES = (
 INCLUDE_RULES = False
 
 
-def build_user_prompt(chinese: str) -> str:
-    """訓練與推理共用的 user turn 內容。"""
-    if INCLUDE_RULES:
-        return f"{TASK_DESC}\n\n{RULES}\n\n中文：{chinese}\nGloss："
-    return f"{TASK_DESC}\n中文：{chinese}\nGloss："
+def build_user_prompt(chinese: str, examples=None) -> str:
+    """訓練與推理共用的 user turn 內容。
+
+    examples：[(中文, 目標), ...] 檢索到的相似例句，**放在同一個 user turn 內**。
+
+    ⚠️ 2026-08-07 實測：把例句做成「多輪對話」注入會破壞格式遵循——v8 是以
+    單輪（一個 user turn → JSON）微調的，多輪屬分布外輸入，短句會讓模型
+    直接回聲輸入而不輸出 JSON（例：「謝謝」→ raw 就是「謝謝」）。
+    故改為單輪內嵌，維持與訓練相同的對話結構。
+    """
+    head = TASK_DESC if not INCLUDE_RULES else f"{TASK_DESC}\n\n{RULES}"
+    if examples:
+        ref = "\n".join(f"中文：{zh}\nGloss：{tgt}" for zh, tgt in examples)
+        head = f"{head}\n\n以下是資料庫中的相似例句，可作參考：\n{ref}"
+    return f"{head}\n中文：{chinese}\nGloss："
 
 
 def build_messages(chinese: str, gloss_text: str = None, examples=None) -> list:
     """conversational 格式；gloss_text=None 時只給 user turn（推理用）。
 
-    examples：[(中文, gloss_text), ...]，推理時可放入檢索到的相似例句（RAG）。
-    以多輪對話呈現（user/assistant 交替），與訓練時的單輪格式相容——
-    模型看到的最後一輪仍是「同樣的 user prompt」，只是前面多了示範。
+    examples：[(中文, 目標), ...]，推理時放入檢索到的相似例句（RAG），
+    內嵌於同一個 user turn（見 build_user_prompt 的說明）。
     訓練不使用此參數，故不影響訓練/推理一致性。
     """
-    msgs = []
-    for ex_zh, ex_gloss in (examples or []):
-        msgs.append({"role": "user", "content": build_user_prompt(ex_zh)})
-        msgs.append({"role": "assistant", "content": ex_gloss})
-    msgs.append({"role": "user", "content": build_user_prompt(chinese)})
+    msgs = [{"role": "user", "content": build_user_prompt(chinese, examples)}]
     if gloss_text is not None:
         msgs.append({"role": "assistant", "content": gloss_text})
     return msgs

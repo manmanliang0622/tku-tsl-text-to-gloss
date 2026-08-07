@@ -5,58 +5,57 @@
   "synth_selection": "confidence-based",
   "include_words": 0,
   "counts": {
-    "train": 10128,
-    "dev": 641,
+    "train": 8992,
+    "dev": 666,
     "test": 33,
-    "test_corpus": 0
+    "test_corpus": 167,
+    "test_papers": 143
   },
   "train_composition": {
-    "twtsl-sentence": 916,
-    "synth": 1089,
-    "tslcorpus": 7927,
-    "paper": 196
+    "tslcorpus": 6817,
+    "twtsl-sentence": 929,
+    "synth": 1246
   },
   "dev_composition": {
-    "tslcorpus": 416,
-    "synth": 172,
-    "twtsl-sentence": 43,
-    "paper": 10
+    "tslcorpus": 493,
+    "synth": 129,
+    "twtsl-sentence": 44
   },
   "test_composition": {
     "real": 33
   },
-  "leaked_removed": 27,
-  "corpus_test_ratio": 0.0,
+  "leaked_removed": 23,
+  "corpus_test_ratio": 0.12,
   "corrections": {
     "unique": 0,
     "rows_after_weighting": 0
   },
   "length_balance": {
-    "before_total": 6102,
-    "after_total": 10128,
+    "before_total": 5347,
+    "after_total": 8992,
     "before_ge8_pct": 10.4,
-    "after_ge8_pct": 25.1,
+    "after_ge8_pct": 24.8,
     "buckets": "≤4 ×1、5–7 ×2、≥8 ×4"
   },
-  "test_corpus_candidate_count": 0,
-  "test_corpus_reviewed_count": 0,
+  "test_corpus_candidate_count": 167,
+  "test_corpus_reviewed_count": 167,
   "test_corpus_review_excluded_count": 0,
   "test_corpus_review_rejected_ids": [],
   "test_corpus_review_file": null,
   "test_corpus_review_sha256": null,
-  "test_corpus_ids_sha256": null,
-  "test_corpus_groups": 0,
+  "test_corpus_ids_sha256": "94a0c0edc3b8d5daf50ed389f66e5b80d1fdbf7b4cc7e76d737df76f1a23f98a",
+  "test_corpus_groups": 33,
   "test_corpus_group_leakage": 0,
   "test_corpus_chinese_leakage": 0,
   "test_corpus_gloss_leakage": 0,
   "test_corpus_pair_leakage": 0,
   "test_4gram_count": 5,
-  "test_corpus_4gram_count": 0,
+  "test_corpus_4gram_count": 766,
   "split_method": "group-holdout（語料庫按對話 seg_uuid、twtsl 按詞條、synth 按模板整組留存）",
   "dev_group_leakage": 0,
   "n_groups": {
-    "train": 708,
-    "dev": 63
+    "train": 668,
+    "dev": 65
   },
   "corpus_dropped_short": 0,
   "min_gloss_len": 1,

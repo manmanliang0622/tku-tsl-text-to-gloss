@@ -145,18 +145,31 @@ def main():
                          "模型偏好短輸出」的偏差（2026-08-07 實測：訓練集 54.9%% 為 "
                          "≤4 詞短句、≥8 詞僅 10.4%%；語料庫長句稽核顯示 70%% 的輸出"
                          "短於參考答案）。只作用於 train，dev 不重複以免評估失真。")
+    ap.add_argument("--papers-as-test", action="store_true",
+                    help="論文例句改作**獨立測試集**（test_papers.jsonl）而非訓練資料。"
+                         "這些是語言學家標註的黃金例句，且與語料庫來源不同，"
+                         "留作 test 可衡量泛化（語料庫已全進訓練，缺乏獨立測試集）。")
+    ap.add_argument("--corpus-test-min-len", type=int, default=0,
+                    help="留存語料庫 test 時只取 Gloss 長度 >= 此值的句子"
+                         "（0=不限）。長句才是目前的弱項，留長句當 test 更有鑑別度。")
     ap.add_argument("--no-papers", action="store_true",
                     help="不納入中正大學手語論文例句（預設在 --use-all 下納入）")
-    ap.add_argument("--corpus-test-ratio", type=float, default=0.0,
+    ap.add_argument("--corpus-test-ratio", type=float, default=None,
                     help="從文化部語料庫依對話群組留存這比例的真實句作『擴大真實 test 集』"
                          "（test_corpus.jsonl）；整段對話移出訓練池以杜絕洩漏。0=不留存（預設，"
                          "沿用舊行為）。擴大 test 集以穩定 BLEU 時設 0.12 左右。")
     args = ap.parse_args()
     exclude_rule_derived = not args.include_rule_derived  # 預設 True（審核安全預設）
-    if args.use_all:
-        # 使用者決策：不設任何審核閘門、語料庫全數進訓練、不濾單詞句
-        exclude_rule_derived = False
+    explicit_corpus_test = args.corpus_test_ratio is not None
+    if args.corpus_test_ratio is None:
         args.corpus_test_ratio = 0.0
+    if args.use_all:
+        # 使用者決策：不設任何審核閘門、不濾單詞句。
+        # 語料庫預設全數進訓練，但**若明確指定 --corpus-test-ratio 就尊重它**
+        # （2026-08-08：需留存測試集才能衡量泛化）。
+        exclude_rule_derived = False
+        if not explicit_corpus_test:
+            args.corpus_test_ratio = 0.0
         args.min_gloss_len = 1
     rng = random.Random(args.seed)
     OUT.mkdir(exist_ok=True)
@@ -204,13 +217,20 @@ def main():
 
     # --- 中正大學手語論文例句（語言學家標註；含呼應/分類詞標記者排除） ---
     papers_added = 0
-    papers_path = DATA / "papers" / "paper_examples.jsonl"
+    test_papers = []
+    papers_path = DATA / "papers" / "paper_examples_all.jsonl"
+    if not papers_path.exists():
+        papers_path = DATA / "papers" / "paper_examples.jsonl"
     if args.use_all and not args.no_papers and papers_path.exists():
         for e in load_jsonl(papers_path):
             if e.get("has_notation"):
-                continue              # 代形詞／呼應下標，下游無法檢索
-            pool.append(norm_record(e, "paper"))
-            papers_added += 1
+                continue              # 代形詞／呼應下標／描述性註解，下游無法檢索
+            rec = norm_record(e, "paper")
+            if args.papers_as_test:
+                test_papers.append(rec)
+            else:
+                pool.append(rec)
+                papers_added += 1
 
     # --- 文化部語料庫：可先依對話群組留存一批當「擴大真實 test 集」，其餘進訓練池 ---
     corpus_dropped_short = 0
@@ -242,6 +262,9 @@ def main():
                     break
                 holdout_groups.add(gk)
                 for e in cgroups[gk]:
+                    if args.corpus_test_min_len and \
+                            len(e["gloss_text"].split("/")) < args.corpus_test_min_len:
+                        continue      # 短句不列入 test（長句才是弱項）
                     # test_corpus 自身去重，且不與核心 33 句 test 重複
                     k = (e["chinese"], e["gloss_text"])
                     if k in picked_seen or e["chinese"] in test_chinese \
@@ -292,8 +315,8 @@ def main():
                 test_corpus_rejected.append(rv)
 
     # 原始候選（含教師排除列）也納入洩漏 blocklist，確保訓練池不含其相同句。
-    tc_chinese = {e["chinese"] for e in test_corpus}
-    tc_gloss = {e["gloss_text"] for e in test_corpus}
+    tc_chinese = {e["chinese"] for e in test_corpus} | {e["chinese"] for e in test_papers}
+    tc_gloss = {e["gloss_text"] for e in test_corpus} | {e["gloss_text"] for e in test_papers}
     tc_block_chinese = {e["chinese"] for e in test_corpus_blocklist}
     tc_block_gloss = {e["gloss_text"] for e in test_corpus_blocklist}
 
@@ -383,6 +406,8 @@ def main():
     out_splits = [("train", train), ("dev", dev), ("test", test)]
     if test_corpus:
         out_splits.append(("test_corpus", test_corpus))
+    if test_papers:
+        out_splits.append(("test_papers", test_papers))
     for name, rows in out_splits:
         with (OUT / f"{name}.jsonl").open("w", encoding="utf-8") as f:
             for e in rows:
@@ -427,7 +452,7 @@ def main():
                             if args.use_teacher_reviewed else "confidence-based"),
         "include_words": args.include_words,
         "counts": {"train": len(train), "dev": len(dev), "test": len(test),
-                   "test_corpus": len(test_corpus)},
+                   "test_corpus": len(test_corpus), "test_papers": len(test_papers)},
         "train_composition": compo(train),
         "dev_composition": compo(dev),
         "test_composition": compo(test),

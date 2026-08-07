@@ -77,8 +77,17 @@ def clean_gloss_line(line):
     return toks
 
 
-# 呼應／分類詞等語言學標記：下游動作庫無法檢索，訓練時排除
-NOTATION_RE = re.compile(r"代形詞|[+＋]|[→←]|(?<=[一-鿿])[ijk](?![一-鿿])")
+# 呼應／分類詞／描述性註解等語言學標記：下游動作庫無法檢索，訓練與測試皆排除。
+# 2026-08-08 收緊：原版只擋 代形詞/+/→/ijk，實測仍放行了
+#   桌子-i、i-問-j（索引與呼應標記）、鉛筆的外形_由長變短（描述性註解）、
+#   花分類詞、倚靠.垂直-3A（位置標記）、介系詞（後設標籤）等不可檢索寫法。
+NOTATION_RE = re.compile(
+    r"代形詞|分類詞|介系詞|[+＋]|[→←]|_"                 # 標記詞與描述性底線
+    r"|[-－][ijk0-9]"                                    # -i / -j / -3A 索引
+    r"|(?<=[一-鿿])[ijk](?![一-鿿])"                      # 詞尾 i/j/k
+    r"|(?<=[一-鿿])\.(?=[一-鿿])"                        # 倚靠.垂直
+    r"|的外形|的長度|的厚度|的高度"                        # 描述性 gloss
+)
 
 
 def has_notation(gloss_text):
@@ -120,12 +129,24 @@ def extract(txt_path, source_key):
 
 
 def main():
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--src-dir", default="/private/tmp/claude-501/-Users-leo-Documents-----"
+                                         "/7105f925-4b9b-4613-a34d-48bc76579f86/scratchpad",
+                    help="放 .txt（pdftotext 產出）的目錄")
+    ap.add_argument("--scan-all", action="store_true",
+                    help="掃描目錄下所有 .txt，而非只取 SOURCES 列出的三篇")
+    ap.add_argument("--out", default="paper_examples.jsonl")
+    args = ap.parse_args()
+
     OUT.mkdir(parents=True, exist_ok=True)
-    src_dir = Path("/private/tmp/claude-501/-Users-leo-Documents-----"
-                   "/7105f925-4b9b-4613-a34d-48bc76579f86/scratchpad")
+    src_dir = Path(args.src_dir)
+    targets = ({p.stem: SOURCES.get(p.stem, f"中正大學手語研究中心文獻：{p.stem}")
+                for p in sorted(src_dir.glob("*.txt"))}
+               if args.scan_all else SOURCES)
     rows, n = [], 0
     seen = set()
-    for key, citation in SOURCES.items():
+    for key, citation in targets.items():
         p = src_dir / f"{key}.txt"
         if not p.exists():
             print(f"  ⚠ 找不到 {p}，略過")
@@ -152,8 +173,9 @@ def main():
                 # 含呼應/分類詞標記者不進訓練（下游無法檢索），但保留供語法參考
                 "has_notation": has_notation(e["gloss_text"]),
             })
-        print(f"  {key}: {len(got)} 例")
-    path = OUT / "paper_examples.jsonl"
+        usable = sum(1 for e in got if not has_notation(e["gloss_text"]))
+        print(f"  {key}: 抽出 {len(got)} 例（可訓練 {usable}）")
+    path = OUT / args.out
     with path.open("w", encoding="utf-8") as f:
         for e in rows:
             f.write(json.dumps(e, ensure_ascii=False) + "\n")

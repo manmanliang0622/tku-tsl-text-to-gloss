@@ -26,6 +26,7 @@ Gloss ＋ 疑問/否定/NMS，下游不必再猜。
 """
 import argparse
 import json
+import re
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent.parent
@@ -37,7 +38,15 @@ INSTRUCTION = "請將中文句子轉成台灣自然手語語序，並標出語�
 TIME_HINTS = ("以前", "以後", "之前", "之後", "期間", "時候", "昨天", "今天", "明天",
               "早上", "中午", "晚上", "去年", "今年", "明年", "六個月", "月", "年",
               "週", "天", "點", "分", "最近", "現在")
-WH_HINTS = ("誰", "什麼", "哪", "哪裡", "為什麼", "怎麼", "幾", "多少")
+# WH 判定（2026-08-07 修正）：原本把「幾」當無條件疑問詞，導致「前幾天」「好幾次」
+# 「二十幾年」等被誤標為 wh 疑問句。實測訓練資料 42 句含「幾」，其中 31 句（74%）
+# 並非疑問句 → 標籤錯誤率極高，模型只是忠實照學。
+# 改法：①「幾」需排除已知非疑問固定用法；②疑問標點／語氣詞為強訊號。
+WH_HINTS = ("誰", "什麼", "哪裡", "哪個", "哪一", "為什麼", "怎麼", "多少")
+WH_AMBIGUOUS = ("幾",)          # 需排除固定用法後才算疑問
+NON_WH_PATTERNS = re.compile(
+    r"前幾|好幾|這幾|那幾|上幾|下幾|幾乎|十幾|廿幾|\d+\s*幾|幾百|幾千|幾萬|零星幾")
+QUESTION_MARKS = re.compile(r"[?？]")
 YESNO_HINTS = ("嗎", "是不是", "是否", "有沒有", "可不可以")
 NEGATION_HINTS = ("不", "沒有", "沒", "無法", "不要", "不能", "沒辦法")
 # 句末常見的情態／否定詞：取「主要動詞」時要先剔除（本專案語料實測）
@@ -57,10 +66,20 @@ def infer_time(tokens):
 
 
 def infer_question_type(chinese, tokens):
+    """判斷疑問類型。見 WH_HINTS 上方註解說明「幾」的誤判問題與修正依據。"""
     combined = chinese + "".join(tokens)
+    has_mark = bool(QUESTION_MARKS.search(chinese))
+    has_yesno = any(h in combined for h in YESNO_HINTS)
+
+    # 明確的 WH 詞
     if any(h in combined for h in WH_HINTS):
         return "wh"
-    if any(h in combined for h in YESNO_HINTS):
+    # 「幾」：先剔除固定用法，再看是否有疑問標點／語氣詞佐證
+    if any(h in combined for h in WH_AMBIGUOUS):
+        stripped = NON_WH_PATTERNS.sub("", combined)
+        if any(h in stripped for h in WH_AMBIGUOUS) and (has_mark or has_yesno):
+            return "wh"
+    if has_yesno:
         return "yesno"
     return "none"
 

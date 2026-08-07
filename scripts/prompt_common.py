@@ -39,9 +39,19 @@ def build_user_prompt(chinese: str) -> str:
     return f"{TASK_DESC}\n中文：{chinese}\nGloss："
 
 
-def build_messages(chinese: str, gloss_text: str = None) -> list:
-    """conversational 格式；gloss_text=None 時只給 user turn（推理用）。"""
-    msgs = [{"role": "user", "content": build_user_prompt(chinese)}]
+def build_messages(chinese: str, gloss_text: str = None, examples=None) -> list:
+    """conversational 格式；gloss_text=None 時只給 user turn（推理用）。
+
+    examples：[(中文, gloss_text), ...]，推理時可放入檢索到的相似例句（RAG）。
+    以多輪對話呈現（user/assistant 交替），與訓練時的單輪格式相容——
+    模型看到的最後一輪仍是「同樣的 user prompt」，只是前面多了示範。
+    訓練不使用此參數，故不影響訓練/推理一致性。
+    """
+    msgs = []
+    for ex_zh, ex_gloss in (examples or []):
+        msgs.append({"role": "user", "content": build_user_prompt(ex_zh)})
+        msgs.append({"role": "assistant", "content": ex_gloss})
+    msgs.append({"role": "user", "content": build_user_prompt(chinese)})
     if gloss_text is not None:
         msgs.append({"role": "assistant", "content": gloss_text})
     return msgs

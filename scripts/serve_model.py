@@ -33,7 +33,8 @@ import prompt_common as pc
 BASE = Path(__file__).resolve().parent.parent
 
 STATE = {"model": None, "tokenizer": None, "adapter": None, "max_new": 64,
-         "target": "gloss"}
+         "target": "gloss", "retriever": None, "rag_k": 0, "rag_min": 0.05,
+         "json_targets": {}}
 
 
 def load(base_model, adapter, ple_on_gpu=None):
@@ -69,9 +70,31 @@ def _parse_json_output(raw):
         return None
 
 
+def _rag_examples(text):
+    """檢索訓練資料中最相似的例句（RAG）。回傳 [(中文, 目標字串), ...]。"""
+    r = STATE.get("retriever")
+    if not r or STATE.get("rag_k", 0) <= 0:
+        return [], []
+    hits = r.search(text, k=STATE["rag_k"], min_score=STATE.get("rag_min", 0.05))
+    pairs, info = [], []
+    for score, row in hits:
+        # 例句的目標格式要與模型訓練目標一致
+        if STATE["target"] == "json":
+            tgt = STATE["json_targets"].get(row["chinese"])
+            if not tgt:
+                continue
+        else:
+            tgt = row["gloss_text"]
+        pairs.append((row["chinese"], tgt))
+        info.append({"score": score, "chinese": row["chinese"],
+                     "gloss_text": row["gloss_text"]})
+    return pairs, info
+
+
 def translate(text):
     tok, model = STATE["tokenizer"], STATE["model"]
-    msgs = pc.build_messages(text)
+    ex_pairs, ex_info = _rag_examples(text)
+    msgs = pc.build_messages(text, examples=ex_pairs)
     inputs = tok.apply_chat_template(msgs, add_generation_prompt=True,
                                      return_tensors="pt", return_dict=True).to(model.device)
     t0 = time.time()
@@ -94,14 +117,14 @@ def translate(text):
             # 相容欄位（0804try 前端用 glosses/question）
             "glosses": toks, "question": obj.get("question_type", "none"),
             "source": "gemma", "unknown": [],
-            "raw": gen.strip(), "seconds": secs,
+            "raw": gen.strip(), "seconds": secs, "rag": ex_info,
         }
 
     gloss_text = pc.parse_gloss(gen)
     toks = [t for t in gloss_text.split("/") if t.strip()]
     return {"chinese": text, "gloss": toks, "gloss_text": gloss_text,
             "glosses": toks, "source": "gemma",
-            "raw": gen.strip(), "seconds": secs}
+            "raw": gen.strip(), "seconds": secs, "rag": ex_info}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -156,6 +179,11 @@ def main():
     ap.add_argument("--max-new", type=int, default=64)
     ap.add_argument("--target", choices=["gloss", "json"], default="gloss",
                     help="模型的輸出格式；json 版會另外回傳 question_type/negation/nonmanual")
+    ap.add_argument("--rag", type=int, default=0,
+                    help="推理時檢索 N 筆訓練集相似例句放進 prompt（0=關閉）。"
+                         "依據 CCL24-Eval 與工研院 ITRI 的 RAG/ICL 做法")
+    ap.add_argument("--rag-min", type=float, default=0.05,
+                    help="檢索相似度下限，低於此值不放入（避免不相關例句干擾）")
     ap.add_argument("--ple", choices=["auto", "gpu", "cpu"], default="auto",
                     help="PLE 放置：auto 依顯存自動判斷（預設）；gpu 強制加速；cpu 省顯存")
     args = ap.parse_args()
@@ -163,6 +191,19 @@ def main():
     STATE["target"] = args.target
     if args.target == "json" and args.max_new < 160:
         STATE["max_new"] = 160        # JSON 目標較長，實測最多 182 token
+    STATE["rag_k"], STATE["rag_min"] = args.rag, args.rag_min
+    if args.rag > 0:
+        from rag_retrieve import Retriever
+        STATE["retriever"] = Retriever()
+        if args.target == "json":
+            # JSON 模式的示範也要是 JSON，否則格式不一致會誤導模型
+            import json as _json
+            STATE["json_targets"] = {
+                _json.loads(l)["input"]: _json.loads(l)["output"]
+                for l in (BASE / "data/splits_json/train.jsonl")
+                .read_text(encoding="utf-8").splitlines() if l.strip()}
+        print(f"[serve] RAG 已啟用：每次檢索 {args.rag} 筆（相似度 ≥ {args.rag_min}）",
+              flush=True)
     print(f"[serve] 載入模型中…（adapter={args.adapter}）", flush=True)
     load(args.base, args.adapter,
          ple_on_gpu={"auto": None, "gpu": True, "cpu": False}[args.ple])

@@ -70,6 +70,11 @@ def _parse_json_output(raw):
         return None
 
 
+def _clean_key(text):
+    """與 scripts/build_json_targets.py 的 clean_chinese 一致的正規化。"""
+    return str(text or "").strip().strip("，。！？；：,.!?;: ")
+
+
 def _rag_examples(text):
     """檢索訓練資料中最相似的例句（RAG）。回傳 [(中文, 目標字串), ...]。"""
     r = STATE.get("retriever")
@@ -80,7 +85,9 @@ def _rag_examples(text):
     for score, row in hits:
         # 例句的目標格式要與模型訓練目標一致
         if STATE["target"] == "json":
-            tgt = STATE["json_targets"].get(row["chinese"])
+            # build_json_targets 會清掉句尾標點，查表時需用同樣的正規化
+            tgt = (STATE["json_targets"].get(row["chinese"])
+                   or STATE["json_targets"].get(_clean_key(row["chinese"])))
             if not tgt:
                 continue
         else:
@@ -202,6 +209,7 @@ def main():
                 _json.loads(l)["input"]: _json.loads(l)["output"]
                 for l in (BASE / "data/splits_json/train.jsonl")
                 .read_text(encoding="utf-8").splitlines() if l.strip()}
+            print(f"[serve] JSON 目標索引 {len(STATE['json_targets'])} 筆", flush=True)
         print(f"[serve] RAG 已啟用：每次檢索 {args.rag} 筆（相似度 ≥ {args.rag_min}）",
               flush=True)
     print(f"[serve] 載入模型中…（adapter={args.adapter}）", flush=True)

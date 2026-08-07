@@ -1,0 +1,27 @@
+{
+  "metrics": {
+    "BLEU-4": 52.73,
+    "ROUGE-L": 69.43,
+    "ExactMatch%": 21.67,
+    "InVocab%": 65.16,
+    "InVocabRef%": 63.8,
+    "InVocabGap": 1.35,
+    "InVocab%(raw)": 64.02,
+    "n": 60,
+    "n_groups": 60,
+    "Reference4Grams": 204,
+    "Hypothesis4Grams": 177
+  },
+  "categories": {
+    "詞彙替換/混合": 34,
+    "完全正確": 13,
+    "Gloss缺失": 12,
+    "Gloss多增": 1
+  },
+  "modal_dropped_pct": 3.3,
+  "neg_mismatch_pct": 0.0,
+  "avg_ref_len": 6.4,
+  "avg_pred_len": 5.88,
+  "shorter_than_ref_pct": 46.7,
+  "note": "語料庫句已全在訓練集，本測量的是復現能力而非泛化"
+}

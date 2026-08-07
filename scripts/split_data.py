@@ -140,6 +140,11 @@ def main():
                          "論文例句、合成句全部直接使用；語料庫全部 5,272 句納入訓練"
                          "（不留存 test_corpus）；不濾單詞句。test 仍保留自有 33 句真實"
                          "錄影句以維持與 Stage A/B 的可比性。授權已確認（標明出處即可）。")
+    ap.add_argument("--length-balance", action="store_true",
+                    help="長度平衡取樣：重複長句以矯正「訓練資料由短句主導、"
+                         "模型偏好短輸出」的偏差（2026-08-07 實測：訓練集 54.9%% 為 "
+                         "≤4 詞短句、≥8 詞僅 10.4%%；語料庫長句稽核顯示 70%% 的輸出"
+                         "短於參考答案）。只作用於 train，dev 不重複以免評估失真。")
     ap.add_argument("--no-papers", action="store_true",
                     help="不納入中正大學手語論文例句（預設在 --use-all 下納入）")
     ap.add_argument("--corpus-test-ratio", type=float, default=0.0,
@@ -338,6 +343,33 @@ def main():
         for gk in gkeys:
             (dev if gk in dev_groups else train).extend(groups[gk])
     train.extend(corrections_rows)   # 修正資料一律進 train，不抽到 dev
+
+    # --- 長度平衡：重複長句，矯正短句主導造成的「輸出過短」偏差 ---
+    length_balance_stats = None
+    if args.length_balance:
+        def repeat_factor(n_tokens):
+            # 分桶重複次數（透明可解釋）：短句不動、中句 ×2、長句 ×4
+            if n_tokens <= 4:
+                return 1
+            if n_tokens <= 7:
+                return 2
+            return 4
+
+        before = Counter(min(len(e["gloss_text"].split("/")), 12) for e in train)
+        balanced = []
+        for e in train:
+            n = len(e["gloss_text"].split("/"))
+            balanced.extend(dict(e) for _ in range(repeat_factor(n)))
+        after = Counter(min(len(e["gloss_text"].split("/")), 12) for e in balanced)
+        length_balance_stats = {
+            "before_total": len(train), "after_total": len(balanced),
+            "before_ge8_pct": round(sum(v for k, v in before.items() if k >= 8)
+                                    / len(train) * 100, 1),
+            "after_ge8_pct": round(sum(v for k, v in after.items() if k >= 8)
+                                   / len(balanced) * 100, 1),
+            "buckets": "≤4 ×1、5–7 ×2、≥8 ×4",
+        }
+        train = balanced
     rng.shuffle(train)
     rng.shuffle(dev)
 
@@ -402,6 +434,7 @@ def main():
         "leaked_removed": leaked,
         "corpus_test_ratio": args.corpus_test_ratio,
         "corrections": {"unique": corrections, "rows_after_weighting": len(corrections_rows)},
+        "length_balance": length_balance_stats,
         "test_corpus_candidate_count": len(test_corpus_candidates),
         "test_corpus_reviewed_count": len(test_corpus),
         "test_corpus_review_excluded_count": len(test_corpus_rejected),

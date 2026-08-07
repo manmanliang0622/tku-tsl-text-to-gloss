@@ -5,21 +5,21 @@
   "synth_selection": "confidence-based",
   "include_words": 0,
   "counts": {
-    "train": 6102,
+    "train": 10128,
     "dev": 641,
     "test": 33,
     "test_corpus": 0
   },
   "train_composition": {
-    "tslcorpus": 4696,
-    "twtsl-sentence": 497,
-    "synth": 792,
-    "paper": 117
+    "twtsl-sentence": 916,
+    "synth": 1089,
+    "tslcorpus": 7927,
+    "paper": 196
   },
   "dev_composition": {
     "tslcorpus": 416,
-    "twtsl-sentence": 43,
     "synth": 172,
+    "twtsl-sentence": 43,
     "paper": 10
   },
   "test_composition": {
@@ -27,6 +27,17 @@
   },
   "leaked_removed": 27,
   "corpus_test_ratio": 0.0,
+  "corrections": {
+    "unique": 0,
+    "rows_after_weighting": 0
+  },
+  "length_balance": {
+    "before_total": 6102,
+    "after_total": 10128,
+    "before_ge8_pct": 10.4,
+    "after_ge8_pct": 25.1,
+    "buckets": "≤4 ×1、5–7 ×2、≥8 ×4"
+  },
   "test_corpus_candidate_count": 0,
   "test_corpus_reviewed_count": 0,
   "test_corpus_review_excluded_count": 0,

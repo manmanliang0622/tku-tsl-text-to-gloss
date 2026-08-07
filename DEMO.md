@@ -14,8 +14,8 @@ cd ~/tku-tsl-text-to-gloss
 . .venv/bin/activate
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 setsid nohup python3 scripts/serve_model.py \
-  --adapter outputs/qlora_e4b_v6_all/checkpoint-763 \
-  --port 8018 --ple gpu > serve.log 2>&1 < /dev/null &
+  --adapter outputs/qlora_e4b_v8_json/checkpoint-763 \
+  --target json --port 8018 --ple gpu > serve.log 2>&1 < /dev/null &
 ```
 
 等 `serve.log` 出現 `[serve] 監聽 127.0.0.1:8018` 表示模型載入完成（約 10 秒）。
@@ -56,7 +56,26 @@ curl -s -X POST http://127.0.0.1:8018/translate \
 - 換 API 位址：瀏覽器 console 執行
   `localStorage.setItem('glossApi','http://127.0.0.1:9000')` 後重整。
 
-## 實測速度與品質（v6，2026-08-06）
+## 目前上線模型：v8（JSON 目標，2026-08-07）
+
+v8 在 33 句 test 上每項指標都優於 v6，且會額外輸出下游虛擬人需要的語法資訊：
+
+| 模型 | BLEU-4 | ROUGE-L | Exact Match | 可播放率 |
+|---|---:|---:|---:|---:|
+| 0804try | 56.71 | 63.88 | 39.39% | 91.76% |
+| v6（純 Gloss） | 72.59 | 80.52 | 63.64% | 94.29% |
+| **v8（JSON）** | **82.47** | **88.20** | **75.76%** | **97.18%** |
+
+v8 回應範例（多了 question_type／negation／nonmanual／topic／verb／time）：
+
+```json
+{"gloss_text":"你/宜蘭/住","question_type":"yesno","negation":false,
+ "nonmanual":"疑問表情（眉毛上揚、身體微前傾）貫穿全句，不比「嗎」"}
+```
+
+速度 4.5–5.7 秒/句（JSON 較長，約 v6 的 4 倍）。詳見 results/stageB_v8_report.md。
+
+## 舊版實測（v6，純 Gloss，2026-08-06）
 
 | 輸入 | 輸出 Gloss | 耗時 |
 |---|---|---|

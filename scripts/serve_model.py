@@ -32,7 +32,8 @@ import prompt_common as pc
 
 BASE = Path(__file__).resolve().parent.parent
 
-STATE = {"model": None, "tokenizer": None, "adapter": None, "max_new": 64}
+STATE = {"model": None, "tokenizer": None, "adapter": None, "max_new": 64,
+         "target": "gloss"}
 
 
 def load(base_model, adapter, ple_on_gpu=None):
@@ -56,6 +57,18 @@ def load(base_model, adapter, ple_on_gpu=None):
     print(f"[serve] 模型就緒 adapter={adapter}", flush=True)
 
 
+def _parse_json_output(raw):
+    """JSON 目標模型的輸出：取出整包 JSON。失敗回 None。"""
+    import re
+    m = re.search(r"\{.*\}", raw, re.S)
+    if not m:
+        return None
+    try:
+        return json.loads(m.group(0))
+    except json.JSONDecodeError:
+        return None
+
+
 def translate(text):
     tok, model = STATE["tokenizer"], STATE["model"]
     msgs = pc.build_messages(text)
@@ -65,10 +78,30 @@ def translate(text):
     with torch.no_grad():
         out = model.generate(**inputs, max_new_tokens=STATE["max_new"], do_sample=False)
     gen = tok.decode(out[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+    secs = round(time.time() - t0, 2)
+
+    if STATE["target"] == "json":
+        obj = _parse_json_output(gen) or {}
+        toks = [t for t in str(obj.get("gloss", "")).split() if t.strip()]
+        return {
+            "chinese": text, "gloss": toks, "gloss_text": "/".join(toks),
+            # 下游虛擬人需要的語法資訊（計畫第 1 節：表情/頭部/身體同步）
+            "question_type": obj.get("question_type", "none"),
+            "negation": obj.get("negation", False),
+            "nonmanual": obj.get("nonmanual", "none"),
+            "topic": obj.get("topic"), "verb": obj.get("verb"),
+            "time": obj.get("time"),
+            # 相容欄位（0804try 前端用 glosses/question）
+            "glosses": toks, "question": obj.get("question_type", "none"),
+            "source": "gemma", "unknown": [],
+            "raw": gen.strip(), "seconds": secs,
+        }
+
     gloss_text = pc.parse_gloss(gen)
     toks = [t for t in gloss_text.split("/") if t.strip()]
     return {"chinese": text, "gloss": toks, "gloss_text": gloss_text,
-            "raw": gen.strip(), "seconds": round(time.time() - t0, 2)}
+            "glosses": toks, "source": "gemma",
+            "raw": gen.strip(), "seconds": secs}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -121,10 +154,15 @@ def main():
     ap.add_argument("--adapter", required=True)
     ap.add_argument("--port", type=int, default=8018)
     ap.add_argument("--max-new", type=int, default=64)
+    ap.add_argument("--target", choices=["gloss", "json"], default="gloss",
+                    help="模型的輸出格式；json 版會另外回傳 question_type/negation/nonmanual")
     ap.add_argument("--ple", choices=["auto", "gpu", "cpu"], default="auto",
                     help="PLE 放置：auto 依顯存自動判斷（預設）；gpu 強制加速；cpu 省顯存")
     args = ap.parse_args()
     STATE["max_new"] = args.max_new
+    STATE["target"] = args.target
+    if args.target == "json" and args.max_new < 160:
+        STATE["max_new"] = 160        # JSON 目標較長，實測最多 182 token
     print(f"[serve] 載入模型中…（adapter={args.adapter}）", flush=True)
     load(args.base, args.adapter,
          ple_on_gpu={"auto": None, "gpu": True, "cpu": False}[args.ple])

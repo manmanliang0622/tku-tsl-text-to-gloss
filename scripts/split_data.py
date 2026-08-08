@@ -114,7 +114,30 @@ def norm_record(e, split_source):
         # 保留 NMS（非手部標記）：JSON 目標格式的 nonmanual 欄位需要，
         # 且下游虛擬人的表情同步也要用（計畫第 1 節）。
         "nms": e.get("nms"),
+        # 上下文（SCOPE 路線）：同段落的前文中文句，由 attach_context() 填入。
+        # 依據：留存測試集實測 22.3% 的參考 Gloss token 無法從中文字面推得，
+        # 需前文才能還原（例：「聾人和重聽者能看到手語翻譯和字幕」的參考含
+        # 「電視」，該詞來自前一句）。
+        "context": e.get("context") or "",
     }
+
+
+def attach_context(corpus_rows, n_prev=2):
+    """為語料庫句子補上同段落的前 n_prev 句中文。
+
+    語料庫的檔案原始順序即句序（已驗證 corpus_id 尾碼遞增，如 G2D1P1/a81→a82），
+    故依出現順序在同一 seg_uuid 內取前文即可。非語料庫來源（合成句、辭典例句、
+    論文例句）本就是獨立句，context 留空。
+    """
+    from collections import defaultdict
+    by_seg = defaultdict(list)
+    for e in corpus_rows:
+        by_seg[e.get("seg_uuid") or e["id"]].append(e)
+    for seg_rows in by_seg.values():
+        for i, e in enumerate(seg_rows):
+            prev = [seg_rows[j]["chinese"] for j in range(max(0, i - n_prev), i)]
+            e["context"] = "".join(prev)
+    return corpus_rows
 
 
 def main():
@@ -145,6 +168,11 @@ def main():
                          "模型偏好短輸出」的偏差（2026-08-07 實測：訓練集 54.9%% 為 "
                          "≤4 詞短句、≥8 詞僅 10.4%%；語料庫長句稽核顯示 70%% 的輸出"
                          "短於參考答案）。只作用於 train，dev 不重複以免評估失真。")
+    ap.add_argument("--context", type=int, default=0,
+                    help="上下文翻譯（SCOPE 路線）：為語料庫句補上同段落的前 N 句中文。"
+                         "0=關閉。依據：留存測試集實測 22.3%% 的參考 Gloss token 無法從"
+                         "中文字面推得，需前文才能還原。test_corpus 依對話群組整組留存，"
+                         "故其前文也在 test 內，不會洩漏。")
     ap.add_argument("--papers-as-test", action="store_true",
                     help="論文例句改作**獨立測試集**（test_papers.jsonl）而非訓練資料。"
                          "這些是語言學家標註的黃金例句，且與語料庫來源不同，"
@@ -240,8 +268,14 @@ def main():
     test_corpus_rejected = []
     corpus_path = DATA / "tslcorpus" / "parallel.jsonl"
     if not args.no_corpus and corpus_path.exists():
+        # 先在**原始列**上補前文（norm_record 不保留 seg_uuid），再正規化。
+        # 注意：過濾短句要在補前文之後，否則會漏掉被濾掉的那句作為前文，
+        # 但前文本身不必進訓練，故此處先補、後濾。
+        raw_corpus = load_jsonl(corpus_path)
+        if args.context > 0:
+            attach_context(raw_corpus, n_prev=args.context)
         corpus_recs = []
-        for e in load_jsonl(corpus_path):
+        for e in raw_corpus:
             if len(e.get("gloss", [])) < args.min_gloss_len:
                 corpus_dropped_short += 1
                 continue
@@ -460,6 +494,7 @@ def main():
         "corpus_test_ratio": args.corpus_test_ratio,
         "corrections": {"unique": corrections, "rows_after_weighting": len(corrections_rows)},
         "length_balance": length_balance_stats,
+        "context_sentences": args.context,
         "test_corpus_candidate_count": len(test_corpus_candidates),
         "test_corpus_reviewed_count": len(test_corpus),
         "test_corpus_review_excluded_count": len(test_corpus_rejected),

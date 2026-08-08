@@ -133,8 +133,11 @@ def convert(row):
         "negation": neg,
         "nonmanual": infer_nonmanual(row, qt, neg),
     }
-    return {"instruction": INSTRUCTION, "input": chinese,
-            "output": json.dumps(out, ensure_ascii=False, separators=(",", ":"))}
+    rec = {"instruction": INSTRUCTION, "input": chinese,
+           "output": json.dumps(out, ensure_ascii=False, separators=(",", ":"))}
+    if row.get("context"):
+        rec["context"] = row["context"]     # 上下文翻譯（SCOPE 路線）用
+    return rec
 
 
 def main():

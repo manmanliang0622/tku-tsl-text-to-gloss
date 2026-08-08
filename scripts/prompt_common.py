@@ -32,7 +32,7 @@ RULES = (
 INCLUDE_RULES = False
 
 
-def build_user_prompt(chinese: str, examples=None) -> str:
+def build_user_prompt(chinese: str, examples=None, context: str = "") -> str:
     """訓練與推理共用的 user turn 內容。
 
     examples：[(中文, 目標), ...] 檢索到的相似例句，**放在同一個 user turn 內**。
@@ -43,20 +43,25 @@ def build_user_prompt(chinese: str, examples=None) -> str:
     故改為單輪內嵌，維持與訓練相同的對話結構。
     """
     head = TASK_DESC if not INCLUDE_RULES else f"{TASK_DESC}\n\n{RULES}"
+    # 上下文（SCOPE 路線）：手語會沿用前文已建立的話題，故前文影響語序與省略。
+    # 實測 22.3% 的參考 Gloss token 無法從本句中文推得，需前文才能還原。
+    if context:
+        head = f"{head}\n前文：{context}"
     if examples:
         ref = "\n".join(f"中文：{zh}\nGloss：{tgt}" for zh, tgt in examples)
         head = f"{head}\n\n以下是資料庫中的相似例句，可作參考：\n{ref}"
     return f"{head}\n中文：{chinese}\nGloss："
 
 
-def build_messages(chinese: str, gloss_text: str = None, examples=None) -> list:
+def build_messages(chinese: str, gloss_text: str = None, examples=None,
+                   context: str = "") -> list:
     """conversational 格式；gloss_text=None 時只給 user turn（推理用）。
 
     examples：[(中文, 目標), ...]，推理時放入檢索到的相似例句（RAG），
     內嵌於同一個 user turn（見 build_user_prompt 的說明）。
     訓練不使用此參數，故不影響訓練/推理一致性。
     """
-    msgs = [{"role": "user", "content": build_user_prompt(chinese, examples)}]
+    msgs = [{"role": "user", "content": build_user_prompt(chinese, examples, context)}]
     if gloss_text is not None:
         msgs.append({"role": "assistant", "content": gloss_text})
     return msgs

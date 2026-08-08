@@ -122,7 +122,8 @@ def build_dataset(name, tokenizer, max_len, target="gloss"):
     if target == "json":
         rows = [json.loads(l) for l in (BASE / "data" / "splits_json" / f"{name}.jsonl")
                 .read_text(encoding="utf-8").splitlines() if l.strip()]
-        rows = [{"chinese": r["input"], "gloss_text": r["output"]} for r in rows]
+        rows = [{"chinese": r["input"], "gloss_text": r["output"],
+                 "context": r.get("context", "")} for r in rows]
     else:
         rows = [json.loads(l) for l in (BASE / "data" / "splits" / f"{name}.jsonl")
                 .read_text(encoding="utf-8").splitlines() if l.strip()]
@@ -132,11 +133,12 @@ def build_dataset(name, tokenizer, max_len, target="gloss"):
         return tokenizer(text, add_special_tokens=False)["input_ids"]
 
     def encode(r):
+        ctx = r.get("context", "")
         prompt_text = tokenizer.apply_chat_template(
-            pc.build_messages(r["chinese"]), add_generation_prompt=True,
+            pc.build_messages(r["chinese"], context=ctx), add_generation_prompt=True,
             tokenize=False)
         full_text = tokenizer.apply_chat_template(
-            pc.build_messages(r["chinese"], r["gloss_text"]),
+            pc.build_messages(r["chinese"], r["gloss_text"], context=ctx),
             add_generation_prompt=False, tokenize=False)
         prompt_ids, full_ids = ids(prompt_text), ids(full_text)
         labels = [-100] * len(prompt_ids) + full_ids[len(prompt_ids):]

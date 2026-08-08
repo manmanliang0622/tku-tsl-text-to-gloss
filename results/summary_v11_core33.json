@@ -1,0 +1,17 @@
+{
+  "BLEU-4": 62.96,
+  "ROUGE-L": 82.71,
+  "ExactMatch%": 69.7,
+  "InVocab%": 91.67,
+  "InVocabRef%": 100.0,
+  "InVocabGap": -8.33,
+  "InVocab%(raw)": 91.67,
+  "n": 33,
+  "n_groups": 33,
+  "Reference4Grams": 5,
+  "Hypothesis4Grams": 6,
+  "ValidJSON%": 100.0,
+  "QuestionAcc%": 96.97,
+  "NegationAcc%": 100.0,
+  "NonmanualNonNone%": 33.33
+}

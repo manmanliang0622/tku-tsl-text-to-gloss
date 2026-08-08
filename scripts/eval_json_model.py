@@ -41,6 +41,9 @@ def main():
     ap.add_argument("--base", default="google/gemma-4-E4B-it")
     ap.add_argument("--adapter", required=True)
     ap.add_argument("--tag", required=True)
+    ap.add_argument("--test-file", default="test.jsonl",
+                    help="data/splits_json/ 下的測試檔：test.jsonl（核心33句）／"
+                         "test_corpus.jsonl（語料庫長句留存）／test_papers.jsonl（論文例句）")
     ap.add_argument("--max-new", type=int, default=160)   # JSON 目標較長
     ap.add_argument("--ple", choices=["auto", "gpu", "cpu"], default="auto",
                     help="PLE 放置；gpu=全模型放 GPU（快約 300 倍）。"
@@ -64,8 +67,9 @@ def main():
     model.eval()
 
     # 參考答案取自 JSON 版 test（與訓練同格式），可同時比 gloss 與語法欄位
-    test = [json.loads(l) for l in (BASE / "data/splits_json/test.jsonl")
+    test = [json.loads(l) for l in (BASE / "data/splits_json" / args.test_file)
             .read_text(encoding="utf-8").splitlines() if l.strip()]
+    print(f"[eval] 測試集 {args.test_file}：{len(test)} 句", flush=True)
 
     recs, invalid = [], 0
     for i, item in enumerate(test):

@@ -34,6 +34,7 @@
 無從判定。故此規則移除，該類詞一律走指拼。
 """
 import json
+import os
 import re
 from functools import lru_cache
 from pathlib import Path
@@ -57,6 +58,14 @@ def normalize(token):
 
 
 TRAIN = BASE / "data" / "splits_json" / "train.jsonl"
+MOE = BASE / "data" / "moe" / "moe_vocab_clean.jsonl"
+
+# 教育部辭典（8,438 詞）預設**不啟用**：其授權尚未查證（站上為 All Right
+# Reserved、無開放資料聲明），而文化部語料與中正辭典的訓練＋散布授權已查證合法。
+# 查證通過後把此旗標改為 True，或以環境變數 TSL_USE_MOE_VOCAB=1 開啟。
+# 實測效果（三層診斷觀察到的 25 個表外詞）：指拼 18 → 12，
+# 7 個詞被正確認出為合法手語詞（概念、鬧鐘、寶寶、安定、診所、警報、社區）。
+USE_MOE_VOCAB = os.environ.get("TSL_USE_MOE_VOCAB") == "1"
 
 
 @lru_cache(maxsize=1)
@@ -87,6 +96,16 @@ def load_vocab(master_path=None, train_path=None):
         for line in tpath.read_text(encoding="utf-8").splitlines():
             if line.strip():
                 all_v.update(json.loads(json.loads(line)["output"])["gloss"].split())
+
+    if USE_MOE_VOCAB and MOE.exists():
+        for line in MOE.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            e = json.loads(line)
+            all_v.add(e["surface"])
+            all_v.update(e.get("aliases") or [])
+            if e.get("has_video"):      # 有示範影片＝下游有動作可播
+                rend.add(e["surface"])
     return frozenset(all_v), frozenset(rend)
 
 

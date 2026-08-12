@@ -5,11 +5,26 @@
 把空白分隔換回「/」，才能與純 Gloss 模型用同一套 metrics 比較。
 除 Gloss 準確度外，另量它獨有的能力：疑問句判斷、否定判斷、NMS 是否輸出。
 
+**分維度評估（2026-08-13 補上）**：教授要求語意／選詞／語序／漏詞／亂加詞／
+未知詞／NMS 分開看，不能只有 EM／BLEU。原本主評估只有整批層級的
+BLEU／ROUGE-L／EM／內率，逐句的 GER 與錯誤分類只存在於 `eval_three_tier.py`，
+一般評估看不到。現改為一律接上 `eval_metrics_ext`，並輸出逐句 CSV：
+
+  語序 → 語序錯誤        選詞 → Gloss替換錯誤     漏詞 → 漏Gloss
+  亂加詞 → 多餘Gloss     未知詞 → OOV/未知Gloss   NMS → Question/Negation/Nonmanual
+  語意 → **自動指標答不了，需母語者 5 分制人工評分（計畫 6.2）**
+
+⚠️ OOV 判定基準用 **詞彙總表 ∪ 訓練詞彙**（`gloss_fallback.load_vocab`），
+不是訓練詞彙。用訓練詞彙當基準會把「合法但訓練沒出現的手語詞」（畫家、
+幼稚園、目不轉睛）誤判成模型造詞——實測高估 67%（45 個 vs 實際 27 個）。
+註：`eval_three_tier.py` 仍用訓練詞彙為基準，其錯誤分類帶此已知偏差。
+
 用法（VM）：
   python3 scripts/eval_json_model.py --adapter outputs/qlora_e4b_v8_json/checkpoint-763 \
       --tag v8_json_ep1
 """
 import argparse
+import csv
 import json
 import re
 import time
@@ -18,6 +33,7 @@ from pathlib import Path
 import torch
 from transformers import AutoTokenizer, BitsAndBytesConfig
 
+import eval_metrics_ext as ext
 import metrics
 import prompt_common as pc
 
@@ -108,6 +124,31 @@ def main():
     m = metrics.evaluate([r["ref"] for r in recs], [r["pred"] for r in recs],
                          set(vocab["renderable"]))
     n = len(recs)
+
+    # --- 分維度評估：逐句 GER 與錯誤分類（見檔頭說明）---
+    from gloss_fallback import load_vocab
+    legal_vocab, _ = load_vocab()          # 合法詞＝詞彙總表 ∪ 訓練詞彙
+    per_sent = [ext.score_pair(r["ref"], r["pred"], legal_vocab) for r in recs]
+    agg = ext.aggregate(per_sent)
+    # 兩套 EM 應一致（同為 token 完全相符）；不一致代表切詞規則漂移，要查
+    if agg["ExactMatch%"] != m["ExactMatch%"]:
+        m["ExactMatch%_ext"] = agg["ExactMatch%"]
+        print(f"⚠ EM 不一致：metrics {m['ExactMatch%']} vs ext {agg['ExactMatch%']}，"
+              "請檢查兩邊的 tokenize 規則", flush=True)
+    for k in ("TokenPrecision", "TokenRecall", "TokenF1", "GER",
+              "AvgEditDistance", "ErrorTypes", "ErrorTypes%"):
+        m[k] = agg[k]
+    m["OOVBasis"] = f"gloss_master ∪ train（{len(legal_vocab)} 詞）"
+
+    csv_path = RESULTS / f"{args.tag}_per_sentence.csv"
+    with csv_path.open("w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["id", "chinese", "ref", "pred"]
+                           + list(per_sent[0].keys()))
+        w.writeheader()
+        for r, s in zip(recs, per_sent):
+            w.writerow({"id": r["id"], "chinese": r["chinese"],
+                        "ref": r["ref"], "pred": r["pred"], **s})
+    print(f"逐句結果 → {csv_path.relative_to(BASE)}", flush=True)
     m["ValidJSON%"] = round(sum(r["valid_json"] for r in recs) / n * 100, 2)
     m["QuestionAcc%"] = round(sum(r["ref_question"] == r["pred_question"] for r in recs) / n * 100, 2)
     m["NegationAcc%"] = round(sum(r["ref_negation"] == r["pred_negation"] for r in recs) / n * 100, 2)

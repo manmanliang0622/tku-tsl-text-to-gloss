@@ -74,7 +74,9 @@ def main():
     recs, invalid = [], 0
     for i, item in enumerate(test):
         ref_obj = json.loads(item["output"])
-        msgs = pc.build_messages(item["input"])
+        # 上下文翻譯模型（--context 訓練者）必須在推論時也帶入前文，
+        # 否則訓練/推論格式不一致，會嚴重低估其表現。
+        msgs = pc.build_messages(item["input"], context=item.get("context", ""))
         inputs = tok.apply_chat_template(msgs, add_generation_prompt=True,
                                          return_tensors="pt", return_dict=True).to(model.device)
         t0 = time.time()
@@ -92,6 +94,7 @@ def main():
             "ref_question": ref_obj.get("question_type"), "pred_question": obj.get("question_type"),
             "ref_negation": ref_obj.get("negation"), "pred_negation": obj.get("negation"),
             "ref_nonmanual": ref_obj.get("nonmanual"), "pred_nonmanual": obj.get("nonmanual"),
+            "has_context": bool(item.get("context")),
             "valid_json": obj != {}, "raw": gen.strip(), "seconds": round(time.time() - t0, 2),
         })
         print(f"[{i+1}/{len(test)}] {item['input']} → {pred_gloss}", flush=True)
@@ -110,6 +113,7 @@ def main():
     m["NegationAcc%"] = round(sum(r["ref_negation"] == r["pred_negation"] for r in recs) / n * 100, 2)
     m["NonmanualNonNone%"] = round(
         sum(1 for r in recs if r["pred_nonmanual"] not in (None, "none")) / n * 100, 2)
+    m["WithContext%"] = round(sum(r["has_context"] for r in recs) / n * 100, 2)
     (RESULTS / f"summary_{args.tag}.json").write_text(
         json.dumps(m, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\n== {args.tag} ==")

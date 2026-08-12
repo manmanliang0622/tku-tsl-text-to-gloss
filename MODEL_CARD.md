@@ -1,9 +1,15 @@
 ---
-title: Model Card — TSL Text→Gloss (Gemma 4 E4B QLoRA, v4 teacher-reviewed)
-updated: 2026-08-04
+title: Model Card — TSL Text→Gloss (Gemma 4 E4B QLoRA, v11 holdout)
+updated: 2026-08-13
+supersedes: v4 teacher-reviewed (2026-08-04)
 ---
 
-# Model Card：中文 → 臺灣手語 Gloss 翻譯（Gemma 4 E4B QLoRA v4）
+# Model Card：中文 → 臺灣手語 Gloss 翻譯（Gemma 4 E4B QLoRA v11）
+
+> **2026-08-13 修訂**：本卡先前停在 v4，引用的是「擴大 584 句 BLEU 18.61」。
+> 那批 584 句其後被證實**多數已在訓練集內**，該數字不代表泛化能力，已整段
+> 汰換為 v11 在兩個留存測試集上的數字。詳見
+> [results/stageB_v11_generalization_report.md](results/stageB_v11_generalization_report.md)。
 
 淡江大學專題。將中文句子翻譯為**臺灣手語 Gloss 詞序**的 QLoRA adapter。
 本卡記錄**訓練配方、資料出處與授權、評估結果與重現方式**。權重二進位（adapter）目前留在訓練 VM，
@@ -13,8 +19,14 @@ updated: 2026-08-04
 
 - **是什麼**：Text→Gloss 的**詞彙／語序層**候選模型。輸入中文、輸出 Gloss token 序列（以 `/` 分隔）。
 - **不是什麼**：**不輸出、也不保證 NMS（非手部標記：表情／搖頭／揚眉）、手形、地區變體**。這些屬「影片軌」，需母語者看影片裁定，不在本模型範圍。
-- **成熟度**：內部候選 / 管線驗證。核心 33 句指標高，但涵蓋較廣真實對話的 584 句 BLEU 僅 18.61；**尚非最終成果**，勿當成通用可用模型。
-- 自動指標高 ≠ 手語文法正確；正式品質須經計畫 6.2 手語老師 5 分制人工評估。
+- **成熟度**：內部候選 / 管線驗證，**尚非最終成果**，勿當成通用可用模型。
+  未見過的語料庫長句 Exact Match 僅 **1.20%**、論文例句 **13.29%**；
+  核心 33 句的 69.70% 是**問候語為主的短句**（參考答案平均 2.39 詞），
+  不可拿來代表整體能力。
+- **已知學到什麼**：語序（錯誤率僅 2–5%）、疑問類型 93–99%、否定 96–97%、
+  有效 JSON 99–100%。**沒學到的是詞彙**——選詞錯誤＋未知詞佔全部錯誤的 60–81%。
+- 自動指標高 ≠ 手語文法正確；正式品質須經計畫 6.2 手語老師 5 分制人工評估，
+  **該評估尚未執行**。
 
 ## 基礎模型
 
@@ -37,11 +49,17 @@ updated: 2026-08-04
 
 ### 1) 切分
 ```bash
-python3 scripts/split_data.py --use-teacher-reviewed --corpus-test-ratio 0.12 --seed 42
+python3 scripts/split_data.py --use-all --length-balance --papers-as-test \
+    --corpus-test-ratio 0.12 --corpus-test-min-len 6
+python3 scripts/build_json_targets.py --splits train dev test test_corpus test_papers
 ```
-- 組成：train 5,038／dev 636／核心 test 33／擴大 test 584。
+- 組成：train **5,347 個相異句對**（長度平衡過取樣後 8,992 列）／dev 666／
+  核心 test 33／`test_corpus` 167／`test_papers` 143。
+  **對外一律寫「5,347 句」，不可寫「8,992 句」**——後者含 3,645 列刻意複製。
+- 長度平衡：≤4 詞 ×1、5–7 詞 ×2、≥8 詞 ×4，用於矯正輸出過短的偏差。
 - synth 只納入 `teacher_train_eligible`（108 句教師修正生效；7 句待影片者不進訓練）。
-- 去洩漏：train/dev/test 的群組、中文、Gloss、`(中文,Gloss)` 洩漏均為 0；擴大 test 排除重複列 `TC01419`、保留正本 `TC00378`。
+- 去洩漏〔2026-08-13 複驗〕：三個測試集與 train 的中文、`(中文,Gloss)` 重疊
+  **皆為 0**；dev 有 8 句中文與 train 相同但 Gloss 不同（標籤噪音，尚未處置）。
 - Sidecar：`data/splits/test_corpus_teacher_review_2026-07-24.json`
   （SHA-256 `4f305cc44c37ed4c329b71c009f4418ce6c3c744ac1532e164cb7ea62f5a549a`）。
 
@@ -49,48 +67,79 @@ python3 scripts/split_data.py --use-teacher-reviewed --corpus-test-ratio 0.12 --
 ```bash
 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
 python3 scripts/train_qlora.py \
-  --model google/gemma-4-E4B-it \
-  --output outputs/qlora_e4b_v4_teacher_holdout \
-  --epochs 2 --batch 2 --grad-accum 4 --max-len 192 --lr 2e-4 --seed 42
+  --model google/gemma-4-E4B-it --output outputs/qlora_e4b_v11_holdout \
+  --target json --epochs 2 --batch 2 --grad-accum 4 --max-len 192 --lr 2e-4 --seed 42
 ```
 - QLoRA：LoRA **r=16、alpha=32、dropout=0.05**；4-bit **nf4** ＋ double quant、**bf16** compute。
+  （r=32 試過，dev loss 反而略差 0.7268 vs 0.7061，見 v7 實驗。）
 - target modules：`language_model` 的 `q/k/v/o/gate/up/down_proj`。
-- 共 1,260 steps，約 43 分 31 秒，最終 train loss 3.459。
-- **選模**：僅依最低 dev loss →
-  `checkpoint-630`（epoch 1，dev loss 0.9821940660）＜ `checkpoint-1260`（epoch 2，1.0088934898）。**未用 test 選模**。
+- **選模**：僅依最低 dev loss → `checkpoint-1124`（epoch 1，dev loss 0.2233）。
+  `save_total_limit=None` 保留每個 epoch 的 checkpoint 供事後挑選，**未用 test 選模**。
 
 ### 3) 評估
 ```bash
-python3 scripts/eval_model.py \
-  --adapter outputs/qlora_e4b_v4_teacher_holdout/checkpoint-630 \
-  --test-file test_corpus.jsonl --tag finetuned_e4b_v4_teacher_ep1_corpus \
-  --batch-size 8 --resume --bootstrap-samples 1000 --bootstrap-seed 42
+python3 scripts/eval_json_model.py --adapter outputs/qlora_e4b_v11_holdout/checkpoint-1124 \
+    --tag v11_test_corpus --test-file test_corpus.jsonl --ple gpu
 ```
+⚠️ `--ple gpu` 必要：`device_map` 含任何 `"cpu"` 項目會讓 accelerate 掛 offload
+hook，每 token 慢到約 35 秒（全放 GPU 是 0.06 秒/token）。
 
-## 評估結果
+## 評估結果（v11）
 
-| 指標 | 核心 33 句 | 擴大 584 句 |
+**對外報告一律用 `test_corpus` / `test_papers`；核心 33 句僅作歷史對照。**
+
+| 指標 | 核心 33（短句） | `test_corpus` 167 | `test_papers` 143 |
+|---|---:|---:|---:|
+| Exact Match | 69.70% | **1.20%** | **13.29%** |
+| ROUGE-L | 82.71 | 50.08 | 57.08 |
+| BLEU-4 | 62.96 | 14.83 | 17.71 |
+| 可播放率 | 91.67% | 66.96% | 78.20% |
+| 　（參考答案天花板） | 100% | 67.09% | 74.96% |
+| 有效 JSON | 100% | 100% | 99.30% |
+| 疑問類型正確 | 96.97% | 93.41% | 98.60% |
+| 否定正確 | 100% | 95.81% | 97.20% |
+
+`test_papers` 的 EM／ROUGE-L／BLEU 為 **2026-08-13 修正參考答案後**的重算值
+（原為 11.19／55.23／16.51）——39 句參考答案曾把論文的替代詞串成 Gloss 序列。
+
+### 分維度錯誤分析
+
+| 錯誤型態 | `test_corpus` | `test_papers` |
 |---|---:|---:|
-| BLEU-4 | 80.00 | **18.61** |
-| BLEU-4 95% CI | 65.74–88.77 | **15.48–22.49** |
-| ROUGE-L | 73.92 | 55.40 |
-| Exact Match | 48.48% | 9.25%（54/584） |
-| 聯集詞彙表內率 | 95.12% | 69.74% |
-| bootstrap 群組數 | 33 | 37 |
+| 選詞（Gloss替換） | 47.90% | 37.76% |
+| 未知詞（OOV） | 33.53% | 22.38% |
+| 漏詞 | 12.57% | 6.99% |
+| **語序** | **2.40%** | **4.90%** |
+| 亂加詞 | 0.60% | 10.49% |
+| 完全錯誤 | 1.80% | 4.20% |
+| 正確 | 1.20% | 13.29% |
 
-- 兩套 test 句型／長度／難度不同，分數不可當同分布比較；泛化描述以 584 句為主。
-- 預測 JSONL SHA-256 `d651612159a95ad4bd127470abd992e7fd05c501e347c277c9317028c5b290e3`；
-  Summary SHA-256 `7305f819859c60c29d6f7151e051f932bffb3ad108b26019740f272a6d4dc8af`。
-- 詳細設定與錯誤分析：[results/stageB_v4_report.md](results/stageB_v4_report.md)。
+**語序不是瓶頸，詞彙覆蓋才是。** 三層診斷（不同測試集、不同方法）獨立得到
+同一結論，見 [results/three_tier_report.md](results/three_tier_report.md)。
+OOV 判定基準為「詞彙總表 ∪ 訓練詞彙」（13,663 詞），非訓練詞彙——後者會把
+合法但訓練未出現的手語詞誤判成造詞，實測高估 67%。
+
+### 尚未具備的證據
+
+- **母語者人工評估未執行**。工具已備妥（`scripts/make_human_eval_sheet.py`，
+  盲測 A/B 設計），尚未產表送出。語意維度自動指標答不了。
+- **未微調基線只在核心 33 句上跑過**（zero 27.27%／rules 30.30%／
+  fewshot 36.36% EM），與 `test_corpus`／`test_papers` 重疊為 0。
+  「微調到底有沒有幫助」在兩個誠實測試集上**目前無法回答**。
+
+- 詳細設定與錯誤分析：[results/stageB_v11_generalization_report.md](results/stageB_v11_generalization_report.md)、
+  [教授回饋對帳與D1進度_2026-08-13.md](教授回饋對帳與D1進度_2026-08-13.md)。
 
 ## 如何取得 adapter 權重
 
-adapter 目前只在訓練 VM：`outputs/qlora_e4b_v4_teacher_holdout/checkpoint-630`（`outputs/` 為 gitignore，不入庫）。
+adapter 目前只在訓練 VM：`outputs/qlora_e4b_v11_holdout/checkpoint-1124`（`outputs/` 為 gitignore，不入庫）。
+另有 v12（上下文版）`outputs/qlora_e4b_v12_context/checkpoint-1124`——實測僅
++0.6pp EM／+1.04 BLEU，疑問類型反退 3.6pp，訓練成本翻倍，**不建議採用**。
 
 兩種方式：
 1. **重跑**：依上方三步（seed 42 固定）即可重現同一 adapter。
 2. **取檔**：有 VM 存取權者
-   `scp -r tku-gpu:.../qlora_e4b_v4_teacher_holdout/checkpoint-630 ./`。
+   `scp -r tku-gpu:.../qlora_e4b_v11_holdout/checkpoint-1124 ./`。
    若日後要公開權重，建議發到 Hugging Face Hub（內建 LFS）並附本卡出處與 Gemma 條款。
 
 ## 引用

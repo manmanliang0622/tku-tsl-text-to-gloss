@@ -53,14 +53,15 @@ def main():
             sys.exit(f"第 {i} 列中文不符：{a['chinese']!r} vs {b['chinese']!r}\n"
                      "切分可能已重新產生，請重跑推論而非離線重算。")
 
-    vocab = set(json.load((BASE / "data" / "tsl_gloss_vocab.json").open())["glosses"])
+    vocab, vocab_name = metrics.load_eval_vocab()   # 與其他評估腳本共用同一份
     preds = [r["pred"] for r in recs]
     refs = [r["gloss_text"] for r in rows]
     old = metrics.evaluate([r["ref"] for r in recs], preds, vocab)
     new = metrics.evaluate(refs, preds, vocab)
     changed = sum(1 for a, b in zip(recs, rows) if a["ref"] != b["gloss_text"])
 
-    print(f"{args.results}  n={len(recs)}  參考答案有變動 {changed} 句\n")
+    print(f"{args.results}  n={len(recs)}  參考答案有變動 {changed} 句"
+          f"  詞彙表 {vocab_name}\n")
     print(f"{'指標':<14}{'舊參考':>10}{'新參考':>10}{'差':>9}")
     for k in ("ExactMatch%", "ROUGE-L", "BLEU-4", "InVocab%", "InVocabRef%"):
         d = new[k] - old[k]

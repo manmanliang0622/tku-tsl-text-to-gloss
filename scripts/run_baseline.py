@@ -216,17 +216,8 @@ def build_hf_runner(model_id, ple, max_new):
 
 
 def load_vocab():
-    """與 `eval_json_model.py` 用同一份詞彙表，InVocab% 才可以並排比較。
-
-    eval_vocab.json 不入版控（可由 build_eval_vocab.py 再生，依賴 splits）；
-    找不到時退回 tsl_gloss_vocab.json，並回報實際用了哪一份——兩份的內率
-    不可互相比較，報告必須標明。
-    """
-    p = BASE / "data" / "vocab" / "eval_vocab.json"
-    if p.exists():
-        return set(json.load(p.open(encoding="utf-8"))["renderable"]), "eval_vocab.renderable"
-    p = BASE / "data" / "tsl_gloss_vocab.json"
-    return set(json.load(p.open(encoding="utf-8"))["glosses"]), "tsl_gloss_vocab.glosses"
+    """見 `metrics.load_eval_vocab`——所有評估腳本共用同一份詞彙表。"""
+    return metrics.load_eval_vocab()
 
 
 def main():

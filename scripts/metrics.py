@@ -17,10 +17,32 @@ Token 化：Gloss 字串以「/」切分（與標記表格式一致）。
 詞彙比對正規化（normalize_gloss）：臺→台、去重複記號 ++、去 _N/_B 轉寫後綴、
 去括號註、去頭尾標點。僅用於「詞彙表內率」比對，不影響 BLEU/ROUGE/EM 的字面比較。
 """
+import json
 import math
 import random
 import re
 from collections import Counter
+from pathlib import Path
+
+BASE = Path(__file__).resolve().parent.parent
+
+
+def load_eval_vocab():
+    """回傳 (可播放詞集合, 來源名稱)——**所有評估腳本一律用這支**。
+
+    可播放率／內率只有在同一份詞彙表下才能並排比較。先前
+    `eval_json_model.py` 用 `eval_vocab.renderable`（5,049 詞）、
+    `run_baseline.py` 與 `recompute_from_split.py` 用 `tsl_gloss_vocab.glosses`
+    （85 詞），兩邊的數字被放進同一張表就會得到荒謬的結論。
+
+    `data/vocab/eval_vocab.json` 不入版控（可由 build_eval_vocab.py 再生，
+    依賴 splits）；找不到時退回小表並回報來源，讓呼叫端能標明。
+    """
+    p = BASE / "data" / "vocab" / "eval_vocab.json"
+    if p.exists():
+        return set(json.load(p.open(encoding="utf-8"))["renderable"]), "eval_vocab.renderable"
+    p = BASE / "data" / "tsl_gloss_vocab.json"
+    return set(json.load(p.open(encoding="utf-8"))["glosses"]), "tsl_gloss_vocab.glosses"
 
 
 def tokenize(gloss_text: str) -> list:

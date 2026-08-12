@@ -1,0 +1,100 @@
+{"test_type": "unseen", "chinese": "這裡景象特殊，他站在那看了好久", "expected_gloss": "這 風景 特殊 他 站立 欣賞 看 見 久", "context": "", "source": "test_papers", "oov_rate": 0.111, "oov_tokens": "站立", "idx": 1}
+{"test_type": "unseen", "chinese": "當看見同學以自然手語溝通時，我感受到手語溝通的快樂", "expected_gloss": "看見 同學 自然手語 溝通 我 感覺 手語 溝通 快樂", "context": "雖然和其他孩子一樣進入幼稚園，但因聽不見和其它小朋友互動少。父母為了幫我找到適合學校，便搬家，進入台南啟聰學校就讀。", "source": "test_corpus", "oov_rate": 0.111, "oov_tokens": "自然手語", "idx": 2}
+{"test_type": "unseen", "chinese": "對不起", "expected_gloss": "對不起", "context": "", "source": "test", "oov_rate": 0.0, "oov_tokens": "", "idx": 3}
+{"test_type": "unseen", "chinese": "這顆鳳梨好大", "expected_gloss": "這 鳳梨 大", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 4}
+{"test_type": "unseen", "chinese": "中秋連假剛好遇上兩個颱風", "expected_gloss": "中秋節 連假 遇 颱風 重複 時間 一樣", "context": "怎麼突然不去了？唉，", "source": "test_corpus", "oov_rate": 0.143, "oov_tokens": "遇", "idx": 5}
+{"test_type": "unseen", "chinese": "如果這畫家之後還有辦展", "expected_gloss": "如果 這 以後 畫家 展覽 有", "context": "所以我拍下一些喜歡的作品，我看得很開心。", "source": "test_corpus", "oov_rate": 0.167, "oov_tokens": "畫家", "idx": 6}
+{"test_type": "unseen", "chinese": "我們小朋友不懂什麼時間觀念", "expected_gloss": "習慣 我們 小朋友 時間 什麼 不知道", "context": "後來我也習慣了學校的生活環境，", "source": "test_corpus", "oov_rate": 0.167, "oov_tokens": "小朋友", "idx": 7}
+{"test_type": "unseen", "chinese": "我的故事也激勵了學弟妹勇敢追夢", "expected_gloss": "我 故事 鼓勵 學弟妹 他們 勇敢 夢想 目標 追", "context": "高中時，我參加畫畫比賽多次獲獎，家人為我開心，", "source": "test_corpus", "oov_rate": 0.0, "oov_tokens": "", "idx": 8}
+{"test_type": "unseen", "chinese": "我已經胖到穿不下這件褲子了", "expected_gloss": "我 胖 褲子 穿 不成", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 9}
+{"test_type": "unseen", "chinese": "雖然和其他孩子一樣進入幼稚園，但因聽不見和其它小朋友互動少", "expected_gloss": "幼兒園 進入 讀書 一樣++ 但是 我 聽不見 講話 沒辦法 溝通 難", "context": "我五歲時因發燒聽力受損，", "source": "test_corpus", "oov_rate": 0.0, "oov_tokens": "", "idx": 10}
+{"test_type": "unseen", "chinese": "姊姊看見蟑螂覺得很可怕", "expected_gloss": "蟑螂 姊姊 見 可怕", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 11}
+{"test_type": "unseen", "chinese": "她的朋友越來越少", "expected_gloss": "她 朋友 越來越少", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 12}
+{"test_type": "unseen", "chinese": "我討厭蟑螂", "expected_gloss": "蟑螂 我 討厭", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 13}
+{"test_type": "unseen", "chinese": "太貴了", "expected_gloss": "很 貴", "context": "", "source": "test", "oov_rate": 0.0, "oov_tokens": "", "idx": 14}
+{"test_type": "unseen", "chinese": "他心地善良，樂於助人", "expected_gloss": "他 心 好 別人 幫 喜歡", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 15}
+{"test_type": "unseen", "chinese": "了解這個工作的薪水大概是多少錢", "expected_gloss": "這 工作 月薪 大概 多少錢 了解", "context": "我要怎麼回答？你可以先做點調查，", "source": "test_corpus", "oov_rate": 0.0, "oov_tokens": "", "idx": 16}
+{"test_type": "unseen", "chinese": "請慢一點", "expected_gloss": "請 慢 一點", "context": "", "source": "test", "oov_rate": 0.0, "oov_tokens": "", "idx": 17}
+{"test_type": "unseen", "chinese": "請再說一次", "expected_gloss": "請 再 說 一次", "context": "", "source": "test", "oov_rate": 0.0, "oov_tokens": "", "idx": 18}
+{"test_type": "unseen", "chinese": "我不要", "expected_gloss": "我 不要", "context": "", "source": "test", "oov_rate": 0.0, "oov_tokens": "", "idx": 19}
+{"test_type": "unseen", "chinese": "那裡東西多到讓我目不轉睛", "expected_gloss": "好奇 那裡 東西 多 我 目不轉睛", "context": "老師說我們可以去上廁所、玩耍或聊天。同學帶我去福利社開眼界，", "source": "test_corpus", "oov_rate": 0.167, "oov_tokens": "目不轉睛", "idx": 20}
+{"test_type": "unseen", "chinese": "我在這所學校度過十二年沒換過學校", "expected_gloss": "深 學校 我 讀書 從小到大 十二年 換 從來沒有", "context": "只知道紅燈上課綠燈下課很有趣，讓我記憶猶深。", "source": "test_corpus", "oov_rate": 0.125, "oov_tokens": "十二年", "idx": 21}
+{"test_type": "unseen", "chinese": "我平日吃飽飯後散步運動", "expected_gloss": "我 平常 週一至週五 簡單 吃飯 完 走 運動", "context": "你平常的休閒娛樂是什麼？", "source": "test_corpus", "oov_rate": 0.125, "oov_tokens": "週一至週五", "idx": 22}
+{"test_type": "unseen", "chinese": "爸爸媽媽我們一起協助整理環境，恢復原本的樣子", "expected_gloss": "我 爸爸 媽媽 我們 一起 幫 打掃 環境 恢復 乾淨", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 23}
+{"test_type": "unseen", "chinese": "參加比賽的人逐漸增加", "expected_gloss": "參加 比賽 人 越來越多", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 24}
+{"test_type": "unseen", "chinese": "他邀請爸爸去吃飯", "expected_gloss": "他 邀請 爸爸 去 吃飯", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 25}
+{"test_type": "unseen", "chinese": "下次帶他來跟我們一起喝咖啡", "expected_gloss": "下次 帶來 我們 一起 咖啡 喝", "context": "他會進步得很快。對啊，", "source": "test_corpus", "oov_rate": 0.0, "oov_tokens": "", "idx": 26}
+{"test_type": "unseen", "chinese": "來賓：這很容易做，你可以學得起來", "expected_gloss": "來賓:這些 簡單 你 學 可以", "context": "", "source": "test_papers", "oov_rate": 0.2, "oov_tokens": "來賓:這些", "idx": 27}
+{"test_type": "unseen", "chinese": "那個男生長的很好看", "expected_gloss": "那 男生 美", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 28}
+{"test_type": "unseen", "chinese": "學校裡的男生占多數", "expected_gloss": "學校 男 大", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 29}
+{"test_type": "unseen", "chinese": "如果老闆問我希望一個月領多少錢", "expected_gloss": "如果 老闆 問 希望 月薪 多少錢", "context": "我不曾遇過，我不知道一個月薪水應該要領多少錢。", "source": "test_corpus", "oov_rate": 0.0, "oov_tokens": "", "idx": 30}
+{"test_type": "unseen", "chinese": "老闆數錢數到笑哈哈", "expected_gloss": "買 老闆 錢 數錢 笑 開心", "context": "像是蘋果麵包、科學麵、飲料、文具等等超多東西的。同學們爭先恐後地上前搶購，", "source": "test_corpus", "oov_rate": 0.167, "oov_tokens": "數錢", "idx": 31}
+{"test_type": "unseen", "chinese": "我家附近的眼科醫生專業又棒", "expected_gloss": "我 家 附近 眼科 醫生 專業 棒", "context": "沒有好轉的話要去看醫生。可以告訴我哪間眼科比較有名嗎？", "source": "test_corpus", "oov_rate": 0.143, "oov_tokens": "眼科", "idx": 32}
+{"test_type": "unseen", "chinese": "他問朋友", "expected_gloss": "朋友 他 問", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 33}
+{"test_type": "unseen", "chinese": "下次再去日月潭玩就好了", "expected_gloss": "下次 再 去 日月潭 玩 可以", "context": "哈哈，沒關係啦，", "source": "test_corpus", "oov_rate": 0.0, "oov_tokens": "", "idx": 34}
+{"test_type": "unseen", "chinese": "你住在宜蘭嗎", "expected_gloss": "你 宜蘭 住", "context": "", "source": "test", "oov_rate": 0.0, "oov_tokens": "", "idx": 35}
+{"test_type": "unseen", "chinese": "我們約明天去奇美博物館?觀", "expected_gloss": "我們兩人 約 明天 去 奇美博物館 參觀++", "context": "", "source": "test_corpus", "oov_rate": 0.167, "oov_tokens": "我們兩人", "idx": 36}
+{"test_type": "unseen", "chinese": "這顆西瓜好大", "expected_gloss": "這 西瓜 大", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 37}
+{"test_type": "unseen", "chinese": "不過我現在會設手錶鬧鐘提醒自己扭動一下脖子", "expected_gloss": "現在 手錶 時間 設定 震動 告訴 自己 扭動脖子", "context": "坐起來很舒服很不錯。我還沒，", "source": "test_corpus", "oov_rate": 0.125, "oov_tokens": "扭動脖子", "idx": 38}
+{"test_type": "unseen", "chinese": "你怎麼吃得這麼少", "expected_gloss": "你 吃 少", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 39}
+{"test_type": "unseen", "chinese": "這樣肉燉久就會變軟變得很好吃", "expected_gloss": "豬肉 煮 久 軟 吃 棒", "context": "我跟你說，滷肉的技巧就是要加入汽水，", "source": "test_corpus", "oov_rate": 0.167, "oov_tokens": "軟", "idx": 40}
+{"test_type": "unseen", "chinese": "這個寶寶長的白白胖胖好可愛", "expected_gloss": "這 孩子 白 胖 可愛", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 41}
+{"test_type": "unseen", "chinese": "有，我先去照了X光", "expected_gloss": "有 我 首先 去 肩膀 照X光+肩膀", "context": "你的肩膀很痛嗎？有沒有去復健科檢查？", "source": "test_corpus", "oov_rate": 0.167, "oov_tokens": "照X光+肩膀", "idx": 42}
+{"test_type": "unseen", "chinese": "哥哥打字的速度很快", "expected_gloss": "哥哥 打字 快", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 43}
+{"test_type": "unseen", "chinese": "趕快去洗澡", "expected_gloss": "快 去 洗澡", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 44}
+{"test_type": "unseen", "chinese": "聾人和聽障者會好奇地想知道台上的聽人在說些什麼", "expected_gloss": "電視 聽人 上台 演講 聾人 重聽者 好奇 想 知道 他們 演講 什麼", "context": "電視裡解說員會針對比賽過程及選手表現進行討論，或每年政府舉辦金馬獎、金鐘獎和金曲獎節目，", "source": "test_corpus", "oov_rate": 0.083, "oov_tokens": "重聽者", "idx": 45}
+{"test_type": "unseen", "chinese": "我要這個", "expected_gloss": "我 這 要", "context": "", "source": "test", "oov_rate": 0.0, "oov_tokens": "", "idx": 46}
+{"test_type": "unseen", "chinese": "他們吃了以後覺得我做的握壽司很好吃", "expected_gloss": "他們 吃 完 告訴 我 做 壽司 好吃 棒", "context": "這是日式料理的特色。學到後回家自己做日式壽司給家人試試看好不好吃，", "source": "test_corpus", "oov_rate": 0.111, "oov_tokens": "壽司", "idx": 47}
+{"test_type": "unseen", "chinese": "台北?聰學校開設夜間成人教育班", "expected_gloss": "台北啟聰學校 辦理 晚上 成人 教育 班", "context": "", "source": "test_corpus", "oov_rate": 0.167, "oov_tokens": "台北啟聰學校", "idx": 48}
+{"test_type": "unseen", "chinese": "這顆蘋果不大", "expected_gloss": "這 蘋果 大 沒有", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 49}
+{"test_type": "unseen", "chinese": "可以改用手機傳訊或手語視訊這兩種方式聯絡", "expected_gloss": "改 手機 手機+輸入 連絡 視訊 打手語 聊天 這兩個 能", "context": "讓我們可以預防。而我們聾人沒有辦法打電話聯繫，", "source": "test_corpus", "oov_rate": 0.111, "oov_tokens": "手機+輸入", "idx": 50}
+{"test_type": "unseen", "chinese": "不可以", "expected_gloss": "不可以", "context": "", "source": "test", "oov_rate": 0.0, "oov_tokens": "", "idx": 51}
+{"test_type": "unseen", "chinese": "有時媽媽會做三明治、稀飯和吐司披薩", "expected_gloss": "媽媽 三明治 稀飯 吐司披薩 煮 偶而", "context": "我小時候每天早上起床，媽媽總是準備好早餐。", "source": "test_corpus", "oov_rate": 0.167, "oov_tokens": "偶而", "idx": 52}
+{"test_type": "unseen", "chinese": "看到學生的進步和他們對手語有興趣", "expected_gloss": "看到 學生 進步 他們 針對 手語 興趣", "context": "那你自己從教學中有什麼收穫嗎？當然有！", "source": "test_corpus", "oov_rate": 0.0, "oov_tokens": "", "idx": 53}
+{"test_type": "unseen", "chinese": "剛開始我不知如何和老師溝通，老師耐心教我穩住心神，用舊報紙練習運筆", "expected_gloss": "一開始 老師 第一次 見 溝通 沒辦法 他 耐心 教 心 ?定 舊 報紙 拿來 運筆 練習", "context": "就學期間，對我一輩子影響最大的是書畫練習，(以前)當時學校師資有限，我決定到校外學書畫並且認真練習。", "source": "test_corpus", "oov_rate": 0.125, "oov_tokens": "?定 運筆", "idx": 54}
+{"test_type": "unseen", "chinese": "電視裡解說員會針對比賽過程及選手表現進行討論", "expected_gloss": "電視 解說員 講述 針對 比賽 過程 參賽者 表現 情形 好不好 討論 會", "context": "再來如果是現場直播節目，比如奧運比賽，", "source": "test_corpus", "oov_rate": 0.167, "oov_tokens": "解說員 參賽者", "idx": 55}
+{"test_type": "unseen", "chinese": "你住哪裡", "expected_gloss": "你 住 哪裡", "context": "", "source": "test", "oov_rate": 0.0, "oov_tokens": "", "idx": 56}
+{"test_type": "unseen", "chinese": "老師怕他", "expected_gloss": "他 老師 怕", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 57}
+{"test_type": "unseen", "chinese": "希望以後火災警報器可以設計手機APP連接手錶", "expected_gloss": "希望 以後 火災警報器 APP 手錶 連接 設計 有", "context": "他沒辦法逃生就很危險了。現在科技這麼進步，", "source": "test_corpus", "oov_rate": 0.125, "oov_tokens": "火災警報器", "idx": 58}
+{"test_type": "unseen", "chinese": "我印象最深刻的有兩件事情", "expected_gloss": "我 印象 很 什麼 有 二 事情", "context": "關於身心障礙者平權，", "source": "test_corpus", "oov_rate": 0.0, "oov_tokens": "", "idx": 59}
+{"test_type": "unseen", "chinese": "你游泳的速度好快", "expected_gloss": "你 游泳 快", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 60}
+{"test_type": "unseen", "chinese": "有時候會找我練習手語對話", "expected_gloss": "偶爾 來 找 我 手語 對話 練習", "context": "我們這邊的社區大學有教手語，他有報名，", "source": "test_corpus", "oov_rate": 0.0, "oov_tokens": "", "idx": 61}
+{"test_type": "unseen", "chinese": "我要看醫生", "expected_gloss": "我 看醫生 要", "context": "", "source": "test", "oov_rate": 0.0, "oov_tokens": "", "idx": 62}
+{"test_type": "unseen", "chinese": "老師看著學生", "expected_gloss": "老師 學生 見 學生 之於 看", "context": "", "source": "test_papers", "oov_rate": 0.167, "oov_tokens": "之於", "idx": 63}
+{"test_type": "unseen", "chinese": "只知道紅燈上課綠燈下課很有趣", "expected_gloss": "知道 什麼 見 紅燈 綠燈 有趣", "context": "後來我也習慣了學校的生活環境，我們小朋友不懂什麼時間觀念，", "source": "test_corpus", "oov_rate": 0.0, "oov_tokens": "", "idx": 64}
+{"test_type": "unseen", "chinese": "幸好他兒子有叫他快點逃生", "expected_gloss": "幸好 他 兒子 告訴 逃 快", "context": "電視的跑馬燈有顯示那棟大樓裡面有聾人，他不知道有火災，", "source": "test_corpus", "oov_rate": 0.0, "oov_tokens": "", "idx": 65}
+{"test_type": "unseen", "chinese": "他的心胸好寬大", "expected_gloss": "他 大", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 66}
+{"test_type": "unseen", "chinese": "你胖到都快要走不動了", "expected_gloss": "你 胖 走 不能", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 67}
+{"test_type": "unseen", "chinese": "我五歲時因發燒聽力受損", "expected_gloss": "我 聽不見 孩子 五歲 頭 發燒 聽損", "context": "", "source": "test_corpus", "oov_rate": 0.143, "oov_tokens": "五歲", "idx": 68}
+{"test_type": "unseen", "chinese": "這個題目的說明好複雜，我看了好久", "expected_gloss": "這 題目 解釋 複雜 見 *欣賞 久", "context": "", "source": "test_papers", "oov_rate": 0.143, "oov_tokens": "*欣賞", "idx": 69}
+{"test_type": "unseen", "chinese": "我去了不同的地方玩", "expected_gloss": "我 去 玩", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 70}
+{"test_type": "unseen", "chinese": "我小時候每天早上起床", "expected_gloss": "我 小時候 每天 早上 醒 起床", "context": "", "source": "test_corpus", "oov_rate": 0.0, "oov_tokens": "", "idx": 71}
+{"test_type": "unseen", "chinese": "而且電視畫面下方出現即時字幕", "expected_gloss": "再 電視 電視+字幕 馬上 聽打 字幕 有", "context": "曾經在疫情爆發時期，有一個縣市召開疫情記者會時有提供手語翻譯，", "source": "test_corpus", "oov_rate": 0.143, "oov_tokens": "電視+字幕", "idx": 72}
+{"test_type": "unseen", "chinese": "聽說它看起來很像歐洲的宮殿", "expected_gloss": "聽說 那 環視 歐洲 古廟 像", "context": "好不好?我一直想去。", "source": "test_corpus", "oov_rate": 0.167, "oov_tokens": "古廟", "idx": 73}
+{"test_type": "unseen", "chinese": "譬如颱風警報或總統宣布重要政策的記者會等等", "expected_gloss": "比如 颱風警報 或 總統 宣布 重要 政府 計畫 記者會 種種", "context": "這樣就不會漏掉任何訊息了。希望將來政府在發布重大事情，", "source": "test_corpus", "oov_rate": 0.2, "oov_tokens": "颱風警報 記者會", "idx": 74}
+{"test_type": "unseen", "chinese": "學到後回家自己做日式壽司給家人試試看好不好吃", "expected_gloss": "學會 回家 自己 做 壽司 給 家人 吃 試試 好不好", "context": "看起來很美，這是日式料理的特色。", "source": "test_corpus", "oov_rate": 0.2, "oov_tokens": "學會 壽司", "idx": 75}
+{"test_type": "unseen", "chinese": "老師告訴我們小朋友們要認真坐好", "expected_gloss": "老師 告訴 孩子 招 坐 認真", "context": "也沒有專心，就看著那亮著的紅燈。", "source": "test_corpus", "oov_rate": 0.0, "oov_tokens": "", "idx": 76}
+{"test_type": "unseen", "chinese": "那你知道春天出產什麼水果嗎", "expected_gloss": "春天 水果 種 什麼 你 知道?", "context": "台灣四季出產各式各樣水果。", "source": "test_corpus", "oov_rate": 0.0, "oov_tokens": "", "idx": 77}
+{"test_type": "unseen", "chinese": "現在幾點", "expected_gloss": "現在 幾點", "context": "", "source": "test", "oov_rate": 0.0, "oov_tokens": "", "idx": 78}
+{"test_type": "unseen", "chinese": "有動物、兵器、樂器、西洋藝術四大類", "expected_gloss": "第一 動物 第二 兵器 第三 樂器 第四 外國 藝術 這四個", "context": "可以坐火車到台南站再轉公車。裡面展覽什麼東西？", "source": "test_corpus", "oov_rate": 0.2, "oov_tokens": "兵器 樂器", "idx": 79}
+{"test_type": "unseen", "chinese": "大家都要出發了，你還慢吞吞的做什麼", "expected_gloss": "大家 走 要 你 慢 什麼", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 80}
+{"test_type": "unseen", "chinese": "那場車禍真令人感到怵目驚心", "expected_gloss": "那 車禍 我 見 可怕", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 81}
+{"test_type": "unseen", "chinese": "他怕老師", "expected_gloss": "老師 他 怕", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 82}
+{"test_type": "unseen", "chinese": "我們這邊的社區大學有教手語", "expected_gloss": "我們 這裡 社區大學 手語 教 有", "context": "他想用手語和聾朋友溝通。他去哪裡學手語？", "source": "test_corpus", "oov_rate": 0.167, "oov_tokens": "社區大學", "idx": 83}
+{"test_type": "unseen", "chinese": "他說，我聽不見聲音，反而沒有外界干擾", "expected_gloss": "他 告訴 我 聽不見 外面 介入 不會", "context": "有一次在戶外寫生時，老師告訴我作畫不是複製畫的一模一樣，要表達出內心的感受，突破自我。", "source": "test_corpus", "oov_rate": 0.143, "oov_tokens": "介入", "idx": 84}
+{"test_type": "unseen", "chinese": "吃完早餐、刷完牙、整理好書包", "expected_gloss": "早餐 吃 完 刷牙 書包 整理 完", "context": "有時媽媽會做三明治、稀飯和吐司披薩，其中我最喜歡比薩。", "source": "test_corpus", "oov_rate": 0.0, "oov_tokens": "", "idx": 85}
+{"test_type": "unseen", "chinese": "像是鴨子、鵝子、鹿、馬、羊和兔子等等", "expected_gloss": "像 鴨 鵝 鹿 馬 羊 兔子 種種", "context": "但孩子們在廣闊的草地上可以盡情奔跑、玩耍，而且能近距離接觸各種可愛的動物，", "source": "test_corpus", "oov_rate": 0.125, "oov_tokens": "鴨", "idx": 86}
+{"test_type": "unseen", "chinese": "他已經看完了", "expected_gloss": "她 看 完", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 87}
+{"test_type": "unseen", "chinese": "老師學生望著彼此", "expected_gloss": "老師 學生 見 學生 他們兩個 看", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 88}
+{"test_type": "unseen", "chinese": "越來越多人喜歡張小姐", "expected_gloss": "人 張小姐 見 喜歡 越來越多", "context": "", "source": "test_papers", "oov_rate": 0.2, "oov_tokens": "張小姐", "idx": 89}
+{"test_type": "unseen", "chinese": "我一天內連去到了三家醫院", "expected_gloss": "我 一天內 醫院 去 三", "context": "", "source": "test_papers", "oov_rate": 0.2, "oov_tokens": "一天內", "idx": 90}
+{"test_type": "unseen", "chinese": "這讓我更有信心投入教學工作", "expected_gloss": "這 我 投入 教學 工作 信心 有", "context": "恭喜你教支人員的認證通過了！是的，", "source": "test_corpus", "oov_rate": 0.0, "oov_tokens": "", "idx": 91}
+{"test_type": "unseen", "chinese": "爸爸工作一整天都累癱了", "expected_gloss": "爸爸 工作 一整天 累", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 92}
+{"test_type": "unseen", "chinese": "希望能加入手語翻譯或聽打", "expected_gloss": "希望 加 手語翻譯 或 聽打 能", "context": "或每年政府舉辦金馬獎、金鐘獎和金曲獎節目，聾人和聽障者會好奇地想知道台上的聽人在說些什麼？", "source": "test_corpus", "oov_rate": 0.0, "oov_tokens": "", "idx": 93}
+{"test_type": "unseen", "chinese": "聾人和重聽者有知的權利", "expected_gloss": "聾人 聽障 接收訊息 知道 有 權利", "context": "身心障礙者權利公約CRPD重視身心障礙者之無障礙空間。換句話說，", "source": "test_corpus", "oov_rate": 0.167, "oov_tokens": "權利", "idx": 94}
+{"test_type": "unseen", "chinese": "哥哥的糖果比我的多", "expected_gloss": "哥哥 糖果 多 我 少", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 95}
+{"test_type": "unseen", "chinese": "就學期間，對我一輩子影響最大的是書畫練習", "expected_gloss": "讀書 期間 我 一輩子 影響 改變 大 什麼 書畫 練習 是", "context": "", "source": "test_corpus", "oov_rate": 0.091, "oov_tokens": "書畫", "idx": 96}
+{"test_type": "unseen", "chinese": "老闆會不會問你希望一個月薪水是多少", "expected_gloss": "你 希望 月薪 多少錢 老闆 問 會不會", "context": "你以前面試的時候，", "source": "test_corpus", "oov_rate": 0.0, "oov_tokens": "", "idx": 97}
+{"test_type": "unseen", "chinese": "你好", "expected_gloss": "你 好", "context": "", "source": "test", "oov_rate": 0.0, "oov_tokens": "", "idx": 98}
+{"test_type": "unseen", "chinese": "建議你在家裡要安裝有閃光功能的火災警報器", "expected_gloss": "建議 告訴 你 家 火災 閃光燈+天花板 安裝 要", "context": "我聽不到，可能來不及逃生。", "source": "test_corpus", "oov_rate": 0.125, "oov_tokens": "閃光燈+天花板", "idx": 99}
+{"test_type": "unseen", "chinese": "他怕老師", "expected_gloss": "老師 他 怕", "context": "", "source": "test_papers", "oov_rate": 0.0, "oov_tokens": "", "idx": 100}

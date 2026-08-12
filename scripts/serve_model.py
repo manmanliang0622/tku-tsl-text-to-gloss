@@ -12,7 +12,7 @@
 
 API：
   GET  /health              → {"status":"ok","adapter":...}
-  POST /translate           → body {"text":"我要喝水"}
+  POST /translate           → body {"text":"我要喝水","context":"前一句（選填）"}
                               回 {"chinese":...,"gloss":["我","水","喝","要"],
                                   "gloss_text":"我/水/喝/要","seconds":1.2}
 
@@ -32,7 +32,7 @@ import prompt_common as pc
 
 BASE = Path(__file__).resolve().parent.parent
 
-STATE = {"model": None, "tokenizer": None, "adapter": None, "max_new": 64,
+STATE = {"model": None, "tokenizer": None, "adapter": None, "model_name": None, "max_new": 64,
          "target": "gloss", "retriever": None, "rag_k": 0, "rag_min": 0.05,
          "json_targets": {}}
 
@@ -98,10 +98,11 @@ def _rag_examples(text):
     return pairs, info
 
 
-def translate(text):
+def translate(text, context=""):
     tok, model = STATE["tokenizer"], STATE["model"]
     ex_pairs, ex_info = _rag_examples(text)
-    msgs = pc.build_messages(text, examples=ex_pairs)
+    # v12 以段落前文訓練；呼叫端若提供 context，推論必須用同一格式送入。
+    msgs = pc.build_messages(text, examples=ex_pairs, context=context)
     inputs = tok.apply_chat_template(msgs, add_generation_prompt=True,
                                      return_tensors="pt", return_dict=True).to(model.device)
     t0 = time.time()
@@ -123,14 +124,16 @@ def translate(text):
             "time": obj.get("time"),
             # 相容欄位（0804try 前端用 glosses/question）
             "glosses": toks, "question": obj.get("question_type", "none"),
-            "source": "gemma", "unknown": [],
+            "source": "gemma", "model": STATE["model_name"], "unknown": [],
+            "context": context,
             "raw": gen.strip(), "seconds": secs, "rag": ex_info,
         }
 
     gloss_text = pc.parse_gloss(gen)
     toks = [t for t in gloss_text.split("/") if t.strip()]
     return {"chinese": text, "gloss": toks, "gloss_text": gloss_text,
-            "glosses": toks, "source": "gemma",
+            "glosses": toks, "source": "gemma", "model": STATE["model_name"],
+            "context": context,
             "raw": gen.strip(), "seconds": secs, "rag": ex_info}
 
 
@@ -152,7 +155,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith("/health"):
             self._send(200, {"status": "ok" if STATE["model"] else "loading",
-                             "adapter": STATE["adapter"]})
+                             "adapter": STATE["adapter"],
+                             "model": STATE["model_name"],
+                             "target": STATE["target"]})
         else:
             self._send(404, {"error": "not found"})
 
@@ -164,13 +169,14 @@ class Handler(BaseHTTPRequestHandler):
             n = int(self.headers.get("Content-Length", 0))
             data = json.loads(self.rfile.read(n) or b"{}")
             text = (data.get("text") or "").strip()
+            context = (data.get("context") or "").strip()
             if not text:
                 self._send(400, {"error": "text 不可為空"})
                 return
             if STATE["model"] is None:
                 self._send(503, {"error": "模型尚未載入完成"})
                 return
-            self._send(200, translate(text))
+            self._send(200, translate(text, context=context))
         except Exception as e:  # 回傳錯誤而非讓連線中斷，前端才能顯示原因
             self._send(500, {"error": f"{type(e).__name__}: {e}"})
 
@@ -184,6 +190,8 @@ def main():
     ap.add_argument("--adapter", required=True)
     ap.add_argument("--port", type=int, default=8018)
     ap.add_argument("--max-new", type=int, default=64)
+    ap.add_argument("--model-name", default=None,
+                    help="API 顯示名稱；預設由 adapter 的上層目錄推斷")
     ap.add_argument("--target", choices=["gloss", "json"], default="gloss",
                     help="模型的輸出格式；json 版會另外回傳 question_type/negation/nonmanual")
     ap.add_argument("--rag", type=int, default=0,
@@ -196,6 +204,8 @@ def main():
     args = ap.parse_args()
     STATE["max_new"] = args.max_new
     STATE["target"] = args.target
+    adapter_path = Path(args.adapter.rstrip("/"))
+    STATE["model_name"] = args.model_name or adapter_path.parent.name or adapter_path.name
     if args.target == "json" and args.max_new < 160:
         STATE["max_new"] = 160        # JSON 目標較長，實測最多 182 token
     STATE["rag_k"], STATE["rag_min"] = args.rag, args.rag_min

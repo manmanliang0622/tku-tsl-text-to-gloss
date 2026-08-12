@@ -25,22 +25,34 @@ few-shot 示例採 leave-one-out：示例池排除當前測試句，避免答案
   的示例，比較不公平。改為從 train 依 Gloss 長度分層抽樣（≤4／5–7／≥8 各佔
   三分之一），與 --length-balance 的分桶一致。
 
-後端：Ollama，temperature=0。端點可用 --endpoint 或環境變數 TSL_OLLAMA_URL
-覆寫（預設 http://localhost:11434/api/chat）——基線通常要在有 Ollama 的 VM
-上跑，而不是開發機。
+後端（`--backend`）：
 
-⚠️ **推論堆疊不同，報告必須註明**：本腳本走 Ollama＋`think:False`（見
-`call_ollama` 註解），微調模型走 transformers GPU greedy（`eval_json_model.py`）。
-同一個底模跑兩套堆疊，基線若落後會有「是不是輸在推論設定」的疑問。
+  transformers  **預設**。直接載入未微調的 base model，走與 `eval_json_model.py`
+                完全相同的推論堆疊：同一個 4-bit bnb 量化設定、同一個
+                `load_model(..., ple_on_gpu)`、同一個 chat template、
+                `do_sample=False` greedy 無 beam。差別只有「有沒有掛 adapter」。
+  ollama        舊路徑，保留供重現既有的核心 33 句結果。走 Ollama＋`think:False`
+                （見 `call_ollama` 註解），與微調模型不是同一套堆疊。
+
+為什麼預設改成 transformers：基線的用途是回答「微調到底有沒有幫助」。若基線
+走 Ollama CPU、微調走 transformers GPU，兩者差的就不只是 adapter，基線落後時
+無法排除「輸在推論設定」。改用同一套堆疊後，唯一的變因就是 adapter。
+
+⚠️ `--ple gpu` 很重要：`device_map` 只要含任何 "cpu" 項目，accelerate 就會為
+整個模型掛 offload hook，每個 token 慢到約 35 秒（全放 GPU 是 0.06 秒/token，
+快約 580 倍）。詳見 `train_qlora.load_model` 的說明。
+
+提示詞與 Gloss 解析一律從 `prompt_common` 匯入，與微調端共用同一份定義，
+避免兩邊各改一份而悄悄失去可比性。
 
 結果逐句即時寫入 results/，中斷可 --resume 續跑。
 
 用法：
-  python3 scripts/run_baseline.py                          # 核心 35 句 × 3 策略
-  python3 scripts/run_baseline.py --split test_corpus      # 留存語料庫長句 167 句
-  python3 scripts/run_baseline.py --split test_papers      # 論文例句 143 句
-  python3 scripts/run_baseline.py --limit 3                # 冒煙測試
-  python3 scripts/run_baseline.py --strategies zero        # 只跑某策略
+  python3 scripts/run_baseline.py --split test_corpus --ple gpu   # 留存語料庫長句 167 句
+  python3 scripts/run_baseline.py --split test_papers --ple gpu   # 論文例句 143 句
+  python3 scripts/run_baseline.py --split test_corpus --dry-run   # 不載模型，只看提示詞
+  python3 scripts/run_baseline.py --backend ollama                # 舊路徑（核心 35 句）
+  python3 scripts/run_baseline.py --limit 3                       # 冒煙測試
 """
 import argparse
 import json
@@ -52,31 +64,16 @@ import urllib.request
 from pathlib import Path
 
 import metrics
+# 提示詞與 Gloss 解析與微調端共用同一份定義（原本兩邊各有一份逐字相同的副本，
+# 任一邊改動都會悄悄破壞 Stage A 與 Stage B 的可比性）
+from prompt_common import RULES, TASK_DESC, parse_gloss
 
 BASE = Path(__file__).resolve().parent.parent
 RESULTS = BASE / "results"
 SPLITS = BASE / "data" / "splits"
 OLLAMA_DEFAULT = "http://localhost:11434/api/chat"
-MODEL_DEFAULT = "gemma4:e4b"
-
-TASK_DESC = (
-    "你是臺灣手語（TSL）翻譯助手。請把輸入的中文句子翻譯成臺灣手語 Gloss。"
-    "Gloss 是手語動作的文字標記，以「/」分隔，例如：我/台北/住。"
-    "只輸出一行 Gloss，不要輸出任何解釋或其他文字。"
-)
-
-# 7 條規則＝計畫 3.3 節（張榮興2008、Tai & Tsay 2015、Jane Tsay 2021、
-# 教育部課綱、專案母語者例句歸納），與合成模板共用同一套規則
-RULES = (
-    "臺灣手語語法規則：\n"
-    "1. 有情態詞「要」時，語序為 [時間]/[主語]/動詞/[地點或活動]/要（「要」放句尾）。\n"
-    "2. 無情態詞、動詞是「住」「上班」等定居類動詞時，語序為 [主語]/地點/動詞（地點在動詞前）。\n"
-    "3. 是非問句不翻出「嗎」，改以臉部表情（眉毛上揚）表達，Gloss 中不出現「嗎」。\n"
-    "4. 判斷句不翻出「是」，直接 [主語]/[地點]/[身分]，例如「我是桃園人」→ 我/桃園/人。\n"
-    "5. 時間詞（今天、明天等）一律放句首。\n"
-    "6. 否定詞放動詞後或句尾，例如「我今天不去學校」→ 今天/我/學校/去/不。\n"
-    "7. 疑問詞（什麼、哪裡、幾點等）放句末。"
-)
+OLLAMA_MODEL_DEFAULT = "gemma4:e4b"
+HF_MODEL_DEFAULT = "google/gemma-4-E4B-it"
 
 # few-shot 示例池：涵蓋定居句/是非問/情態要/身分句/否定/WH/程度詞等句型
 EXEMPLAR_IDS = ["P01", "P03", "P04", "P05", "S01", "S09", "S14", "S21", "S23", "S28"]
@@ -181,32 +178,73 @@ def call_ollama(model, prompt, endpoint, timeout=600):
         return json.loads(r.read())["message"]["content"]
 
 
-def parse_gloss(raw: str) -> str:
-    """優先取含「/」的行（最像 Gloss），否則取最後一個非空行（單詞句無分隔符）。
+def build_hf_runner(model_id, ple, max_new):
+    """載入未微調的 base model，回傳 infer(prompt) -> raw。
 
-    正規化：全形／→半形/、去空白、去前綴（Gloss：）、去引號與句尾標點、
-    去尾端括號註解（如「（規則2）」）。
+    刻意與 `eval_json_model.py` 走同一條路徑：同一個 bnb 4-bit 設定、同一個
+    `train_qlora.load_model`、同一個 chat template、`do_sample=False`。
+    唯一差別是**不掛 adapter**——這樣「基線 vs 微調」的變因才只有 adapter 一項。
     """
-    def clean(line):
-        line = line.strip().strip("`").strip()
-        line = re.sub(r"^(Gloss|gloss|手語|TSL)[：:]\s*", "", line)
-        line = line.replace("／", "/").replace(" ", "").strip("「」\"'")
-        line = re.sub(r"[（(][^（）()]*[）)]$", "", line)
-        return line.rstrip("。．.!?！？")
+    import torch
+    from transformers import AutoTokenizer, BitsAndBytesConfig
 
-    lines = [clean(l) for l in raw.strip().splitlines()]
-    lines = [l for l in lines if l]
-    if not lines:
-        return ""
-    for line in lines:
-        if "/" in line:
-            return line
-    return lines[-1]
+    from train_qlora import can_fit_ple_on_gpu, load_model
+
+    bnb = BitsAndBytesConfig(
+        load_in_4bit=True, bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_use_double_quant=True,
+        llm_int8_enable_fp32_cpu_offload=True)
+    tok = AutoTokenizer.from_pretrained(model_id)
+    ple_on_gpu = {"auto": None, "gpu": True, "cpu": False}[ple]
+    if ple_on_gpu is None:
+        ple_on_gpu = can_fit_ple_on_gpu()
+    print(f"[baseline] PLE 放置：{'GPU（快）' if ple_on_gpu else 'CPU（慢，約 35 秒/token）'}",
+          flush=True)
+    model = load_model(model_id, bnb, ple_on_gpu=ple_on_gpu)
+    model.eval()
+
+    def infer(prompt):
+        msgs = [{"role": "user", "content": prompt}]
+        inputs = tok.apply_chat_template(
+            msgs, add_generation_prompt=True,
+            return_tensors="pt", return_dict=True).to(model.device)
+        with torch.no_grad():
+            out = model.generate(**inputs, max_new_tokens=max_new, do_sample=False)
+        return tok.decode(out[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+
+    return infer
+
+
+def load_vocab():
+    """與 `eval_json_model.py` 用同一份詞彙表，InVocab% 才可以並排比較。
+
+    eval_vocab.json 不入版控（可由 build_eval_vocab.py 再生，依賴 splits）；
+    找不到時退回 tsl_gloss_vocab.json，並回報實際用了哪一份——兩份的內率
+    不可互相比較，報告必須標明。
+    """
+    p = BASE / "data" / "vocab" / "eval_vocab.json"
+    if p.exists():
+        return set(json.load(p.open(encoding="utf-8"))["renderable"]), "eval_vocab.renderable"
+    p = BASE / "data" / "tsl_gloss_vocab.json"
+    return set(json.load(p.open(encoding="utf-8"))["glosses"]), "tsl_gloss_vocab.glosses"
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default=MODEL_DEFAULT)
+    ap.add_argument("--backend", choices=["transformers", "ollama"], default="transformers",
+                    help="transformers＝與 eval_json_model 同一套推論堆疊（預設）；"
+                         "ollama＝舊路徑，僅供重現既有核心 33 句結果")
+    ap.add_argument("--model", default=None,
+                    help=f"預設隨 backend：transformers→{HF_MODEL_DEFAULT}、"
+                         f"ollama→{OLLAMA_MODEL_DEFAULT}")
+    ap.add_argument("--ple", choices=["auto", "gpu", "cpu"], default="gpu",
+                    help="僅 transformers。gpu＝全模型放 GPU（快約 580 倍）。"
+                         "auto 在顯存剛好卡門檻時會誤退回慢速模式，故預設 gpu")
+    ap.add_argument("--max-new", type=int, default=128,
+                    help="僅 transformers。與 ollama 路徑的 num_predict=128 對齊，"
+                         "兩個後端的輸出長度預算才一致。"
+                         "不可再調低：test_corpus 最長參考答案 20 個 Gloss／56 字元，"
+                         "截斷會讓基線莫名失分——那正是本次要消除的不公平")
     ap.add_argument("--strategies", nargs="+",
                     default=["zero", "rules", "fewshot"],
                     choices=["zero", "rules", "fewshot"])
@@ -225,6 +263,8 @@ def main():
                     help="不呼叫模型，只印出設定與第一句的完整提示詞。"
                          "用於在沒有 Ollama 的機器上檢查示例池與提示詞是否正確")
     args = ap.parse_args()
+    if args.model is None:
+        args.model = HF_MODEL_DEFAULT if args.backend == "transformers" else OLLAMA_MODEL_DEFAULT
 
     RESULTS.mkdir(exist_ok=True)
     sents = load_split(args.split) if args.split else load_sentences()
@@ -239,14 +279,21 @@ def main():
     # 留存測試集與 train 已驗證零重疊，仍保留 leave-one-out 作為便宜的防呆
     overlap = {e["id"] for e in pool} & {e["id"] for e in sents}
 
-    vocab = set(json.load((BASE / "data" / "tsl_gloss_vocab.json").open(encoding="utf-8"))["glosses"])
+    vocab, vocab_name = load_vocab()
 
     suffix = f"_{args.split}" if args.split else ""
     print(f"評測集：{args.split or '核心 35 句'}（{len(sents)} 句）")
     print(f"示例池：{src}，{len(pool)} 句"
           + (f"（種子 {args.pool_seed}）" if src == "train" else "")
           + (f"  ⚠ 與測試集重疊 {len(overlap)} 句，將由 leave-one-out 排除" if overlap else ""))
-    print(f"端點　：{args.endpoint}")
+    print(f"詞彙表：{vocab_name}（{len(vocab)} 詞）")
+    if args.backend == "transformers":
+        print(f"後端　：transformers {args.model}（未微調 base model，"
+              f"ple={args.ple}、greedy、max_new={args.max_new}）")
+    else:
+        print(f"後端　：ollama {args.model} @ {args.endpoint}（think:False）")
+        print("⚠ ollama 與微調模型不是同一套推論堆疊，基線落後時無法排除"
+              "「輸在推論設定」；報告須註明，或改用 --backend transformers")
     if not args.split:
         print("⚠ 核心 35 句僅供 Stage A/B 歷史對照，對外報告不得引用；"
               "要比較微調成效請加 --split test_corpus 或 --split test_papers")
@@ -259,7 +306,13 @@ def main():
             print(build_prompt(strat, sents[0], pool))
         return
 
-    tag = args.model.replace(":", "_")
+    if args.backend == "transformers":
+        infer = build_hf_runner(args.model, args.ple, args.max_new)
+    else:
+        def infer(prompt):
+            return call_ollama(args.model, prompt, args.endpoint)
+
+    tag = re.sub(r"[^A-Za-z0-9._-]", "_", args.model.replace(":", "_"))
     for strat in args.strategies:
         out_path = RESULTS / f"baseline_{tag}{suffix}_{strat}.jsonl"
         done = set()
@@ -282,7 +335,7 @@ def main():
                     continue
                 prompt = build_prompt(strat, item, pool)
                 t0 = time.time()
-                raw = call_ollama(args.model, prompt, args.endpoint)
+                raw = infer(prompt)
                 pred = parse_gloss(raw)
                 rec = {"id": item["id"], "chinese": item["chinese"],
                        "ref": item["gloss_text"], "pred": pred,
@@ -299,13 +352,19 @@ def main():
         summary_path = RESULTS / f"summary_{tag}{suffix}.json"
         summary = json.loads(summary_path.read_text(encoding="utf-8")) if summary_path.exists() else {}
         # 連同設定一起存：推論堆疊與示例池會影響結果，報告要能追溯
-        summary[strat] = dict(m, _config={
+        cfg = {
             "split": args.split or "core35", "model": args.model,
-            "backend": "ollama", "think": False, "temperature": 0,
+            "backend": args.backend, "vocab": vocab_name,
             "exemplar_source": src,
             "pool_ids": [e["id"] for e in pool] if strat == "fewshot" else None,
             "pool_seed": args.pool_seed if src == "train" else None,
-        })
+        }
+        if args.backend == "transformers":
+            cfg.update({"ple": args.ple, "do_sample": False, "num_beams": 1,
+                        "max_new_tokens": args.max_new, "adapter": None})
+        else:
+            cfg.update({"think": False, "temperature": 0, "num_predict": 128})
+        summary[strat] = dict(m, _config=cfg)
         summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
 
 

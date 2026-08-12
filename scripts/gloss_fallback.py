@@ -56,9 +56,22 @@ def normalize(token):
     return t.strip(" ?？。，、!！") or str(token)
 
 
+TRAIN = BASE / "data" / "splits_json" / "train.jsonl"
+
+
 @lru_cache(maxsize=1)
-def load_vocab(master_path=None):
-    """回傳 (全部詞, 可播放詞)。可播放＝有辭典詞條，下游動作庫查得到。"""
+def load_vocab(master_path=None, train_path=None):
+    """回傳 (合法詞, 可播放詞)。
+
+    **合法詞＝詞彙總表 ∪ 訓練集實際用過的 Gloss。**
+    只用總表會誤修語料庫真實使用、但辭典未收的詞——實測訓練集 4,396 個
+    Gloss 詞中有 136 個不在總表內（如「五萬」「使用」「交」「KTV」「2020」）。
+    初版漏了這一項，導致 Seen 層 EM 反而掉 2 分：模型本來預測正確的詞
+    被 fallback「修」壞了。既然語料庫用過，它就是合法的手語詞。
+
+    可播放詞仍只取有辭典詞條者——那是下游動作庫真的查得到動作的範圍，
+    也是修復時要退到的目標。
+    """
     path = Path(master_path) if master_path else MASTER
     all_v, rend = set(), set()
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -68,6 +81,12 @@ def load_vocab(master_path=None):
         all_v.add(r["surface"])
         if r.get("has_dict_entry") or r.get("norm_has_dict_entry"):
             rend.add(r["surface"])
+
+    tpath = Path(train_path) if train_path else TRAIN
+    if tpath.exists():
+        for line in tpath.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                all_v.update(json.loads(json.loads(line)["output"])["gloss"].split())
     return frozenset(all_v), frozenset(rend)
 
 

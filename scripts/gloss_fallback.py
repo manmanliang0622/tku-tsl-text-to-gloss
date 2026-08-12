@@ -60,12 +60,18 @@ def normalize(token):
 TRAIN = BASE / "data" / "splits_json" / "train.jsonl"
 MOE = BASE / "data" / "moe" / "moe_vocab_clean.jsonl"
 
-# 教育部辭典（8,438 詞）預設**不啟用**：其授權尚未查證（站上為 All Right
-# Reserved、無開放資料聲明），而文化部語料與中正辭典的訓練＋散布授權已查證合法。
-# 查證通過後把此旗標改為 True，或以環境變數 TSL_USE_MOE_VOCAB=1 開啟。
+# 教育部辭典（8,438 詞）：專案負責人 2026-08-13 確認**可用於訓練，但資料本身
+# 不得公開給大眾**。這與文化部語料庫／中正辭典（訓練＋散布皆合法，標明出處即可）
+# 的條件**不同**，不可混為一談：
+#   - 可以：本機／VM 上用於訓練與推論；散布模型權重
+#   - 不可以：把 data/moe/ 推上公開 repo，或隨模型附上該詞彙檔
+# 故 data/moe/ 留在 .gitignore 內，且此處以「檔案存在才載入」的方式接上——
+# 公開 repo 的使用者不會有該檔，程式自動退回原詞彙表，不會壞掉。
+# 設 TSL_USE_MOE_VOCAB=0 可強制停用（用於對照實驗）。
+#
 # 實測效果（三層診斷觀察到的 25 個表外詞）：指拼 18 → 12，
 # 7 個詞被正確認出為合法手語詞（概念、鬧鐘、寶寶、安定、診所、警報、社區）。
-USE_MOE_VOCAB = os.environ.get("TSL_USE_MOE_VOCAB") == "1"
+USE_MOE_VOCAB = os.environ.get("TSL_USE_MOE_VOCAB", "1") != "0"
 
 
 @lru_cache(maxsize=1)

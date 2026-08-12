@@ -47,7 +47,30 @@ def has_cjk(s):
 
 
 def clean_gloss_line(line):
-    """把論文 Gloss 行轉成 token list。回傳 None 表示不可用。"""
+    """把論文 Gloss 行轉成 token list。回傳 None 表示不可用。
+
+    2026-08-13 修正（教授回饋第 2 點：替代用法被直接串成同一個 Gloss 句子）。
+
+    論文用**空白**分隔 Gloss、用「/」分隔同一位置的**替代詞**，但排版時「/」
+    兩側的空白並不一致：
+
+        看/ *見/ *欣賞 心情      ← 「/」後有空白
+        難看/不漂亮/醜 1         ← 「/」後無空白
+
+    舊版先 whitespace 切詞、再對每個 token 做 split("/")[0]，只有後者會被正確
+    收斂；前者會讓 `*見`、`*欣賞` 各自變成獨立 Gloss 串進答案，等於把「不合語法
+    的替代詞」寫進參考答案。實測 143 句 test_papers 有 43 句（30%）因此被汙染。
+
+    另一個坑：`*` 緊貼標的（`*光了 1`），`?`（存疑）卻不緊貼（`? 光了 2`）。
+    只過濾「以 `*` 開頭的 token」會漏掉 `?` 標記的替代詞——它的標記被當成空
+    token 丟掉、被標記的詞卻活了下來（11 句）。故必須先把 `*`/`?` 與其標的
+    收攏，再以 slot 為單位判斷。
+
+    注意：本函式只作用於**論文來源**。語料庫（tslcorpus）的 `?` 是它自己的
+    疑問句尾標記（`你/傘/帶來/有沒有?`），語意完全不同，切勿套用此規則——
+    那會刪掉 48 筆語料庫疑問句的標記，而疑問類型正確率正是本模型少數穩定
+    習得的能力。
+    """
     s = unicodedata.normalize("NFKC", line).strip()
     if not s or not has_cjk(s):
         return None
@@ -59,13 +82,18 @@ def clean_gloss_line(line):
     if re.search(r"[A-Za-z]{3,}", s):
         return None
     s = s.replace("，", " ").replace(",", " ")   # 子句逗號視為分隔
+    # 先讓「一個位置的所有替代詞」黏成同一個 whitespace token，再逐 slot 處理
+    s = re.sub(r"\s*/\s*", "/", s)               # 「/」兩側空白
+    s = re.sub(r"([*?])\s+", r"\1", s)           # 標記與其標的之間的空白
     toks = []
     for raw in s.split():
-        t = raw.strip("，。、；：？?!！")
+        # 同一 slot 內：丟掉不合語法（*）與存疑（?）的替代項，取第一個合法者
+        alts = [a.strip() for a in raw.split("/")]
+        legal = [a for a in alts if a and not a.startswith(("*", "?"))]
+        t = legal[0] if legal else ""
+        t = t.strip("，。、；：？?!！")
         if not t:
             continue
-        # 「/」在論文是替代詞 → 取第一個
-        t = t.split("/")[0]
         # 去下標數字（呼應/變體標記）
         t = re.sub(r"\d+$", "", t)
         t = t.strip("＋+")

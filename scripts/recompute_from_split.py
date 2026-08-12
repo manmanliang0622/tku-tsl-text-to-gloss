@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+"""拿既有的模型輸出檔，換上目前切分裡的參考答案，離線重算指標。
+
+用途：參考答案被修正時（如 2026-08-13 論文替代詞解析修正），模型輸出並未
+改變，不需要重跑推論或重訓——只要把 `results/*.jsonl` 裡的 `ref` 換成切分
+檔的最新 `gloss_text` 再算一次即可。
+
+對齊方式：逐列索引。`eval_json_model.py` 會先去掉句尾標點才餵給模型，
+故 `chinese` 欄可能與切分檔差一個標點；本腳本以索引對齊並驗證去標點後
+的中文完全相同，不同即中止（代表切分已被重新產生，結果檔不可再對齊）。
+
+用法：
+  python3 scripts/recompute_from_split.py \
+      --results results/v11_test_papers_test.jsonl --split test_papers
+"""
+import argparse
+import json
+import sys
+from pathlib import Path
+
+BASE = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE / "scripts"))
+import metrics  # noqa: E402
+
+PUNCT = " 。，、！!？?；;："
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--results", required=True, help="模型輸出 jsonl（含 chinese/ref/pred）")
+    ap.add_argument("--split", required=True, help="切分名稱，如 test_papers")
+    args = ap.parse_args()
+
+    recs = [json.loads(l) for l in Path(args.results).open()]
+    rows = [json.loads(l) for l in (BASE / "data" / "splits" / f"{args.split}.jsonl").open()]
+    if len(recs) != len(rows):
+        sys.exit(f"列數不同：結果檔 {len(recs)}、切分 {len(rows)}，無法對齊")
+    for i, (a, b) in enumerate(zip(recs, rows)):
+        if a["chinese"].strip(PUNCT) != b["chinese"].strip(PUNCT):
+            sys.exit(f"第 {i} 列中文不符：{a['chinese']!r} vs {b['chinese']!r}\n"
+                     "切分可能已重新產生，請重跑推論而非離線重算。")
+
+    vocab = set(json.load((BASE / "data" / "tsl_gloss_vocab.json").open())["glosses"])
+    preds = [r["pred"] for r in recs]
+    old = metrics.evaluate([r["ref"] for r in recs], preds, vocab)
+    new = metrics.evaluate([r["gloss_text"] for r in rows], preds, vocab)
+    changed = sum(1 for a, b in zip(recs, rows) if a["ref"] != b["gloss_text"])
+
+    print(f"{args.results}  n={len(recs)}  參考答案有變動 {changed} 句\n")
+    print(f"{'指標':<14}{'舊參考':>10}{'新參考':>10}{'差':>9}")
+    for k in ("ExactMatch%", "ROUGE-L", "BLEU-4", "InVocab%", "InVocabRef%"):
+        d = new[k] - old[k]
+        print(f"{k:<14}{old[k]:>10.2f}{new[k]:>10.2f}{d:>+9.2f}")
+
+
+if __name__ == "__main__":
+    main()

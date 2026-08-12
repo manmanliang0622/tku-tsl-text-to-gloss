@@ -98,6 +98,25 @@ def _rag_examples(text):
     return pairs, info
 
 
+def _apply_fallback(toks):
+    """把表外 Gloss 修成可播放的詞，修不了的標為指拼（見 scripts/gloss_fallback.py）。
+
+    回傳 (修復後詞串列, 需指拼的原詞串列)。後者放進回應的 `unknown` 欄位，
+    讓下游知道哪些詞得走指拼，而不是收到一個查不到的假 Gloss 就默默失敗。
+    """
+    if not STATE.get("fallback"):
+        return toks, []
+    import gloss_fallback as fb
+    vocab, rend = fb.load_vocab()
+    fixed, unknown = [], []
+    for t in toks:
+        parts, rule = fb.repair_token(t, vocab, rend)
+        if rule == "fingerspell":
+            unknown.append(t)
+        fixed.extend(parts)
+    return fixed, unknown
+
+
 def translate(text, context=""):
     tok, model = STATE["tokenizer"], STATE["model"]
     ex_pairs, ex_info = _rag_examples(text)
@@ -114,6 +133,7 @@ def translate(text, context=""):
     if STATE["target"] == "json":
         obj = _parse_json_output(gen) or {}
         toks = [t for t in str(obj.get("gloss", "")).split() if t.strip()]
+        toks, unknown = _apply_fallback(toks)
         return {
             "chinese": text, "gloss": toks, "gloss_text": "/".join(toks),
             # 下游虛擬人需要的語法資訊（計畫第 1 節：表情/頭部/身體同步）
@@ -124,15 +144,18 @@ def translate(text, context=""):
             "time": obj.get("time"),
             # 相容欄位（0804try 前端用 glosses/question）
             "glosses": toks, "question": obj.get("question_type", "none"),
-            "source": "gemma", "model": STATE["model_name"], "unknown": [],
+            "source": "gemma", "model": STATE["model_name"], "unknown": unknown,
             "context": context,
             "raw": gen.strip(), "seconds": secs, "rag": ex_info,
         }
 
     gloss_text = pc.parse_gloss(gen)
     toks = [t for t in gloss_text.split("/") if t.strip()]
+    toks, unknown = _apply_fallback(toks)
+    gloss_text = "/".join(toks)
     return {"chinese": text, "gloss": toks, "gloss_text": gloss_text,
-            "glosses": toks, "source": "gemma", "model": STATE["model_name"],
+            "glosses": toks, "unknown": unknown,
+            "source": "gemma", "model": STATE["model_name"],
             "context": context,
             "raw": gen.strip(), "seconds": secs, "rag": ex_info}
 
@@ -199,11 +222,20 @@ def main():
                          "依據 CCL24-Eval 與工研院 ITRI 的 RAG/ICL 做法")
     ap.add_argument("--rag-min", type=float, default=0.05,
                     help="檢索相似度下限，低於此值不放入（避免不相關例句干擾）")
+    ap.add_argument("--no-fallback", action="store_true",
+                    help="關閉表外 Gloss 修復。預設開啟：修不了的詞標為指拼放進 "
+                         "unknown 欄位，避免下游收到查不到的假 Gloss 而默默失敗")
     ap.add_argument("--ple", choices=["auto", "gpu", "cpu"], default="auto",
                     help="PLE 放置：auto 依顯存自動判斷（預設）；gpu 強制加速；cpu 省顯存")
     args = ap.parse_args()
     STATE["max_new"] = args.max_new
     STATE["target"] = args.target
+    STATE["fallback"] = not args.no_fallback
+    if STATE["fallback"]:
+        import gloss_fallback as _fb
+        _v, _r = _fb.load_vocab()
+        print(f"[serve] 表外 Gloss 修復已啟用：合法詞 {len(_v)}、可播放 {len(_r)}；"
+              f"修不了的會標為指拼並列入 unknown 欄位", flush=True)
     adapter_path = Path(args.adapter.rstrip("/"))
     STATE["model_name"] = args.model_name or adapter_path.parent.name or adapter_path.name
     if args.target == "json" and args.max_new < 160:

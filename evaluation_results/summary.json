@@ -1,0 +1,145 @@
+{
+  "adapter": "outputs/qlora_e4b_v12_context/checkpoint-1124",
+  "tiers": {
+    "seen": {
+      "n": 100,
+      "ExactMatch%": 42.0,
+      "TokenPrecision": 0.8379,
+      "TokenRecall": 0.8018,
+      "TokenF1": 0.8139,
+      "GER": 0.23,
+      "GER_sentence_avg": 0.2437,
+      "AvgEditDistance": 1.47,
+      "ErrorTypes": {
+        "正確": 42,
+        "Gloss替換錯誤": 29,
+        "OOV/未知Gloss": 13,
+        "漏Gloss": 12,
+        "多餘Gloss": 4
+      },
+      "ErrorTypes%": {
+        "正確": 42.0,
+        "Gloss替換錯誤": 29.0,
+        "OOV/未知Gloss": 13.0,
+        "漏Gloss": 12.0,
+        "多餘Gloss": 4.0
+      },
+      "BLEU-4": 68.86
+    },
+    "paraphrase": {
+      "n": 100,
+      "ExactMatch%": 28.0,
+      "TokenPrecision": 0.8014,
+      "TokenRecall": 0.771,
+      "TokenF1": 0.7801,
+      "GER": 0.3161,
+      "GER_sentence_avg": 0.3296,
+      "AvgEditDistance": 2.02,
+      "ErrorTypes": {
+        "Gloss替換錯誤": 31,
+        "正確": 28,
+        "OOV/未知Gloss": 17,
+        "漏Gloss": 10,
+        "多餘Gloss": 8,
+        "語序錯誤": 5,
+        "完全錯誤": 1
+      },
+      "ErrorTypes%": {
+        "Gloss替換錯誤": 31.0,
+        "正確": 28.0,
+        "OOV/未知Gloss": 17.0,
+        "漏Gloss": 10.0,
+        "多餘Gloss": 8.0,
+        "語序錯誤": 5.0,
+        "完全錯誤": 1.0
+      },
+      "BLEU-4": 56.69
+    },
+    "unseen": {
+      "n": 100,
+      "ExactMatch%": 13.0,
+      "TokenPrecision": 0.6896,
+      "TokenRecall": 0.6588,
+      "TokenF1": 0.6623,
+      "GER": 0.5732,
+      "GER_sentence_avg": 0.5428,
+      "AvgEditDistance": 3.29,
+      "ErrorTypes": {
+        "OOV/未知Gloss": 33,
+        "Gloss替換錯誤": 29,
+        "正確": 13,
+        "漏Gloss": 12,
+        "多餘Gloss": 8,
+        "語序錯誤": 5
+      },
+      "ErrorTypes%": {
+        "OOV/未知Gloss": 33.0,
+        "Gloss替換錯誤": 29.0,
+        "正確": 13.0,
+        "漏Gloss": 12.0,
+        "多餘Gloss": 8.0,
+        "語序錯誤": 5.0
+      },
+      "BLEU-4": 20.24
+    },
+    "paraphrase_需語意映射": {
+      "n": 9,
+      "ExactMatch%": 11.11,
+      "TokenPrecision": 0.8209,
+      "TokenRecall": 0.7159,
+      "TokenF1": 0.7555,
+      "GER": 0.2857,
+      "GER_sentence_avg": 0.3403,
+      "AvgEditDistance": 2.0,
+      "ErrorTypes": {
+        "Gloss替換錯誤": 4,
+        "漏Gloss": 3,
+        "正確": 1,
+        "多餘Gloss": 1
+      },
+      "ErrorTypes%": {
+        "Gloss替換錯誤": 44.44,
+        "漏Gloss": 33.33,
+        "正確": 11.11,
+        "多餘Gloss": 11.11
+      },
+      "BLEU-4": 55.95
+    },
+    "paraphrase_字面仍有依據": {
+      "n": 91,
+      "ExactMatch%": 29.67,
+      "TokenPrecision": 0.7994,
+      "TokenRecall": 0.7764,
+      "TokenF1": 0.7826,
+      "GER": 0.3194,
+      "GER_sentence_avg": 0.3286,
+      "AvgEditDistance": 2.02,
+      "ErrorTypes": {
+        "正確": 27,
+        "Gloss替換錯誤": 27,
+        "OOV/未知Gloss": 17,
+        "多餘Gloss": 7,
+        "漏Gloss": 7,
+        "語序錯誤": 5,
+        "完全錯誤": 1
+      },
+      "ErrorTypes%": {
+        "正確": 29.67,
+        "Gloss替換錯誤": 29.67,
+        "OOV/未知Gloss": 18.68,
+        "多餘Gloss": 7.69,
+        "漏Gloss": 7.69,
+        "語序錯誤": 5.49,
+        "完全錯誤": 1.1
+      },
+      "BLEU-4": 56.86
+    }
+  },
+  "診斷": {
+    "判斷": "情況 3：訓練句與改寫都還行，但未見句子掉",
+    "建議": "優先懷疑句型多樣性與 composition 能力不足。可做：擴充句型覆蓋、增加長句與複雜結構、檢查訓練資料的句型分布是否偏斜。",
+    "補充": [
+      "未見層 OOV 偏高：模型在造訓練沒出現過的詞，可能是照抄中文而非檢索學過的 Gloss。"
+    ]
+  }
+}

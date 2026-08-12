@@ -1,0 +1,211 @@
+{
+  "note": "主要看『可播放率』；EM 不會因 fallback 提高，指拼標記本就不與參考字面相同",
+  "vocab_size": 7138,
+  "renderable_size": 3758,
+  "tiers": {
+    "seen": {
+      "修復前": {
+        "n": 100,
+        "ExactMatch%": 42.0,
+        "TokenPrecision": 0.8379,
+        "TokenRecall": 0.8018,
+        "TokenF1": 0.8139,
+        "GER": 0.23,
+        "GER_sentence_avg": 0.2437,
+        "AvgEditDistance": 1.47,
+        "ErrorTypes": {
+          "正確": 42,
+          "Gloss替換錯誤": 29,
+          "OOV/未知Gloss": 13,
+          "漏Gloss": 12,
+          "多餘Gloss": 4
+        },
+        "ErrorTypes%": {
+          "正確": 42.0,
+          "Gloss替換錯誤": 29.0,
+          "OOV/未知Gloss": 13.0,
+          "漏Gloss": 12.0,
+          "多餘Gloss": 4.0
+        },
+        "BLEU-4": 68.86,
+        "可播放率%": 75.12,
+        "指拼標記率%": 0.0
+      },
+      "修復後": {
+        "n": 100,
+        "ExactMatch%": 42.0,
+        "TokenPrecision": 0.8435,
+        "TokenRecall": 0.8065,
+        "TokenF1": 0.8191,
+        "GER": 0.2254,
+        "GER_sentence_avg": 0.239,
+        "AvgEditDistance": 1.44,
+        "ErrorTypes": {
+          "正確": 42,
+          "Gloss替換錯誤": 31,
+          "漏Gloss": 13,
+          "OOV/未知Gloss": 10,
+          "多餘Gloss": 4
+        },
+        "ErrorTypes%": {
+          "正確": 42.0,
+          "Gloss替換錯誤": 31.0,
+          "漏Gloss": 13.0,
+          "OOV/未知Gloss": 10.0,
+          "多餘Gloss": 4.0
+        },
+        "BLEU-4": 69.3,
+        "可播放率%": 75.12,
+        "指拼標記率%": 1.96
+      },
+      "有改動的句子": 13,
+      "規則使用": {
+        "keep": 591,
+        "normalize": 3,
+        "contained": 5,
+        "fingerspell": 12
+      }
+    },
+    "paraphrase": {
+      "修復前": {
+        "n": 100,
+        "ExactMatch%": 28.0,
+        "TokenPrecision": 0.8014,
+        "TokenRecall": 0.771,
+        "TokenF1": 0.7801,
+        "GER": 0.3161,
+        "GER_sentence_avg": 0.3296,
+        "AvgEditDistance": 2.02,
+        "ErrorTypes": {
+          "Gloss替換錯誤": 32,
+          "正確": 28,
+          "OOV/未知Gloss": 16,
+          "漏Gloss": 10,
+          "多餘Gloss": 8,
+          "語序錯誤": 5,
+          "完全錯誤": 1
+        },
+        "ErrorTypes%": {
+          "Gloss替換錯誤": 32.0,
+          "正確": 28.0,
+          "OOV/未知Gloss": 16.0,
+          "漏Gloss": 10.0,
+          "多餘Gloss": 8.0,
+          "語序錯誤": 5.0,
+          "完全錯誤": 1.0
+        },
+        "BLEU-4": 56.69,
+        "可播放率%": 74.79,
+        "指拼標記率%": 0.0
+      },
+      "修復後": {
+        "n": 100,
+        "ExactMatch%": 29.0,
+        "TokenPrecision": 0.8118,
+        "TokenRecall": 0.7824,
+        "TokenF1": 0.791,
+        "GER": 0.3083,
+        "GER_sentence_avg": 0.3211,
+        "AvgEditDistance": 1.97,
+        "ErrorTypes": {
+          "Gloss替換錯誤": 37,
+          "正確": 29,
+          "漏Gloss": 11,
+          "OOV/未知Gloss": 9,
+          "多餘Gloss": 8,
+          "語序錯誤": 5,
+          "完全錯誤": 1
+        },
+        "ErrorTypes%": {
+          "Gloss替換錯誤": 37.0,
+          "正確": 29.0,
+          "漏Gloss": 11.0,
+          "OOV/未知Gloss": 9.0,
+          "多餘Gloss": 8.0,
+          "語序錯誤": 5.0,
+          "完全錯誤": 1.0
+        },
+        "BLEU-4": 57.49,
+        "可播放率%": 74.71,
+        "指拼標記率%": 1.81
+      },
+      "有改動的句子": 17,
+      "規則使用": {
+        "keep": 583,
+        "fingerspell": 11,
+        "contained": 7,
+        "normalize": 3,
+        "split": 2,
+        "extend": 1
+      }
+    },
+    "unseen": {
+      "修復前": {
+        "n": 100,
+        "ExactMatch%": 13.0,
+        "TokenPrecision": 0.6896,
+        "TokenRecall": 0.6588,
+        "TokenF1": 0.6623,
+        "GER": 0.5732,
+        "GER_sentence_avg": 0.5428,
+        "AvgEditDistance": 3.29,
+        "ErrorTypes": {
+          "Gloss替換錯誤": 34,
+          "OOV/未知Gloss": 25,
+          "漏Gloss": 15,
+          "正確": 13,
+          "多餘Gloss": 8,
+          "語序錯誤": 5
+        },
+        "ErrorTypes%": {
+          "Gloss替換錯誤": 34.0,
+          "OOV/未知Gloss": 25.0,
+          "漏Gloss": 15.0,
+          "正確": 13.0,
+          "多餘Gloss": 8.0,
+          "語序錯誤": 5.0
+        },
+        "BLEU-4": 20.24,
+        "可播放率%": 79.89,
+        "指拼標記率%": 0.0
+      },
+      "修復後": {
+        "n": 100,
+        "ExactMatch%": 13.0,
+        "TokenPrecision": 0.6933,
+        "TokenRecall": 0.6612,
+        "TokenF1": 0.6652,
+        "GER": 0.5697,
+        "GER_sentence_avg": 0.5404,
+        "AvgEditDistance": 3.27,
+        "ErrorTypes": {
+          "Gloss替換錯誤": 40,
+          "OOV/未知Gloss": 18,
+          "漏Gloss": 16,
+          "正確": 13,
+          "多餘Gloss": 8,
+          "語序錯誤": 5
+        },
+        "ErrorTypes%": {
+          "Gloss替換錯誤": 40.0,
+          "OOV/未知Gloss": 18.0,
+          "漏Gloss": 16.0,
+          "正確": 13.0,
+          "多餘Gloss": 8.0,
+          "語序錯誤": 5.0
+        },
+        "BLEU-4": 20.34,
+        "可播放率%": 80.82,
+        "指拼標記率%": 3.54
+      },
+      "有改動的句子": 25,
+      "規則使用": {
+        "keep": 509,
+        "fingerspell": 19,
+        "extend": 4,
+        "normalize": 1,
+        "contained": 4
+      }
+    }
+  }
+}

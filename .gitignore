@@ -24,3 +24,8 @@ models/**/*.pt
 models/**/*.pth
 data/splits_json/*.jsonl
 data/moe/
+
+# 影片庫覆蓋率評估用的鏡像檔：0813 recordings/ 的副本，屬非公開訓練素材，
+# 用 scp 從學校主機再抓即可（見 scripts/eval_video_coverage.py docstring）
+data/video/lexicon.json
+data/video/moe_dict_words.json

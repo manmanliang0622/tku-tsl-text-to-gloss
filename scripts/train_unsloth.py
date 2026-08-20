@@ -41,7 +41,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--model", default=str(Path.home() / "0813/model_service/base_model"))
-ap.add_argument("--data", default=str(Path.home() / "tku-tsl-text-to-gloss/data/splits_json"))
+ap.add_argument("--data", default=None,
+                help="切分資料夾；不給則依 --format 自動選 splits_json 或 splits_script")
+ap.add_argument("--format", choices=["json", "script"], default="json",
+                help="json=舊的結構化 JSON 目標；script=教授指定的候選挑選格式")
 ap.add_argument("--output", default=str(Path.home() / "outputs/qlora_e4b_v13u"))
 ap.add_argument("--epochs", type=float, default=2)
 ap.add_argument("--lr", type=float, default=2e-4)
@@ -52,6 +55,17 @@ ap.add_argument("--lora-r", type=int, default=16)
 ap.add_argument("--lora-alpha", type=int, default=32)
 ap.add_argument("--seed", type=int, default=42)
 args = ap.parse_args()
+
+_REPO = Path.home() / "tku-tsl-text-to-gloss"
+if args.data is None:
+    args.data = str(_REPO / ("data/splits_script" if args.format == "script"
+                             else "data/splits_json"))
+# 新格式的 prompt 光候選清單就吃掉 654 token（k=40 壓縮版實測中位數），
+# 沿用 512 會把 assistant 段整段截掉而學不到東西。
+if args.format == "script" and args.max_len < 768:
+    print(f"[train] --format script：max_len {args.max_len} → 768（候選清單需要）",
+          flush=True)
+    args.max_len = 768
 
 print(f"[train] {json.dumps(vars(args), ensure_ascii=False)}", flush=True)
 
@@ -98,9 +112,13 @@ def load_split(name):
     with open(Path(args.data) / f"{name}.jsonl", encoding="utf-8") as f:
         for line in f:
             r = json.loads(line)
+            # script 格式的資料本身已是完整 messages（system/user/assistant），
+            # 候選清單就在 user turn 裡，不可再過 prompt_common 包一層。
+            msgs = (r["messages"] if args.format == "script"
+                    else pc.build_messages(r["input"], r["output"],
+                                           context=r.get("context", "")))
             text = tokenizer.apply_chat_template(
-                pc.build_messages(r["input"], r["output"], context=r.get("context", "")),
-                tokenize=False, add_generation_prompt=False,
+                msgs, tokenize=False, add_generation_prompt=False,
             )
             if not isinstance(text, str):
                 text = str(text)
@@ -159,6 +177,28 @@ trainer = train_on_responses_only(
     response_part="<|turn>model\n",
 )
 print("[train] train_on_responses_only 已套用（Gemma 4 <|turn> 標記）", flush=True)
+
+# 遮罩自我檢查：把第一筆實際會算 loss 的片段印出來。
+# 今天已被靜默遮罩失敗坑過一次（標記寫錯→整批 -100→退回全序列 loss 但不報錯），
+# 光看「已套用」訊息不夠，要真的看到學的是 assistant 段才算數。
+try:
+    probe = trainer.train_dataset[0]
+    lab = probe.get("labels")
+    ids = probe.get("input_ids")
+    if lab is not None and ids is not None:
+        kept = [i for i, l in zip(ids, lab) if l != -100]
+        pct = 100 * len(kept) / max(len(lab), 1)
+        print(f"[train] 遮罩檢查：{len(kept)}/{len(lab)} token 參與 loss（{pct:.1f}%）",
+              flush=True)
+        print(f"[train] 實際學習內容：{tokenizer.decode(kept)[:200]!r}", flush=True)
+        if not kept:
+            raise SystemExit("[train] ✗ 整批被遮成 -100，訓練無意義，請檢查 turn 標記")
+        if pct > 80:
+            print("[train] ⚠️ 參與 loss 的比例過高，疑似遮罩失效退回全序列", flush=True)
+except SystemExit:
+    raise
+except Exception as e:  # noqa: BLE001  檢查失敗不該擋住訓練
+    print(f"[train] 遮罩檢查略過（{e}）", flush=True)
 
 torch.cuda.reset_peak_memory_stats()
 t0 = time.time()

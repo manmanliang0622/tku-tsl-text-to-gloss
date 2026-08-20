@@ -1,0 +1,282 @@
+#!/usr/bin/env python3
+"""候選手語檢索：從中文句子撈出「可能用得到的 sign_id」清單。
+
+為什麼是這支決定成敗（2026-08-20，教授指定的訓練資料格式）：
+    新格式要模型「只能從候選清單挑 sign_id」。候選清單怎麼來，
+    **訓練與推論必須用同一支程式**——訓練時若用「拿正解回頭湊candidates」
+    的作弊法，上線時無正解可用、候選分布完全不同，模型學到的約束就失效。
+    故本模組只吃中文句子，不吃正解，離線建資料與線上服務共用。
+
+檢索方法（沿用 rag_retrieve.py 的原則：不裝額外依賴、共用機能跑）：
+    1. 字面命中  句子裡直接出現的詞（「今天天氣很好」→ 今天／天氣／好）。
+                 中文無空白分詞，改以動作庫的詞當詞典做最長匹配掃描，
+                 等價於用 16,628 詞的詞典斷詞，精準度最高。
+    2. 例句遷移  用既有 Retriever 找相似訓練句，把那些句子用到的手語一起放進來。
+                 這能撈到字面撈不到的對應（「走走」→ 散步、「想去」→ 想）。
+    3. 字元重疊  與句子共用字元的詞（今天→今年、天氣→氣）。純為湊出干擾項，
+                 讓模型必須真的判斷而不是照抄唯一候選。
+
+干擾項是刻意的：教授範例裡的 現在／熱／公園／游泳 都不是答案，
+但少了它們，候選清單＝答案清單，模型不必學選擇，直接背誦即可。
+
+用法：
+    python3 scripts/sign_candidates.py "今天天氣很好，我想去海邊走走。"
+    from sign_candidates import CandidateRetriever
+"""
+from __future__ import annotations
+
+import collections
+import json
+import re
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from eval_video_coverage import norm  # noqa: E402  複用既有 gloss 正規化
+
+BASE = Path(__file__).resolve().parent.parent
+INVENTORY = BASE / "data" / "signs" / "sign_inventory.jsonl"
+INDEX = BASE / "data" / "signs" / "gloss_to_sign.json"
+
+_PUNCT = "，。？！?!,.、;；:：…「」『』（）()《》〈〉 　\n\t"
+_STOP = {"的", "了", "是", "在", "и"}   # 純虛詞，撈進候選只是雜訊
+
+
+def strip_punct(text: str) -> str:
+    return "".join(c for c in str(text) if c not in _PUNCT)
+
+
+class CandidateRetriever:
+    """從中文句子檢索候選手語。載入一次重複使用（線上服務常駐）。"""
+
+    def __init__(self, inventory: Path = INVENTORY, index: Path = INDEX,
+                 use_examples: bool = True):
+        self.rows = [json.loads(l) for l in
+                     inventory.read_text(encoding="utf-8").splitlines() if l.strip()]
+        self.by_gloss = {r["gloss"]: r for r in self.rows}
+        self.index: dict[str, str] = json.loads(index.read_text(encoding="utf-8"))
+        self.by_id = {r["sign_id"]: r for r in self.rows}
+        self.max_len = max(len(g) for g in self.by_gloss)
+        # 字元 → 含該字元的 gloss，供干擾項檢索
+        self.by_char: dict[str, list[str]] = {}
+        for g in self.by_gloss:
+            for ch in set(g):
+                self.by_char.setdefault(ch, []).append(g)
+
+        self._ex_rows, self._ex_bg = [], []
+        self._core: list[str] = []
+        if use_examples:
+            self._load_examples()
+
+    def _load_examples(self) -> None:
+        """載入訓練句供「例句遷移」與詞對齊表；缺檔不致命，退化成純字面檢索。"""
+        path = BASE / "data" / "splits" / "train.jsonl"
+        if not path.exists():
+            return
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            r = json.loads(line)
+            if r.get("chinese") and r.get("gloss_text"):
+                self._ex_rows.append(r)
+                self._ex_bg.append(self._bigrams(r["chinese"]))
+        self._build_align()
+        self._build_core()
+
+    def _build_core(self, size: int = 30) -> None:
+        """高頻核心手語，每題都放進候選。
+
+        為什麼不能只靠檢索（2026-08-20 實測）：自然手語的 這／那／他／我
+        是**空間指示與代名詞**，屬語法機制不是中文詞的對譯。實例：
+
+            往西邊走會到公園  →  西/那/走/那/公園/那
+            他推我下去池子裡  →  池/這/池/他/我/他/我/他/推
+
+        中文句面完全沒有「那」字，任何以中文為輸入的檢索都撈不到，
+        但它們是 dev 集最常缺的詞（這 285、什麼 220、那 181 次）。
+        手語者隨時都能比指示與代名詞，候選清單也就該隨時備著。
+        """
+        freq: collections.Counter = collections.Counter()
+        for r in self._ex_rows:
+            for t in str(r["gloss_text"]).split("/"):
+                t = t.strip()
+                if t in self.by_gloss:
+                    freq[t] += 1
+        self._core = [g for g, _ in freq.most_common(size)]
+
+    def _build_align(self) -> None:
+        """從平行語料挖「中文片段 → gloss」對齊表。
+
+        為什麼非有不可：自然手語大量使用**中文句面上沒有的詞**。
+        「我會注意政見發表的內容」的 gloss 是 政見/演講/什麼/我/注意/會——
+        「什麼」是話題引入標記，中文裡根本沒這兩個字，字面掃描永遠撈不到。
+        同類還有 這／那／他／有／是，實測是 dev 集最常見的漏撈詞。
+
+        作法是最陽春的共現統計（等價於 IBM Model 1 的詞彙翻譯機率）：
+        數「中文出現片段 c 時，gloss 出現 g」的次數，再除以 g 的總頻次抑制
+        高頻詞洗版。不需外部套件，建表數秒。
+        """
+        co: dict[str, collections.Counter] = {}
+        gfreq: collections.Counter = collections.Counter()
+        for r in self._ex_rows:
+            toks = {t.strip() for t in str(r["gloss_text"]).split("/") if t.strip()}
+            toks = {t for t in toks if t in self.by_gloss}
+            if not toks:
+                continue
+            gfreq.update(toks)
+            t = strip_punct(r["chinese"])
+            frags = set(t) | {t[i:i + 2] for i in range(len(t) - 1)}
+            for c in frags:
+                bucket = co.setdefault(c, collections.Counter())
+                bucket.update(toks)
+        # 轉成 條件機率 × 稀有度加權，只留每個片段最強的幾個對應
+        self._align: dict[str, list[tuple[str, float]]] = {}
+        for c, bucket in co.items():
+            total = sum(bucket.values())
+            if total < 2:
+                continue
+            scored = [(g, (n / total) * (1.0 / (1.0 + gfreq[g] ** 0.5)))
+                      for g, n in bucket.items() if n >= 2]
+            scored.sort(key=lambda x: -x[1])
+            if scored:
+                self._align[c] = scored[:8]
+
+    @staticmethod
+    def _bigrams(text: str) -> set[str]:
+        t = strip_punct(text)
+        return {t[i:i + 2] for i in range(len(t) - 1)} or {t}
+
+    def resolve(self, gloss: str) -> str | None:
+        """gloss 寫法 → sign_id；解不到回 None（＝動作庫演不出來）。
+
+        必須先過 norm()：語料庫的 gloss 帶標註記號（++ 重複、+X 複合、
+        (X) 註記），`買++` 不是一個新手語而是「買」打兩次，動作庫只會有「買」。
+        不正規化就查，會把一堆演得出來的詞誤判成缺片（實測 dev 集因此
+        虛報 43 個缺口）。
+        """
+        g = str(gloss).strip()
+        for form in (g, strip_punct(g), norm(g)):
+            if form and form in self.index:
+                return self.index[form]
+        return None
+
+    def _literal(self, text: str) -> list[str]:
+        """撈出句子裡字面出現的詞——**所有**匹配，不是最長匹配切分。
+
+        為什麼不能用最長匹配（2026-08-20 實測）：切分會把短詞吃掉，
+        「這個東西」只切出 這個／東西，但語料的正解 gloss 是「這」；
+        「有沒有」切成一塊，「有」就進不了候選。實測 train 集最常漏撈的
+        這(285)／什麼(220)／那(181)／有(144) 全是被這樣吃掉的，
+        它們在動作庫裡都有影片，純粹是查詢端的錯。
+
+        候選清單本來就該是**選項**而非切分結果，長短詞並陳交給模型判斷才對。
+        """
+        t = strip_punct(text)
+        hits: list[str] = []
+        seen: set[str] = set()
+        for i in range(len(t)):
+            for ln in range(min(self.max_len, len(t) - i), 0, -1):
+                chunk = t[i:i + ln]
+                if chunk in self.by_gloss and chunk not in _STOP and chunk not in seen:
+                    seen.add(chunk)
+                    hits.append(chunk)
+        # 長詞優先：較具體的對應排前面，k 截斷時先保住資訊量大的
+        hits.sort(key=lambda g: (-len(g), t.find(g)))
+        return hits
+
+    def _from_examples(self, text: str, k: int, exclude_id=None) -> list[str]:
+        """相似訓練句用到的手語。
+
+        exclude_id 是**建訓練資料時必給**的：不排掉句子自己，檢索會把正解
+        原封不動撈回候選，模型只要照抄就滿分，上線卻無此捷徑（實測 train
+        涵蓋率因此虛高到 96.8%，dev 只有 73.4%）。
+        """
+        if not self._ex_rows:
+            return []
+        q = self._bigrams(text)
+        scored = []
+        for r, bg in zip(self._ex_rows, self._ex_bg):
+            if exclude_id is not None and r.get("id") == exclude_id:
+                continue
+            inter = len(q & bg)
+            if inter:
+                scored.append((inter / len(q | bg), r))
+        scored.sort(key=lambda x: -x[0])
+        out = []
+        for _, r in scored[:k]:
+            for g in str(r["gloss_text"]).split("/"):
+                g = g.strip()
+                if g and g in self.by_gloss:
+                    out.append(g)
+        return out
+
+    def _from_align(self, text: str, want: int) -> list[str]:
+        """詞對齊表：撈出中文句面沒有、但語料顯示常一起出現的手語。"""
+        if not getattr(self, "_align", None):
+            return []
+        t = strip_punct(text)
+        frags = set(t) | {t[i:i + 2] for i in range(len(t) - 1)}
+        agg: dict[str, float] = {}
+        for c in frags:
+            for g, s in self._align.get(c, ()):
+                agg[g] = agg.get(g, 0.0) + s
+        return sorted(agg, key=lambda g: (-agg[g], g))[:want]
+
+    def _distractors(self, text: str, chosen: set[str], want: int) -> list[str]:
+        """共用字元的詞，依重疊比排序。純為增加選擇難度。"""
+        t = set(strip_punct(text))
+        scored: dict[str, float] = {}
+        for ch in t:
+            for g in self.by_char.get(ch, ()):
+                if g in chosen or g in _STOP:
+                    continue
+                scored[g] = max(scored.get(g, 0), len(set(g) & t) / len(set(g)))
+        ranked = sorted(scored, key=lambda g: (-scored[g], len(g), g))
+        return ranked[:want]
+
+    # n_examples 預設 8 是實測結果，不是猜的：教授範例句「今天天氣很好…」
+    # 的關鍵對應「天氣很好→晴朗」出現在相似度第 4 名的訓練句，top-3 撈不到。
+    def candidates(self, text: str, k: int = 20, n_examples: int = 8,
+                   distractor_ratio: float = 0.2, n_align: int = 12,
+                   n_core: int = 30, exclude_id=None) -> list[dict]:
+        """回傳 [{sign_id, gloss}]，長度上限 k。順序穩定（可重現）。
+
+        五個通道依序填：字面命中 → 例句遷移 → 詞對齊 → 高頻核心 → 字元重疊干擾項。
+        前四個負責把正解撈進來，最後一個負責讓題目不會只有答案。
+        """
+        ordered: list[str] = []
+        seen: set[str] = set()
+
+        def add(glosses):
+            for g in glosses:
+                if g not in seen and g in self.by_gloss:
+                    seen.add(g)
+                    ordered.append(g)
+
+        add(self._literal(text))
+        add(self._from_examples(text, n_examples, exclude_id=exclude_id))
+        add(self._from_align(text, n_align))
+        add(self._core[:n_core])
+        room = max(0, k - len(ordered))
+        if room:
+            add(self._distractors(text, seen, min(room, max(1, int(k * distractor_ratio)))))
+        return [{"sign_id": self.by_gloss[g]["sign_id"], "gloss": g}
+                for g in ordered[:k]]
+
+
+def main() -> int:
+    if len(sys.argv) < 2:
+        print(__doc__)
+        return 1
+    r = CandidateRetriever()
+    text = sys.argv[1]
+    cands = r.candidates(text)
+    print(f"輸入：{text}")
+    print(f"候選 {len(cands)}：")
+    for c in cands:
+        print(f"  {c['sign_id']}  {c['gloss']}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

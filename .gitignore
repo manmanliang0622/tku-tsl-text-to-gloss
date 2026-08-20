@@ -29,3 +29,7 @@ data/moe/
 # 用 scp 從學校主機再抓即可（見 scripts/eval_video_coverage.py docstring）
 data/video/lexicon.json
 data/video/moe_dict_words.json
+
+# 腳本格式訓練資料：可由 build_script_dataset.py 從 splits＋sign_inventory 再生（16MB），
+# 不入庫；涵蓋率統計 coverage_stats.json 是評估結論，要留。
+data/splits_script/*.jsonl

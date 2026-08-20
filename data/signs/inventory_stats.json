@@ -1,0 +1,24 @@
+{
+  "lexicon_entries": 16628,
+  "signs": 16628,
+  "new_ids_this_run": 16628,
+  "index_keys": 16721,
+  "alias_keys_added": 93,
+  "by_source": {
+    "moe_signdict": 7913,
+    "other": 3467,
+    "moc_corpus": 3412,
+    "tsl_placenames": 846,
+    "tsl_familynames": 565,
+    "tasli": 425
+  },
+  "by_gloss_len": {
+    "2": 9701,
+    "4": 2884,
+    "3": 2079,
+    "1": 996,
+    "6": 529,
+    "5": 439
+  },
+  "missing_timing": 0
+}

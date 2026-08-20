@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""用 Unsloth 訓練 Gemma 4 E4B QLoRA（v12u），超參數對齊 v8/v11 以求可比。
+"""用 Unsloth 訓練 Gemma 4 E4B QLoRA（v13u），超參數對齊 v8/v11 以求可比。
+
+⚠️ 版號從 v13 起跳，**跳過 v12**：v12 已被既有的「上下文（前文）模型」佔用
+（2026-08-12 的 SCOPE 路線實驗，見 NEXT_STEPS.md 第 2 節）。本輪與上下文無關，
+沿用 v12 會讓日後報告出現兩個 v12 而誤讀。
 
 為什麼要這一輪（2026-08-20，教授要求評估 Unsloth）：
   smoke test 已證明能跑、峰值 10.87GB。但「能跑」不等於「品質相同」，
@@ -38,7 +42,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 ap = argparse.ArgumentParser()
 ap.add_argument("--model", default=str(Path.home() / "0813/model_service/base_model"))
 ap.add_argument("--data", default=str(Path.home() / "tku-tsl-text-to-gloss/data/splits_json"))
-ap.add_argument("--output", default=str(Path.home() / "outputs/qlora_e4b_v12u"))
+ap.add_argument("--output", default=str(Path.home() / "outputs/qlora_e4b_v13u"))
 ap.add_argument("--epochs", type=float, default=2)
 ap.add_argument("--lr", type=float, default=2e-4)
 ap.add_argument("--batch", type=int, default=2)

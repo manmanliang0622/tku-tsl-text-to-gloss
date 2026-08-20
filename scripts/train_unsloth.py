@@ -21,14 +21,19 @@
   # pillow：系統版太舊缺 Image.Resampling
   # torchao：unsloth 帶的 0.18 需要 torch>=2.8，本機是 2.7.1
 
-執行（訓練需 ~10.9GB 顯存，須先停 v11 服務）：
-  setsid nohup ~/unsloth-venv/bin/python ~/train_unsloth.py > ~/unsloth_train.log 2>&1 &
+執行（訓練需 ~10.9GB 顯存，須先停 v11 服務）。
+**必須在 repo 的 scripts/ 目錄下跑**，本檔 import prompt_common 求與 v8 同 prompt：
+  cd ~/tku-tsl-text-to-gloss/scripts
+  setsid nohup ~/unsloth-venv/bin/python train_unsloth.py > ~/unsloth_train.log 2>&1 &
 """
 import argparse
 import inspect
 import json
+import sys
 import time
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--model", default=str(Path.home() / "0813/model_service/base_model"))
@@ -50,6 +55,8 @@ from unsloth import FastModel  # noqa: E402
 import torch  # noqa: E402
 from datasets import Dataset  # noqa: E402
 from trl import SFTConfig, SFTTrainer  # noqa: E402
+
+import prompt_common as pc  # noqa: E402  與 train_qlora.py 共用同一組 prompt
 
 t0 = time.time()
 model, tokenizer = FastModel.from_pretrained(
@@ -75,17 +82,21 @@ model = FastModel.get_peft_model(
 
 
 def load_split(name):
+    """組 prompt 一律走 prompt_common.build_messages，與 train_qlora.py 相同。
+
+    ⚠️ 2026-08-20 踩過：第一版自己組 `instruction + "\\n" + input`，訓練沒問題
+    （eval_loss 0.23 正常收斂），但 eval_json_model.py 是用 prompt_common 組
+    prompt（結尾是「Gloss：」）。模型沒見過那個提示，就照字面吐純 gloss 而非
+    JSON，評估分數全部掛零，看起來像模型爛掉，其實只是 prompt 不一致。
+    要跟 v8 公平比較，prompt 必須逐字相同——這也是換訓練框架時最容易漏的一環。
+    """
     rows = []
     with open(Path(args.data) / f"{name}.jsonl", encoding="utf-8") as f:
         for line in f:
             r = json.loads(line)
-            user = r["instruction"] + "\n" + r.get("input", "")
-            msgs = [
-                {"role": "user", "content": user},
-                {"role": "assistant", "content": r["output"]},
-            ]
             text = tokenizer.apply_chat_template(
-                msgs, tokenize=False, add_generation_prompt=False
+                pc.build_messages(r["input"], r["output"], context=r.get("context", "")),
+                tokenize=False, add_generation_prompt=False,
             )
             if not isinstance(text, str):
                 text = str(text)

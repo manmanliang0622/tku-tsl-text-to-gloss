@@ -1,6 +1,13 @@
 {
   "lexicon_entries": 16628,
   "signs": 16628,
+  "distinct_signs": 16624,
+  "duplicates": {
+    "TSL_00001": "TSL_13474",
+    "TSL_00002": "TSL_13487",
+    "TSL_01692": "TSL_01691",
+    "TSL_06664": "TSL_06663"
+  },
   "new_ids_this_run": 0,
   "index_keys": 16721,
   "alias_keys_added": 53,
@@ -32,7 +39,7 @@
           "duration": 1.96
         }
       ],
-      "same_duration": true
+      "verified_duplicate": true
     },
     {
       "gloss_clean": "許久",
@@ -54,7 +61,7 @@
           "duration": 2.96
         }
       ],
-      "same_duration": true
+      "verified_duplicate": true
     },
     {
       "gloss_clean": "事情",
@@ -76,7 +83,7 @@
           "duration": 6.8
         }
       ],
-      "same_duration": false
+      "verified_duplicate": false
     },
     {
       "gloss_clean": "傾聽",
@@ -98,7 +105,7 @@
           "duration": 3.0
         }
       ],
-      "same_duration": true
+      "verified_duplicate": true
     },
     {
       "gloss_clean": "共同",
@@ -120,7 +127,7 @@
           "duration": 3.0
         }
       ],
-      "same_duration": false
+      "verified_duplicate": false
     },
     {
       "gloss_clean": "抹黑",
@@ -142,7 +149,7 @@
           "duration": 3.737
         }
       ],
-      "same_duration": true
+      "verified_duplicate": true
     },
     {
       "gloss_clean": "軟弱",
@@ -164,7 +171,7 @@
           "duration": 2.96
         }
       ],
-      "same_duration": false
+      "verified_duplicate": false
     }
   ],
   "by_source": {

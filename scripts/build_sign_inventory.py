@@ -39,9 +39,11 @@ gloss 清理與 name_key（2026-08-21）：
     **7 組碰撞**——那個「唯一」有一半是髒空白撐出來的假象。ID 一旦凍結不可改，
     碰撞規則必須現在就定死。
 
-    這 7 組是同詞不同錄影（訪談／許久／事情／傾聽／共同／抹黑／軟弱），其中
-    4 組兩筆時長完全相同，比較像重複收錄而非地區變體。是否合併需看影片才能定，
-    本腳本只負責偵測與報告，不自行刪併。
+    這 7 組已於 2026-08-21 逐組比對動作資料查清：**4 組（訪談／許久／傾聽／抹黑）
+    的 frames 陣列 sha256 完全相同**，是同一支錄影被匯入兩次，label 只差一個
+    控制字元或尾空白；另 3 組（事情／共同／軟弱）確為不同錄影，兩支都保留。
+    重複者標 duplicate_of 不刪 ID（見 DUPLICATE_OF），對外報告請引用
+    distinct_signs（16,624）而非 signs（16,628）。
 
 輸出：
     data/signs/sign_inventory.jsonl   逐筆：sign_id / gloss / gloss_clean / name_key / 來源 / 影片位置
@@ -70,6 +72,25 @@ STATS = OUT_DIR / "inventory_stats.json"
 
 ID_PREFIX = "TSL_"
 ID_WIDTH = 5
+
+# 2026-08-21 逐筆比對動作資料後確認的重複收錄：同一支錄影被收兩次，
+# label 只差一個控制字元或尾空白。判定依據不是時長相近，是 frames 陣列的
+# sha256 **完全相同**（下列括號內為前 16 碼）；created_at 不同代表兩次匯入。
+# 重驗方式：在 VM 上比對 ~/0813/recordings/<recording>.json 的 frames 欄位。
+#
+# ID 不刪除（發出去的 ID 永不可變，且下游可能已引用），改標 duplicate_of，
+# 使「動作庫有幾個手語」這個數字據實扣除。實測這 4 筆目前引用數為 0，
+# 檢索器也撈不到（髒鍵不可能被中文查詢命中），標記純為報告數字誠實。
+DUPLICATE_OF = {
+    "TSL_00001": "TSL_13474",   # 訪談 moe_12_1218 = moe_02_0925 (707b2b53e2e3ddbe)
+    "TSL_00002": "TSL_13487",   # 許久 moe_12_1219 = moe_01_0339 (51deed856f7e9edf)
+    "TSL_01692": "TSL_01691",   # 傾聽 moe_05_0022 = moe_02_0097 (8997c78a4918754d)
+    "TSL_06664": "TSL_06663",   # 抹黑 moe_12_0711 = moe_13_0773 (c3b4450341292dbc)
+}
+# 另 3 組清理後同名者已比對確認為**不同**錄影，兩支都保留：
+#   事情 TSL_00883（語料庫長片切出的 0.65 秒片段）vs TSL_00004（辭典單詞）
+#   共同 TSL_02059（錄影 label「一同」）vs TSL_02060
+#   軟弱 TSL_14281（錄影 label「弱」）  vs TSL_14282
 
 # recording 檔名前綴 → 素材來源。來源會影響授權標註，必須逐筆帶著走。
 SOURCE_PREFIX = {
@@ -157,6 +178,8 @@ def main() -> int:
             # 動作庫有這筆＝虛擬人演得出來。這是 asset_class 的唯一事實依據。
             "asset_class": "natural_playable",
         })
+        if sign_id in DUPLICATE_OF:
+            rows[-1]["duplicate_of"] = DUPLICATE_OF[sign_id]
 
     # ---- name_key：語義 ID 的命名基礎，碰撞時加序號後綴 ----
     # 依既有 sign_id 排序決定誰不加後綴，重跑結果才穩定（ID 凍結後不可改）。
@@ -178,8 +201,9 @@ def main() -> int:
                              "name_key": r["name_key"], "source": r["source"],
                              "recording": r["recording"],
                              "duration": r["duration"]} for r in group],
-                # 時長相同＝比較像同一支重複收錄，不是地區變體；仍須看影片才能定
-                "same_duration": len({r["duration"] for r in group}) == 1,
+                # 2026-08-21 已逐組比對 frames：4 組完全相同（重複收錄），
+                # 3 組不同（真變體，兩支都留）。新出現的碰撞需照同樣方式驗。
+                "verified_duplicate": any(r["sign_id"] in DUPLICATE_OF for r in group),
             })
 
     name_keys = [r["name_key"] for r in rows]
@@ -196,14 +220,16 @@ def main() -> int:
         "slash": sum(1 for r in rows if "/" in r["gloss_clean"]),
     }
     if collisions:
-        print(f"\n⚠ 清理後 gloss 碰撞 {len(collisions)} 組"
-              f"（其中 {sum(c['same_duration'] for c in collisions)} 組兩筆時長相同，"
-              f"較像重複收錄而非變體）：")
+        n_dup = sum(c["verified_duplicate"] for c in collisions)
+        print(f"\n清理後 gloss 碰撞 {len(collisions)} 組"
+              f"（已驗證 {n_dup} 組為重複收錄、{len(collisions) - n_dup} 組為不同錄影）：")
         for c in collisions:
             ms = "／".join(f"{m['sign_id']}({m['recording']} {m['duration']}s)"
                            for m in c["members"])
-            print(f"    {c['gloss_clean']}: {ms}")
-        print("  已用 name_key 後綴區分，不影響現有 sign_id；是否合併需看影片決定。")
+            tag = "重複收錄" if c["verified_duplicate"] else "真變體"
+            print(f"    [{tag}] {c['gloss_clean']}: {ms}")
+        print("  已用 name_key 後綴區分，不影響現有 sign_id。"
+              "⚠ 新出現的碰撞未經驗證，需比對 frames 後補進 DUPLICATE_OF。")
     if any(dirty.values()):
         print(f"\n動作庫 gloss 髒資料（gloss 欄保持原狀，清理值在 gloss_clean）："
               f"控制字元 {dirty['control_chars']}／前後空白 {dirty['outer_space']}"
@@ -236,9 +262,13 @@ def main() -> int:
                 f"name_key 與索引不一致：{r['gloss_clean']} → "
                 f"name_key {r['sign_id']} / 索引 {index.get(r['gloss_clean'])}")
 
+    dup_rows = [r for r in rows if "duplicate_of" in r]
     stats = {
         "lexicon_entries": len(lexicon),
         "signs": len(rows),
+        # 對外報告用這個數字：扣掉已驗證的重複收錄
+        "distinct_signs": len(rows) - len(dup_rows),
+        "duplicates": {r["sign_id"]: r["duplicate_of"] for r in dup_rows},
         "new_ids_this_run": new_count,
         "index_keys": len(index),
         "alias_keys_added": alias_added,

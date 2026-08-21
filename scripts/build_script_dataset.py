@@ -63,14 +63,14 @@ def clause_breaks(gloss_tokens: list[str], raw: str) -> list[int]:
 
 
 def convert_row(row: dict, retr: CandidateRetriever, k: int,
-                split: str, compact: bool = False) -> tuple[dict, dict]:
+                split: str, compact: bool = False, n_syn: int = 0) -> tuple[dict, dict]:
     text = str(row.get("chinese", "")).strip()
     gloss_raw = str(row.get("gloss_text", "")).strip()
     tokens = [t.strip() for t in gloss_raw.split("/") if t.strip()]
 
     # train 句必須排掉自己：例句遷移會把同一句撈回來，等於直接把正解塞進候選，
     # 訓練出「照抄檢索結果」的捷徑，上線無此捷徑即失效。
-    cands = retr.candidates(text, k=k, exclude_id=row.get("id"))
+    cands = retr.candidates(text, k=k, exclude_id=row.get("id"), n_syn=n_syn)
     cand_ids = {c["sign_id"] for c in cands}
 
     sign_ids, oov = [], []
@@ -137,6 +137,10 @@ def main() -> int:
                     help="候選壓成 ID=gloss 字串（省 36%% token）")
     ap.add_argument("--no-compact", dest="compact", action="store_false",
                     help="用教授原始的候選物件寫法")
+    ap.add_argument("--n-syn", type=int, default=0,
+                    help="同義展開通道的名額上限。**預設 0＝關閉**：實測 train "
+                         "涵蓋率 92.6%%→90.7%%、dev 僅 +0.1pp，是淨負的。"
+                         "見 sign_candidates._from_synonyms")
     ap.add_argument("--dry-run", action="store_true", help="只算涵蓋率不寫檔")
     ap.add_argument("--limit", type=int, default=0, help="每個切分只處理前 N 句（除錯用）")
     args = ap.parse_args()
@@ -158,7 +162,8 @@ def main() -> int:
 
         records, stats = [], []
         for i, row in enumerate(rows):
-            rec, st = convert_row(row, retr, args.k, split, compact=args.compact)
+            rec, st = convert_row(row, retr, args.k, split, compact=args.compact,
+                                  n_syn=args.n_syn)
             records.append(rec)
             stats.append(st)
             if (i + 1) % 500 == 0:

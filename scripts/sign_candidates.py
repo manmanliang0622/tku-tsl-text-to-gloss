@@ -37,6 +37,7 @@ from eval_video_coverage import norm  # noqa: E402  複用既有 gloss 正規化
 BASE = Path(__file__).resolve().parent.parent
 INVENTORY = BASE / "data" / "signs" / "sign_inventory.jsonl"
 INDEX = BASE / "data" / "signs" / "gloss_to_sign.json"
+SYNONYMS = BASE / "data" / "signs" / "synonym_groups.json"
 
 _PUNCT = "，。？！?!,.、;；:：…「」『』（）()《》〈〉 　\n\t"
 _STOP = {"的", "了", "是", "在", "и"}   # 純虛詞，撈進候選只是雜訊
@@ -50,7 +51,7 @@ class CandidateRetriever:
     """從中文句子檢索候選手語。載入一次重複使用（線上服務常駐）。"""
 
     def __init__(self, inventory: Path = INVENTORY, index: Path = INDEX,
-                 use_examples: bool = True):
+                 use_examples: bool = True, synonyms: Path = SYNONYMS):
         all_rows = [json.loads(l) for l in
                     inventory.read_text(encoding="utf-8").splitlines() if l.strip()]
         # 已驗證的重複收錄（build_sign_inventory.DUPLICATE_OF）不進候選：
@@ -69,10 +70,49 @@ class CandidateRetriever:
             for ch in set(g):
                 self.by_char.setdefault(ch, []).append(g)
 
+        # 清理後詞形 → 動作庫原鍵：同義表用 gloss_clean，by_gloss 用原鍵，
+        # 有 45 筆原鍵帶空白，不轉換這一層會白白漏掉
+        self._clean_to_raw: dict[str, str] = {}
+        for r in self.rows:
+            self._clean_to_raw.setdefault(r["gloss_clean"], r["gloss"])
+
+        self._syn: dict[str, list[str]] = {}
+        if synonyms and Path(synonyms).exists():
+            self._load_synonyms(Path(synonyms))
+
         self._ex_rows, self._ex_bg = [], []
         self._core: list[str] = []
         if use_examples:
             self._load_examples()
+
+    def _load_synonyms(self, path: Path) -> None:
+        """載入同義詞組（scripts/build_synonym_groups.py）。
+
+        兩種來源的可信度不同，展開順序照可信度排：same_clip（同一支錄影同一
+        區段，按定義就是同一個動作）優先於 dict_alias（辭典說可以用同一個手語
+        打，但中文不見得全等，如 成→完成／成功）。k 截斷時先保住強的那些。
+        """
+        data = json.loads(path.read_text(encoding="utf-8"))
+        rank = {"same_clip": 0, "dict_alias": 1, "moe_alias": 2}
+        by_id = {g["id"]: g for g in data.get("groups", [])}
+        pairs: dict[str, list[tuple[int, str]]] = {}
+        for gid, group in by_id.items():
+            r = rank.get(group["source"], 9)
+            members = group["members"]
+            for m in members:
+                for other in members:
+                    if other != m:
+                        pairs.setdefault(m, []).append((r, other))
+        for m, lst in pairs.items():
+            out, seen = [], set()
+            for _, other in sorted(lst, key=lambda x: x[0]):
+                raw = other if other in self.by_gloss else self._clean_to_raw.get(other)
+                if raw and raw not in seen:
+                    seen.add(raw)
+                    out.append(raw)
+            key = m if m in self.by_gloss else self._clean_to_raw.get(m, m)
+            if out:
+                self._syn[key] = out
 
     def _load_examples(self) -> None:
         """載入訓練句供「例句遷移」與詞對齊表；缺檔不致命，退化成純字面檢索。"""
@@ -228,6 +268,31 @@ class CandidateRetriever:
                 agg[g] = agg.get(g, 0.0) + s
         return sorted(agg, key=lambda g: (-agg[g], g))[:want]
 
+    def _from_synonyms(self, seeds: list[str], want: int) -> list[str]:
+        """把已命中的詞展開成同義詞。
+
+        為什麼需要（2026-08-21 實測）：總表是以**中文詞面**編 ID 的，
+        16,623 個詞面背後只有 15,354 個不同動作。句子寫「孩子」，
+        動作庫裡那支叫「小孩」，字面檢索就撈不到——但它們是同一個手語。
+        **實測是淨負的，故預設關閉**：train 92.6%→90.7%、dev 僅 +0.1pp。
+        固定 k 之下候選是零和的，加同義詞就得擠掉別的；種子若放寬到例句與
+        對齊通道的結果，再掉 0.7pp。故種子只取**多字的字面命中**——
+        它們最可靠，其同義詞也最接近等價。
+
+        **不會洩漏正解**：展開來源是動作庫與辭典，與該句的參考答案無關，
+        上線時同樣拿得到（對比 _from_examples 必須用 exclude_id 留一）。
+        """
+        if not self._syn:
+            return []
+        out: list[str] = []
+        for g in seeds:
+            for other in self._syn.get(g, ()):
+                if other not in out:
+                    out.append(other)
+                if len(out) >= want:
+                    return out
+        return out
+
     def _distractors(self, text: str, chosen: set[str], want: int) -> list[str]:
         """共用字元的詞，依重疊比排序。純為增加選擇難度。"""
         t = set(strip_punct(text))
@@ -244,11 +309,19 @@ class CandidateRetriever:
     # 的關鍵對應「天氣很好→晴朗」出現在相似度第 4 名的訓練句，top-3 撈不到。
     def candidates(self, text: str, k: int = 20, n_examples: int = 8,
                    distractor_ratio: float = 0.2, n_align: int = 12,
-                   n_core: int = 30, exclude_id=None) -> list[dict]:
+                   n_core: int = 30, exclude_id=None, n_syn: int = 0) -> list[dict]:
         """回傳 [{sign_id, gloss}]，長度上限 k。順序穩定（可重現）。
 
-        五個通道依序填：字面命中 → 例句遷移 → 詞對齊 → 高頻核心 → 字元重疊干擾項。
-        前四個負責把正解撈進來，最後一個負責讓題目不會只有答案。
+        五個通道依序填：字面命中 → 例句遷移 → 詞對齊 → 高頻核心 →
+        字元重疊干擾項。前四個負責把正解撈進來，最後一個負責讓題目不會只有答案。
+
+        **n_syn 預設 0＝同義展開關閉**。通道本身已實作可用（設 n_syn>0 啟用，
+        插在多字字面命中之後），但實測是淨負的：train 詞涵蓋率 92.6%→90.7%
+        （−1.9pp），dev 只有 +0.1pp。原因是固定 k 之下候選是零和的——
+        train 的例句遷移（留一法後仍很準）本來就撈得到正解，12 個同義名額
+        把那些高價值候選擠掉了；dev 的例句遷移較不準，擠掉的損失才較小。
+        留著是因為表與通道有其他用途（見 build_synonym_groups.py），
+        且 k 若拉高到候選不再稀缺時值得重測。
         """
         ordered: list[str] = []
         seen: set[str] = set()
@@ -259,7 +332,15 @@ class CandidateRetriever:
                     seen.add(g)
                     ordered.append(g)
 
-        add(self._literal(text))
+        # 字面命中含大量單字（這／個／片），把它們排在同義展開之前會用
+        # 「片」這種碎片擠掉「小孩」。故先放多字命中，再放它們的同義詞，
+        # 單字命中殿後——與 _literal 內部「長詞優先」是同一個道理。
+        literal = self._literal(text)
+        multi = [g for g in literal if len(g) > 1]
+        add(multi)
+        if n_syn:
+            add(self._from_synonyms(multi, n_syn))
+        add([g for g in literal if len(g) == 1])
         add(self._from_examples(text, n_examples, exclude_id=exclude_id))
         add(self._from_align(text, n_align))
         add(self._core[:n_core])

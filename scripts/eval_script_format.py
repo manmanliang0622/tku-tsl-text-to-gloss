@@ -267,7 +267,8 @@ def main() -> int:
     split_file = args.full_ref
     if split_file is None:
         stem = args.pred.stem
-        for name in ("test_corpus", "test_papers", "test", "dev", "train"):
+        # 長名在前：test_textbook 若排在 test 之後會先被 "test" 誤配
+        for name in ("test_textbook", "test_corpus", "test_papers", "test", "dev", "train"):
             if stem.endswith(name):
                 split_file = BASE / "data" / "splits" / f"{name}.jsonl"
                 break

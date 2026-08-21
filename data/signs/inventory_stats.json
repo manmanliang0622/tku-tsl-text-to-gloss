@@ -1,22 +1,24 @@
 {
-  "lexicon_entries": 16628,
-  "signs": 16628,
-  "distinct_signs": 16624,
+  "lexicon_entries": 17078,
+  "signs": 17078,
+  "distinct_signs": 17075,
   "duplicates": {
-    "TSL_00001": "TSL_13474",
-    "TSL_00002": "TSL_13487",
-    "TSL_01692": "TSL_01691",
-    "TSL_06664": "TSL_06663"
+    "TSL_訪談_2": "TSL_訪談",
+    "TSL_許久_2": "TSL_許久",
+    "TSL_抹黑_2": "TSL_抹黑"
   },
   "superseded": {
-    "TSL_00004": "TSL_00883",
-    "TSL_02060": "TSL_02059",
-    "TSL_14282": "TSL_14281"
+    "TSL_事情_2": "TSL_事情",
+    "TSL_共同_2": "TSL_共同",
+    "TSL_求救_2": "TSL_求救",
+    "TSL_軟弱_2": "TSL_軟弱"
   },
-  "new_ids_this_run": 0,
-  "index_keys": 16721,
+  "id_scheme": "semantic",
+  "ids_changed_vs_previous": 16628,
+  "new_signs_this_run": 450,
+  "index_keys": 17170,
   "alias_keys_added": 53,
-  "clean_keys_added": 40,
+  "clean_keys_added": 39,
   "index_keys_repointed_from_duplicate": 7,
   "gloss_dirty": {
     "control_chars": 2,
@@ -29,7 +31,6 @@
       "gloss_clean": "訪談",
       "members": [
         {
-          "sign_id": "TSL_13474",
           "gloss": "訪談",
           "name_key": "訪談",
           "source": "moe_signdict",
@@ -37,7 +38,6 @@
           "duration": 1.96
         },
         {
-          "sign_id": "TSL_00001",
           "gloss": "\b訪談",
           "name_key": "訪談_2",
           "source": "moe_signdict",
@@ -51,7 +51,6 @@
       "gloss_clean": "許久",
       "members": [
         {
-          "sign_id": "TSL_13487",
           "gloss": "許久",
           "name_key": "許久",
           "source": "moe_signdict",
@@ -59,7 +58,6 @@
           "duration": 2.96
         },
         {
-          "sign_id": "TSL_00002",
           "gloss": "\b許久",
           "name_key": "許久_2",
           "source": "moe_signdict",
@@ -73,15 +71,13 @@
       "gloss_clean": "事情",
       "members": [
         {
-          "sign_id": "TSL_00883",
           "gloss": "事情",
           "name_key": "事情",
           "source": "moc_corpus",
-          "recording": "moc_G3D3P1.json",
-          "duration": 0.649
+          "recording": "moc_G2D7P1.json",
+          "duration": 0.968
         },
         {
-          "sign_id": "TSL_00004",
           "gloss": " 事情",
           "name_key": "事情_2",
           "source": "moe_signdict",
@@ -95,15 +91,13 @@
       "gloss_clean": "傾聽",
       "members": [
         {
-          "sign_id": "TSL_01691",
           "gloss": "傾聽",
           "name_key": "傾聽",
-          "source": "moe_signdict",
-          "recording": "moe_02_0097.json",
-          "duration": 3.0
+          "source": "moc_corpus",
+          "recording": "moc_G2C27_R.json",
+          "duration": 0.889
         },
         {
-          "sign_id": "TSL_01692",
           "gloss": "傾聽 ",
           "name_key": "傾聽_2",
           "source": "moe_signdict",
@@ -111,13 +105,12 @@
           "duration": 3.0
         }
       ],
-      "verified_duplicate": true
+      "verified_duplicate": false
     },
     {
       "gloss_clean": "共同",
       "members": [
         {
-          "sign_id": "TSL_02059",
           "gloss": "共同",
           "name_key": "共同",
           "source": "other",
@@ -125,7 +118,6 @@
           "duration": 3.267
         },
         {
-          "sign_id": "TSL_02060",
           "gloss": "共同 ",
           "name_key": "共同_2",
           "source": "moe_signdict",
@@ -139,7 +131,6 @@
       "gloss_clean": "抹黑",
       "members": [
         {
-          "sign_id": "TSL_06663",
           "gloss": "抹黑",
           "name_key": "抹黑",
           "source": "moe_signdict",
@@ -147,7 +138,6 @@
           "duration": 3.737
         },
         {
-          "sign_id": "TSL_06664",
           "gloss": "抹黑 ",
           "name_key": "抹黑_2",
           "source": "moe_signdict",
@@ -158,10 +148,29 @@
       "verified_duplicate": true
     },
     {
+      "gloss_clean": "求救",
+      "members": [
+        {
+          "gloss": "求救",
+          "name_key": "求救",
+          "source": "other",
+          "recording": "slw_求救.json",
+          "duration": 2.903
+        },
+        {
+          "gloss": "求救 ",
+          "name_key": "求救_2",
+          "source": "moe_signdict",
+          "recording": "moe_04_0780.json",
+          "duration": 2.96
+        }
+      ],
+      "verified_duplicate": false
+    },
+    {
       "gloss_clean": "軟弱",
       "members": [
         {
-          "sign_id": "TSL_14281",
           "gloss": "軟弱",
           "name_key": "軟弱",
           "source": "other",
@@ -169,7 +178,6 @@
           "duration": 3.833
         },
         {
-          "sign_id": "TSL_14282",
           "gloss": "軟弱 ",
           "name_key": "軟弱_2",
           "source": "moe_signdict",
@@ -181,20 +189,20 @@
     }
   ],
   "by_source": {
-    "moe_signdict": 7913,
-    "other": 3467,
-    "moc_corpus": 3412,
+    "moe_signdict": 7663,
+    "other": 3808,
+    "moc_corpus": 3728,
     "tsl_placenames": 846,
     "tsl_familynames": 565,
-    "tasli": 425
+    "tasli": 468
   },
   "by_gloss_len": {
-    "2": 9701,
-    "4": 2884,
-    "3": 2079,
-    "1": 996,
-    "6": 529,
-    "5": 439
+    "2": 9793,
+    "4": 3004,
+    "3": 2161,
+    "1": 1009,
+    "6": 560,
+    "5": 551
   },
   "missing_timing": 0
 }

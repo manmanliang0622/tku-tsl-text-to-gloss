@@ -62,6 +62,17 @@ def clause_breaks(gloss_tokens: list[str], raw: str) -> list[int]:
     return breaks
 
 
+def _semantic_ids() -> bool:
+    """總表是不是語義 ID 方案（build_sign_inventory.py --id-scheme）。"""
+    stats = BASE / "data" / "signs" / "inventory_stats.json"
+    if not stats.exists():
+        return False
+    return json.loads(stats.read_text(encoding="utf-8")).get("id_scheme") == "semantic"
+
+
+SEMANTIC_IDS = _semantic_ids()
+
+
 def convert_row(row: dict, retr: CandidateRetriever, k: int,
                 split: str, compact: bool = False, n_syn: int = 0) -> tuple[dict, dict]:
     text = str(row.get("chinese", "")).strip()
@@ -84,16 +95,20 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
             sign_ids.append(sid)
 
     needs_review = bool(oov)
-    # compact：候選改寫成 "TSL_01084=今天" 字串陣列。語意與教授原格式相同，
+    # compact：候選壓成字串陣列。語意與教授原格式相同，
     # 但 k=40 的 prompt 從 1,015 token 降到 654（實測 Gemma 4 tokenizer，
     # 省 36%）——原格式每個候選都要 {"sign_id":...,"gloss":...} 的引號與鍵名，
     # 40 個候選光是這些框架就吃掉三百多 token。序列長度直接吃顯存與訓練時間，
     # 同樣預算下壓縮後可以多放 15 個候選，涵蓋率換得更划算。
-    user = {
-        "text": text,
-        "candidates": ([f"{c['sign_id']}={c['gloss']}" for c in cands]
-                       if compact else cands),
-    }
+    # 語義 ID（TSL_今天）自己就是詞面，再附「=今天」等於把 gloss 寫兩次；
+    # 實測 dev 中位數 472→377 token。流水號（TSL_01084）看不懂才需要附。
+    if compact and SEMANTIC_IDS:
+        candidates = [c["sign_id"] for c in cands]
+    elif compact:
+        candidates = [f"{c['sign_id']}={c['gloss']}" for c in cands]
+    else:
+        candidates = cands
+    user = {"text": text, "candidates": candidates}
     assistant = {
         "schema_version": SCHEMA_VERSION,
         "sign_ids": sign_ids,

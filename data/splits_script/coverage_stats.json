@@ -3,12 +3,12 @@
   "splits": {
     "train": {
       "sentences": 8915,
-      "token_recall": 0.9259,
-      "sentence_fully_covered": 0.7471,
-      "needs_review_rate": 0.2529,
-      "oov_tokens": 3803,
-      "oov_not_in_library": 468,
-      "oov_retrieval_miss": 3335,
+      "token_recall": 0.9264,
+      "sentence_fully_covered": 0.7522,
+      "needs_review_rate": 0.2478,
+      "oov_tokens": 3777,
+      "oov_not_in_library": 416,
+      "oov_retrieval_miss": 3361,
       "top_missing": [
         [
           "什麼",
@@ -33,10 +33,6 @@
         [
           "是",
           38
-        ],
-        [
-          "新北",
-          36
         ],
         [
           "有",
@@ -69,13 +65,13 @@
         [
           "要",
           22
+        ],
+        [
+          "第一",
+          21
         ]
       ],
       "top_missing_not_in_library": [
-        [
-          "新北",
-          36
-        ],
         [
           "是的++",
           14
@@ -131,16 +127,20 @@
         [
           "相信他",
           4
+        ],
+        [
+          "右轉",
+          4
         ]
       ]
     },
     "dev": {
       "sentences": 663,
-      "token_recall": 0.7933,
-      "sentence_fully_covered": 0.5023,
-      "needs_review_rate": 0.4977,
-      "oov_tokens": 587,
-      "oov_not_in_library": 18,
+      "token_recall": 0.7947,
+      "sentence_fully_covered": 0.5083,
+      "needs_review_rate": 0.4917,
+      "oov_tokens": 583,
+      "oov_not_in_library": 14,
       "oov_retrieval_miss": 569,
       "top_missing": [
         [
@@ -196,19 +196,15 @@
           4
         ],
         [
-          "新北",
+          "我們兩個",
           4
         ],
         [
-          "我們兩個",
+          "常常",
           4
         ]
       ],
       "top_missing_not_in_library": [
-        [
-          "新北",
-          4
-        ],
         [
           "刷+地板",
           2
@@ -261,28 +257,19 @@
     },
     "test": {
       "sentences": 33,
-      "token_recall": 0.9747,
-      "sentence_fully_covered": 0.9394,
-      "needs_review_rate": 0.0606,
-      "oov_tokens": 2,
-      "oov_not_in_library": 1,
+      "token_recall": 0.9873,
+      "sentence_fully_covered": 0.9697,
+      "needs_review_rate": 0.0303,
+      "oov_tokens": 1,
+      "oov_not_in_library": 0,
       "oov_retrieval_miss": 1,
       "top_missing": [
-        [
-          "晚安",
-          1
-        ],
         [
           "很",
           1
         ]
       ],
-      "top_missing_not_in_library": [
-        [
-          "晚安",
-          1
-        ]
-      ]
+      "top_missing_not_in_library": []
     },
     "test_corpus": {
       "sentences": 166,
@@ -395,12 +382,12 @@
     },
     "test_papers": {
       "sentences": 143,
-      "token_recall": 0.742,
-      "sentence_fully_covered": 0.4056,
-      "needs_review_rate": 0.5944,
-      "oov_tokens": 153,
-      "oov_not_in_library": 59,
-      "oov_retrieval_miss": 94,
+      "token_recall": 0.7504,
+      "sentence_fully_covered": 0.4126,
+      "needs_review_rate": 0.5874,
+      "oov_tokens": 148,
+      "oov_not_in_library": 53,
+      "oov_retrieval_miss": 95,
       "top_missing": [
         [
           "見",
@@ -451,15 +438,15 @@
           3
         ],
         [
-          "貓咪",
-          3
-        ],
-        [
           "在",
           2
         ],
         [
           "熱心地",
+          2
+        ],
+        [
+          "入獄",
           2
         ]
       ],
@@ -474,10 +461,6 @@
         ],
         [
           "張老師",
-          3
-        ],
-        [
-          "貓咪",
           3
         ],
         [
@@ -522,6 +505,10 @@
         ],
         [
           "下面",
+          1
+        ],
+        [
+          "菜餚",
           1
         ]
       ]

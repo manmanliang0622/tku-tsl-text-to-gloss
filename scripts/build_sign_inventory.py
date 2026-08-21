@@ -81,11 +81,20 @@ ID_WIDTH = 5
 # ID 不刪除（發出去的 ID 永不可變，且下游可能已引用），改標 duplicate_of，
 # 使「動作庫有幾個手語」這個數字據實扣除。實測這 4 筆目前引用數為 0，
 # 檢索器也撈不到（髒鍵不可能被中文查詢命中），標記純為報告數字誠實。
+# 鍵是**動作庫原鍵（gloss）**不是 sign_id：sign_id 的形式會隨命名方案改變
+# （2026-08-21 教授裁示後由流水號改為語義 ID），gloss 才是跨方案穩定的錨點。
+# 值是 (正本 gloss, 本筆當初驗的 recording, 正本當初驗的 recording)。
+# **後兩項是防呆，不是註解**：動作庫會更新，同一個 gloss 可能被改指到別支錄影。
+# 2026-08-21 實際發生過——「傾聽」原本兩支 frames sha256 相同、判為重複收錄，
+# 動作庫更新後正本改指 moc_G2C27_R，兩支變成完全不同的錄影，舊結論當場作廢。
+# 若不比對就沿用，會把一個真正不同的手語當成重複刪掉。對不上一律中止，重驗後再更新。
 DUPLICATE_OF = {
-    "TSL_00001": "TSL_13474",   # 訪談 moe_12_1218 = moe_02_0925 (707b2b53e2e3ddbe)
-    "TSL_00002": "TSL_13487",   # 許久 moe_12_1219 = moe_01_0339 (51deed856f7e9edf)
-    "TSL_01692": "TSL_01691",   # 傾聽 moe_05_0022 = moe_02_0097 (8997c78a4918754d)
-    "TSL_06664": "TSL_06663",   # 抹黑 moe_12_0711 = moe_13_0773 (c3b4450341292dbc)
+    "\x08訪談": ("訪談", "moe_12_1218.json", "moe_02_0925.json"),  # sha 707b2b53e2e3ddbe
+    "\x08許久": ("許久", "moe_12_1219.json", "moe_01_0339.json"),  # sha 51deed856f7e9edf
+    "抹黑 ":    ("抹黑", "moe_12_0711.json", "moe_13_0773.json"),  # sha c3b4450341292dbc
+    # 「傾聽」原在此表，2026-08-21 動作庫更新後兩支已非同一錄影，故移除。
+    # 重驗結果：兩支都是 severe（moc_G2C27_R act_eff 0.2、moe_05_0022 act_eff 0.0），
+    # 選哪支都演不出來，屬素材缺口而非命名問題，見 BOTH_UNUSABLE。
 }
 # 同名但**不同錄影**時，若已比對品質並選定用哪一支，記在這裡。被取代者不進候選，
 # ID 同樣不刪。判定依據是 ~/0813/quality_scan/entries_final.csv 的實測欄位，
@@ -96,13 +105,24 @@ SUPERSEDED_BY = {
     # 手腕可見度 0.585/0.663（moc 為 1.0/1.0）——缺 landmark 是 retarget 端補不出來的。
     # 抖動 0.0191 vs 0.0081、畫質 480x360@30 vs 1920x1080@60。moe 唯一勝出的是
     # flicker 0.107 vs 0.154。線上實際使用的也是 moc 那支（usage 71 vs 0）。
-    "TSL_00004": "TSL_00883",
+    " 事情": ("事情", "moe_04_0090.json", "moc_G2D7P1.json"),
     # 共同：moe_12_0041 是 severe（act_eff 0.0698，幾乎整段偵測不到手），
     # 2248_一同 是 ok（0.7069），手腕可見度 0.99/0.86 vs 0.64/0.66。差一個數量級。
-    "TSL_02060": "TSL_02059",
+    "共同 ": ("共同", "moe_12_0041.json", "2248_一同.json"),
     # 軟弱：moe_13_1548 是 severe（act_eff 0.0351），2417_弱 是 ok（0.6447）。
     # 後者線上已在用（usage 3 vs 0）。
-    "TSL_14282": "TSL_14281",
+    "軟弱 ": ("軟弱", "moe_13_1548.json", "2417_弱.json"),
+    # 求救：2026-08-21 動作庫更新後新出現的碰撞。slw_求救 是 ok（act_eff 0.7955，
+    # 88/88 幀舉手、手腕 1.0/1.0）；moe_04_0780 是 severe（act_eff 0.0）。
+    "求救 ": ("求救", "moe_04_0780.json", "slw_求救.json"),
+}
+
+# 同名兩支**都不堪用**者。不選任何一支（選了也演不出來），列在這裡是為了
+# 讓它進補片待辦，而不是被當成「已處理」。
+BOTH_UNUSABLE = {
+    # 傾聽：moc_G2C27_R 0.889 秒裡只有 2–5 幀舉手（act_eff 0.2）；
+    # moe_05_0022 act_eff 0.0。兩支皆 severe，需換源重錄。
+    "傾聽": "兩支皆 severe（moc_G2C27_R act_eff 0.2／moe_05_0022 act_eff 0.0）",
 }
 
 # 另 3 組清理後同名者已比對確認為**不同**錄影，且都已比過品質並選定：
@@ -132,7 +152,7 @@ def source_of(recording: str) -> str:
 
 
 def load_existing() -> dict[str, str]:
-    """讀回既有 gloss → sign_id 對應，確保 ID 永不變動。"""
+    """讀回上一版的 gloss → sign_id，存成 legacy_sign_id 供追溯與換方案時對照。"""
     if not INVENTORY.exists():
         return {}
     mapping = {}
@@ -145,19 +165,12 @@ def load_existing() -> dict[str, str]:
     return mapping
 
 
-def next_id_counter(existing: dict[str, str]) -> int:
-    """從既有 ID 推出下一個編號，避免撞號。"""
-    top = 0
-    for sid in existing.values():
-        m = re.fullmatch(rf"{ID_PREFIX}(\d+)", sid)
-        if m:
-            top = max(top, int(m.group(1)))
-    return top + 1
-
-
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--lexicon", type=Path, default=LEXICON)
+    ap.add_argument("--id-scheme", choices=["semantic", "serial"], default="semantic",
+                    help="sign_id 形式。semantic=TSL_<name_key>（2026-08-21 教授裁示，"
+                         "預設）；serial=沿用舊流水號（僅供重現舊資料）")
     ap.add_argument("--check", action="store_true", help="只報告，不寫檔")
     args = ap.parse_args()
 
@@ -168,24 +181,17 @@ def main() -> int:
         return 1
 
     lexicon: dict[str, dict] = json.loads(args.lexicon.read_text(encoding="utf-8"))
-    existing = load_existing()
-    counter = next_id_counter(existing)
-    print(f"動作庫 {len(lexicon)} 筆；既有 ID {len(existing)} 筆，下一號 {counter}")
+    legacy = load_existing()          # gloss → 前一版 sign_id（含 2026-08-21 前的流水號）
+    print(f"動作庫 {len(lexicon)} 筆；既有 ID {len(legacy)} 筆；命名方案 {args.id_scheme}")
 
-    rows, new_count = [], 0
+    rows = []
     for gloss in sorted(lexicon):                       # 排序只影響首次建表
         entry = lexicon[gloss]
-        sign_id = existing.get(gloss)
-        if sign_id is None:
-            sign_id = f"{ID_PREFIX}{counter:0{ID_WIDTH}d}"
-            counter += 1
-            new_count += 1
         recording = entry.get("recording", "")
         start, end = entry.get("start"), entry.get("end")
         rows.append({
-            "sign_id": sign_id,
             "gloss": gloss,
-            # gloss 維持 lexicon 原鍵（join key＋ID 錨點，不可動）；清理另存一欄
+            # gloss 維持 lexicon 原鍵（join key＋命名錨點，不可動）；清理另存一欄
             "gloss_clean": clean_gloss(gloss),
             "source": source_of(recording),
             "recording": recording,
@@ -196,36 +202,79 @@ def main() -> int:
                          else None),
             # 動作庫有這筆＝虛擬人演得出來。這是 asset_class 的唯一事實依據。
             "asset_class": "natural_playable",
+            "legacy_sign_id": legacy.get(gloss),
         })
-        if sign_id in DUPLICATE_OF:
-            rows[-1]["duplicate_of"] = DUPLICATE_OF[sign_id]
-        if sign_id in SUPERSEDED_BY:
-            rows[-1]["superseded_by"] = SUPERSEDED_BY[sign_id]
 
-    # ---- name_key：語義 ID 的命名基礎，碰撞時加序號後綴 ----
-    # 依既有 sign_id 排序決定誰不加後綴，重跑結果才穩定（ID 凍結後不可改）。
+    # ---- name_key：ID 的命名基礎，碰撞時加序號後綴 ----
+    # 必須在指派 sign_id **之前**算完：語義 ID 就是由 name_key 生成的。
     by_clean: dict[str, list[dict]] = collections.defaultdict(list)
     for r in rows:
         by_clean[r["gloss_clean"]].append(r)
     collisions = []
     for key, group in by_clean.items():
-        # 排序決定誰不加後綴：原鍵本來就乾淨的優先，其次比 sign_id。
-        # 必須與下面查詢索引的解析順序一致——索引用原鍵精準命中，
-        # 若這裡讓髒的那筆搶到乾淨名字，兩張表會指向不同 sign_id。
-        group.sort(key=lambda r: (r["gloss"] != r["gloss_clean"], r["sign_id"]))
+        # 排序決定誰不加後綴：原鍵本來就乾淨的優先，其次比舊流水號（沒有就比 gloss）。
+        # 用舊流水號當次序是為了**與換方案前的結果完全一致**，避免這次遷移順手
+        # 改掉誰是正名。必須與下面查詢索引的解析順序一致——索引用原鍵精準命中，
+        # 若這裡讓髒的那筆搶到乾淨名字，兩張表會指向不同影片。
+        group.sort(key=lambda r: (r["gloss"] != r["gloss_clean"],
+                                  r["legacy_sign_id"] or r["gloss"]))
         for i, r in enumerate(group):
             r["name_key"] = key if i == 0 else f"{key}_{i + 1}"
         if len(group) > 1:
             collisions.append({
                 "gloss_clean": key,
-                "members": [{"sign_id": r["sign_id"], "gloss": r["gloss"],
-                             "name_key": r["name_key"], "source": r["source"],
-                             "recording": r["recording"],
+                "members": [{"gloss": r["gloss"], "name_key": r["name_key"],
+                             "source": r["source"], "recording": r["recording"],
                              "duration": r["duration"]} for r in group],
                 # 2026-08-21 已逐組比對 frames：4 組完全相同（重複收錄），
-                # 3 組不同（真變體，兩支都留）。新出現的碰撞需照同樣方式驗。
-                "verified_duplicate": any(r["sign_id"] in DUPLICATE_OF for r in group),
+                # 3 組不同（真變體，已逐組比品質選定）。新碰撞需照同樣方式驗。
+                "verified_duplicate": any(r["gloss"] in DUPLICATE_OF for r in group),
             })
+
+    # ---- 指派 sign_id ----
+    # 2026-08-21 教授裁示：改用中文語義 ID。依據是 Gemma 4 把數字逐位切開，
+    # TSL_01084 要 8 token 而 TSL_今天 只要 4，且流水號看不懂、候選一定得補
+    # 「=今天」才有語意（10 token）；assistant 輸出的 sign_ids 用的是同一批 ID，
+    # 輸入輸出兩邊都在付這個代價。實測整段序列 631→377 token、
+    # 每輪訓練 4h10m→2h36m（見 交接說明_2026-08-21.md）。
+    for r in rows:
+        r["sign_id"] = (ID_PREFIX + r["name_key"] if args.id_scheme == "semantic"
+                        else r["legacy_sign_id"])
+    missing = [r["gloss"] for r in rows if not r["sign_id"]]
+    if missing:
+        raise SystemExit(f"--id-scheme serial 但有 {len(missing)} 筆查無舊 ID：{missing[:5]}")
+    # 判定表以 gloss 為鍵（跨命名方案穩定），值也是 gloss，需轉成當前方案的 sign_id
+    id_by_gloss = {r["gloss"]: r["sign_id"] for r in rows}
+    rec_by_gloss = {r["gloss"]: r["recording"] for r in rows}
+    stale = []
+    for r in rows:
+        for field, table in (("duplicate_of", DUPLICATE_OF),
+                             ("superseded_by", SUPERSEDED_BY)):
+            entry = table.get(r["gloss"])
+            if entry is None:
+                continue
+            target, rec_self, rec_target = entry
+            if target not in id_by_gloss:
+                raise SystemExit(f"{field} 指向的 gloss 不在動作庫：{target!r}")
+            # 防呆：判定當時驗的是哪支錄影，現在還是不是同一支
+            now_self, now_target = rec_by_gloss[r["gloss"]], rec_by_gloss[target]
+            if now_self != rec_self or now_target != rec_target:
+                stale.append(
+                    f"  {field} {r['gloss']!r}→{target!r}："
+                    f"當初驗 {rec_self}／{rec_target}，現在是 {now_self}／{now_target}")
+                continue
+            r[field] = id_by_gloss[target]
+    if stale:
+        raise SystemExit(
+            "動作庫已把下列 gloss 改指到別支錄影，原判定的證據不再成立：\n"
+            + "\n".join(stale)
+            + "\n請重新比對 frames／品質後更新 DUPLICATE_OF／SUPERSEDED_BY，"
+              "不要直接沿用——2026-08-21「傾聽」就是這樣從『重複收錄』變成兩支不同錄影的。")
+
+    ids = [r["sign_id"] for r in rows]
+    if len(set(ids)) != len(ids):
+        dup = [k for k, c in collections.Counter(ids).items() if c > 1]
+        raise SystemExit(f"sign_id 不唯一：{dup[:10]}")
 
     name_keys = [r["name_key"] for r in rows]
     if len(set(name_keys)) != len(name_keys):
@@ -245,17 +294,22 @@ def main() -> int:
         print(f"\n清理後 gloss 碰撞 {len(collisions)} 組"
               f"（已驗證 {n_dup} 組為重複收錄、{len(collisions) - n_dup} 組為不同錄影）：")
         for c in collisions:
-            ms = "／".join(f"{m['sign_id']}({m['recording']} {m['duration']}s)"
+            ms = "／".join(f"{m['name_key']}({m['recording']} {m['duration']}s)"
                            for m in c["members"])
             if c["verified_duplicate"]:
                 tag = "重複收錄"
-            elif any(m["sign_id"] in SUPERSEDED_BY for m in c["members"]):
+            elif c["gloss_clean"] in BOTH_UNUSABLE:
+                tag = "真變體·兩支皆不堪用"
+            elif any(m["gloss"] in SUPERSEDED_BY for m in c["members"]):
                 tag = "真變體·已選定"
             else:
                 tag = "真變體·未比品質"
             print(f"    [{tag}] {c['gloss_clean']}: {ms}")
-        print("  已用 name_key 後綴區分，不影響現有 sign_id。"
-              "⚠ 新出現的碰撞未經驗證，需比對 frames 後補進 DUPLICATE_OF。")
+        print("  已用 name_key 後綴區分。"
+              "⚠ 標「未比品質」者尚未驗證，需比對 frames 與品質後更新判定表。")
+        for g, why in BOTH_UNUSABLE.items():
+            if any(c["gloss_clean"] == g for c in collisions):
+                print(f"  ⚠ 「{g}」{why}——屬素材缺口，需換源重錄，不是選哪支的問題。")
     if any(dirty.values()):
         print(f"\n動作庫 gloss 髒資料（gloss 欄保持原狀，清理值在 gloss_clean）："
               f"控制字元 {dirty['control_chars']}／前後空白 {dirty['outer_space']}"
@@ -283,17 +337,19 @@ def main() -> int:
 
     # 指向重複收錄的鍵改導向正本：查詢應該拿到正規那支，兩者動作資料本就相同
     repointed = 0
-    replaced = {**DUPLICATE_OF, **SUPERSEDED_BY}
+    replaced_ids = {r["sign_id"]: r[f]
+                    for r in rows
+                    for f in ("duplicate_of", "superseded_by") if f in r}
     for key, sid in list(index.items()):
-        if sid in replaced:
-            index[key] = replaced[sid]
+        if sid in replaced_ids:
+            index[key] = replaced_ids[sid]
             repointed += 1
     if repointed:
         print(f"索引改導向：{repointed} 個鍵原指向重複收錄或已被取代的 ID")
 
     # name_key 與索引必須指向同一支影片，否則下游兩條路徑會播出不同的手語
     for r in rows:
-        if r["sign_id"] in SUPERSEDED_BY:
+        if r["gloss"] in SUPERSEDED_BY:
             continue                      # 已刻意改導向較準確的那支
         if r["name_key"] == r["gloss_clean"] and index.get(r["gloss_clean"]) != r["sign_id"]:
             raise SystemExit(
@@ -310,7 +366,10 @@ def main() -> int:
         "duplicates": {r["sign_id"]: r["duplicate_of"] for r in dup_rows},
         # 取代不影響 distinct_signs：詞還在，只是換一支影片演
         "superseded": {r["sign_id"]: r["superseded_by"] for r in sup_rows},
-        "new_ids_this_run": new_count,
+        "id_scheme": args.id_scheme,
+        "ids_changed_vs_previous": sum(
+            1 for r in rows if r["legacy_sign_id"] and r["legacy_sign_id"] != r["sign_id"]),
+        "new_signs_this_run": sum(1 for r in rows if not r["legacy_sign_id"]),
         "index_keys": len(index),
         "alias_keys_added": alias_added,
         "clean_keys_added": clean_added,

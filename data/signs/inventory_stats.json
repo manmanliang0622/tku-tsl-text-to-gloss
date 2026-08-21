@@ -1,9 +1,172 @@
 {
   "lexicon_entries": 16628,
   "signs": 16628,
-  "new_ids_this_run": 16628,
+  "new_ids_this_run": 0,
   "index_keys": 16721,
-  "alias_keys_added": 93,
+  "alias_keys_added": 53,
+  "clean_keys_added": 40,
+  "gloss_dirty": {
+    "control_chars": 2,
+    "outer_space": 45,
+    "inner_space": 21,
+    "slash": 2
+  },
+  "name_key_collisions": [
+    {
+      "gloss_clean": "訪談",
+      "members": [
+        {
+          "sign_id": "TSL_13474",
+          "gloss": "訪談",
+          "name_key": "訪談",
+          "source": "moe_signdict",
+          "recording": "moe_02_0925.json",
+          "duration": 1.96
+        },
+        {
+          "sign_id": "TSL_00001",
+          "gloss": "\b訪談",
+          "name_key": "訪談_2",
+          "source": "moe_signdict",
+          "recording": "moe_12_1218.json",
+          "duration": 1.96
+        }
+      ],
+      "same_duration": true
+    },
+    {
+      "gloss_clean": "許久",
+      "members": [
+        {
+          "sign_id": "TSL_13487",
+          "gloss": "許久",
+          "name_key": "許久",
+          "source": "moe_signdict",
+          "recording": "moe_01_0339.json",
+          "duration": 2.96
+        },
+        {
+          "sign_id": "TSL_00002",
+          "gloss": "\b許久",
+          "name_key": "許久_2",
+          "source": "moe_signdict",
+          "recording": "moe_12_1219.json",
+          "duration": 2.96
+        }
+      ],
+      "same_duration": true
+    },
+    {
+      "gloss_clean": "事情",
+      "members": [
+        {
+          "sign_id": "TSL_00883",
+          "gloss": "事情",
+          "name_key": "事情",
+          "source": "moc_corpus",
+          "recording": "moc_G3D3P1.json",
+          "duration": 0.649
+        },
+        {
+          "sign_id": "TSL_00004",
+          "gloss": " 事情",
+          "name_key": "事情_2",
+          "source": "moe_signdict",
+          "recording": "moe_04_0090.json",
+          "duration": 6.8
+        }
+      ],
+      "same_duration": false
+    },
+    {
+      "gloss_clean": "傾聽",
+      "members": [
+        {
+          "sign_id": "TSL_01691",
+          "gloss": "傾聽",
+          "name_key": "傾聽",
+          "source": "moe_signdict",
+          "recording": "moe_02_0097.json",
+          "duration": 3.0
+        },
+        {
+          "sign_id": "TSL_01692",
+          "gloss": "傾聽 ",
+          "name_key": "傾聽_2",
+          "source": "moe_signdict",
+          "recording": "moe_05_0022.json",
+          "duration": 3.0
+        }
+      ],
+      "same_duration": true
+    },
+    {
+      "gloss_clean": "共同",
+      "members": [
+        {
+          "sign_id": "TSL_02059",
+          "gloss": "共同",
+          "name_key": "共同",
+          "source": "other",
+          "recording": "2248_一同.json",
+          "duration": 3.267
+        },
+        {
+          "sign_id": "TSL_02060",
+          "gloss": "共同 ",
+          "name_key": "共同_2",
+          "source": "moe_signdict",
+          "recording": "moe_12_0041.json",
+          "duration": 3.0
+        }
+      ],
+      "same_duration": false
+    },
+    {
+      "gloss_clean": "抹黑",
+      "members": [
+        {
+          "sign_id": "TSL_06663",
+          "gloss": "抹黑",
+          "name_key": "抹黑",
+          "source": "moe_signdict",
+          "recording": "moe_13_0773.json",
+          "duration": 3.737
+        },
+        {
+          "sign_id": "TSL_06664",
+          "gloss": "抹黑 ",
+          "name_key": "抹黑_2",
+          "source": "moe_signdict",
+          "recording": "moe_12_0711.json",
+          "duration": 3.737
+        }
+      ],
+      "same_duration": true
+    },
+    {
+      "gloss_clean": "軟弱",
+      "members": [
+        {
+          "sign_id": "TSL_14281",
+          "gloss": "軟弱",
+          "name_key": "軟弱",
+          "source": "other",
+          "recording": "2417_弱.json",
+          "duration": 3.833
+        },
+        {
+          "sign_id": "TSL_14282",
+          "gloss": "軟弱 ",
+          "name_key": "軟弱_2",
+          "source": "moe_signdict",
+          "recording": "moe_13_1548.json",
+          "duration": 2.96
+        }
+      ],
+      "same_duration": false
+    }
+  ],
   "by_source": {
     "moe_signdict": 7913,
     "other": 3467,

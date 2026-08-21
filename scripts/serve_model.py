@@ -34,7 +34,44 @@ BASE = Path(__file__).resolve().parent.parent
 
 STATE = {"model": None, "tokenizer": None, "adapter": None, "model_name": None, "max_new": 64,
          "target": "gloss", "retriever": None, "rag_k": 0, "rag_min": 0.05,
-         "json_targets": {}}
+         "json_targets": {}, "cand_retriever": None, "id2gloss": {}, "k": 40}
+
+# ---- tsl-script-v1（新格式）----------------------------------------------
+# system 字串必須與 scripts/build_script_dataset.py 的 SYSTEM **逐字相同**。
+# 既有教訓：2026-08-20 因為推論端自組 prompt 與訓練不一致，33 句 test 的 EM 與
+# ValidJSON 全部掛零，看起來像模型壞掉，其實模型是好的。改這裡等於改訓練契約。
+SCRIPT_SYSTEM = ("將繁體中文轉成可執行的臺灣手語腳本。只能使用候選清單中的 sign_id，"
+                 "不得創造新 ID。缺少必要手語時，必須輸出 needs_review=true。只輸出 JSON。")
+
+
+def _assert_system_matches_training() -> None:
+    """在 repo 裡跑時，斷言上面的字串與 build_script_dataset.SYSTEM 逐字相同。
+
+    這兩份必然是複本——部署到 0821 時只帶服務程式，不會帶 build_script_dataset。
+    複本會漂移，而這個特定的漂移代價很高：2026-08-20 就因為推論端 prompt 與
+    訓練不一致，33 句 test 的 EM 與 ValidJSON 全部掛零，花了時間才確認模型是好的。
+    故在**找得到訓練腳本時**主動比對；部署環境找不到就靜默略過（不是錯誤）。
+    用 ast 讀字面值而非 import，避免把 sign_candidates 等重依賴拖進服務啟動。
+    """
+    import ast
+    src = BASE / "scripts" / "build_script_dataset.py"
+    if not src.exists():
+        return                      # 部署環境沒有訓練腳本，正常
+    tree = ast.parse(src.read_text(encoding="utf-8"))
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(
+                getattr(t, "id", None) == "SYSTEM" for t in node.targets):
+            trained = ast.literal_eval(node.value)
+            if trained != SCRIPT_SYSTEM:
+                raise SystemExit(
+                    "serve_model.SCRIPT_SYSTEM 與 build_script_dataset.SYSTEM 不一致，"
+                    "推論 prompt 與訓練不同會讓指標整組掛零：\n"
+                    f"  訓練：{trained!r}\n  服務：{SCRIPT_SYSTEM!r}")
+            return
+# 2026-08-21 在 dev 250 句上依「recall>=0.7 下最大化 precision」選定。
+# 貪婪解碼的硬 true/false 是 P0.941/R0.118（幾乎不拒答）；改讀機率後
+# P0.952/R0.728。**門檻只能在 dev 上重選，不要看 test 的數字調。**
+NEEDS_REVIEW_THRESHOLD = 0.02
 
 
 def load(base_model, adapter, ple_on_gpu=None):
@@ -117,7 +154,93 @@ def _apply_fallback(toks):
     return fixed, unknown
 
 
+def _load_script_assets():
+    """候選檢索器與 sign_id→gloss 對照。訓練與上線**必須共用同一支檢索器**，
+    否則模型學到的候選分布與線上不同，約束就失效了。"""
+    if STATE["cand_retriever"] is not None:
+        return
+    _assert_system_matches_training()
+    from sign_candidates import CandidateRetriever
+    STATE["cand_retriever"] = CandidateRetriever()
+    STATE["id2gloss"] = {r["sign_id"]: r.get("gloss_clean") or r["gloss"]
+                         for r in STATE["cand_retriever"].by_id.values()}
+    print(f"[serve] 候選檢索器就緒（{len(STATE['id2gloss'])} 個 sign_id）", flush=True)
+
+
+def _needs_review_prob(tok, seq, scores):
+    """needs_review 那個位置給 true 的機率（只在 true/false 之間正規化）。"""
+    text = ""
+    for i, tid in enumerate(seq.tolist()):
+        piece = tok.decode([tid])
+        low = piece.strip().lower()
+        if "needs_review" in text and low[:4] in ("true", "fals"):
+            if i >= len(scores):
+                return None
+            probs = torch.softmax(scores[i][0].float(), dim=-1)
+            top = torch.topk(probs, 50)
+            pt = pf = 0.0
+            for val, idx in zip(top.values.tolist(), top.indices.tolist()):
+                w = tok.decode([idx]).strip().lower()
+                if w.startswith("true"):
+                    pt += val
+                elif w.startswith("fals"):
+                    pf += val
+            return (pt / (pt + pf)) if (pt + pf) > 0 else None
+        text += piece
+    return None
+
+
+def translate_script(text):
+    """tsl-script-v1：跑候選檢索 → 模型從候選挑 sign_id → 對回 gloss 與影片。"""
+    _load_script_assets()
+    tok, model = STATE["tokenizer"], STATE["model"]
+    retr = STATE["cand_retriever"]
+    cands = retr.candidates(text, k=STATE["k"])
+    user = {"text": text, "candidates": [c["sign_id"] for c in cands]}
+    msgs = [{"role": "system", "content": SCRIPT_SYSTEM},
+            {"role": "user", "content": json.dumps(user, ensure_ascii=False)}]
+    inputs = tok.apply_chat_template(msgs, add_generation_prompt=True,
+                                     return_tensors="pt", return_dict=True).to(model.device)
+    t0 = time.time()
+    with torch.no_grad():
+        out = model.generate(**inputs, max_new_tokens=STATE["max_new"], do_sample=False,
+                             return_dict_in_generate=True, output_scores=True)
+    seq = out.sequences[0][inputs["input_ids"].shape[1]:]
+    gen = tok.decode(seq, skip_special_tokens=True)
+    secs = round(time.time() - t0, 2)
+
+    obj = _parse_json_output(gen) or {}
+    cand_ids = {c["sign_id"] for c in cands}
+    raw_ids = [str(x) for x in (obj.get("sign_ids") or [])]
+    # 約束在**服務端**強制執行，不只在訓練目標裡。實測 v14 在 test_corpus 仍有
+    # 0.7% 的 ID 落在候選外，其中還有總表查無的幻覺 ID（語義 ID 讓「造一個
+    # 看起來合理的 ID」變容易）。這一行是新格式可播放率的最後保證。
+    sign_ids = [i for i in raw_ids if i in cand_ids and i in STATE["id2gloss"]]
+    dropped = [i for i in raw_ids if i not in sign_ids]
+
+    p_nr = _needs_review_prob(tok, seq, out.scores)
+    model_nr = bool(obj.get("needs_review", False))
+    needs_review = (p_nr >= NEEDS_REVIEW_THRESHOLD) if p_nr is not None else model_nr
+
+    toks = [STATE["id2gloss"][i] for i in sign_ids]
+    return {
+        "chinese": text, "gloss": toks, "gloss_text": "/".join(toks), "glosses": toks,
+        "sign_ids": sign_ids,
+        "needs_review": needs_review,
+        "needs_review_prob": round(p_nr, 6) if p_nr is not None else None,
+        "needs_review_model": model_nr,
+        "oov_items": obj.get("oov_items") or [],
+        "dropped_ids": dropped,
+        "candidates_k": len(cands),
+        "schema_version": obj.get("schema_version", "tsl-script-v1"),
+        "source": "gemma", "model": STATE["model_name"],
+        "raw": gen.strip(), "seconds": secs,
+    }
+
+
 def translate(text, context=""):
+    if STATE["target"] == "script":
+        return translate_script(text)
     tok, model = STATE["tokenizer"], STATE["model"]
     ex_pairs, ex_info = _rag_examples(text)
     # v12 以段落前文訓練；呼叫端若提供 context，推論必須用同一格式送入。
@@ -191,10 +314,24 @@ class Handler(BaseHTTPRequestHandler):
         try:
             n = int(self.headers.get("Content-Length", 0))
             data = json.loads(self.rfile.read(n) or b"{}")
-            text = (data.get("text") or "").strip()
-            context = (data.get("context") or "").strip()
+            text_value = data.get("text")
+            context_value = data.get("context", "")
+            if not isinstance(text_value, str):
+                self._send(400, {"error": "text must be a string"})
+                return
+            if not isinstance(context_value, str):
+                self._send(400, {"error": "context must be a string"})
+                return
+            text = text_value.strip()
+            context = context_value.strip()
             if not text:
                 self._send(400, {"error": "text 不可為空"})
+                return
+            if len(text) > 500:
+                self._send(400, {"error": "text must not exceed 500 characters"})
+                return
+            if len(context) > 1000:
+                self._send(400, {"error": "context must not exceed 1000 characters"})
                 return
             if STATE["model"] is None:
                 self._send(503, {"error": "模型尚未載入完成"})
@@ -215,7 +352,7 @@ def main():
     ap.add_argument("--max-new", type=int, default=64)
     ap.add_argument("--model-name", default=None,
                     help="API 顯示名稱；預設由 adapter 的上層目錄推斷")
-    ap.add_argument("--target", choices=["gloss", "json"], default="gloss",
+    ap.add_argument("--target", choices=["gloss", "json", "script"], default="gloss",
                     help="模型的輸出格式；json 版會另外回傳 question_type/negation/nonmanual")
     ap.add_argument("--rag", type=int, default=0,
                     help="推理時檢索 N 筆訓練集相似例句放進 prompt（0=關閉）。"

@@ -193,6 +193,10 @@ def main():
     ap.add_argument("--keep-excluded", action="store_true",
                     help="保留 2026-08-21 人工校訂判定「排除」的句子（預設排除）。"
                          "僅用於重現該次校訂之前的切分。")
+    ap.add_argument("--textbook-as-test", action="store_true",
+                    help="產生 test_textbook.jsonl（台灣手語教材，423 句）。"
+                         "2026-08-22 起取代論文例句作為第三個測試集。"
+                         "需先跑 scripts/build_textbook_testset.py。")
     ap.add_argument("--no-papers", action="store_true",
                     help="不納入中正大學手語論文例句（預設在 --use-all 下納入）")
     ap.add_argument("--corpus-test-ratio", type=float, default=None,
@@ -279,6 +283,19 @@ def main():
             else:
                 pool.append(rec)
                 papers_added += 1
+
+    # --- 台灣手語教材（tslcopus.deaf.com.tw）：獨立測試集，不進訓練池 ---
+    # 2026-08-22 取代論文例句成為第三個測試集。來源檔由
+    # scripts/build_textbook_testset.py 產出，已在該處去重並排除與既有語料
+    # 重複的句子（測試洩漏）。⚠️ 授權未查證，data/tsl_textbook/ 在 .gitignore 內。
+    test_textbook = []
+    tb_path = DATA / "tsl_textbook" / "testset.jsonl"
+    if args.textbook_as_test:
+        if not tb_path.exists():
+            raise SystemExit(
+                f"找不到 {tb_path.relative_to(BASE)}，"
+                f"先跑 scripts/build_textbook_testset.py")
+        test_textbook = [norm_record(e, "textbook") for e in load_jsonl(tb_path)]
 
     # --- 文化部語料庫：可先依對話群組留存一批當「擴大真實 test 集」，其餘進訓練池 ---
     corpus_dropped_short = 0
@@ -465,6 +482,8 @@ def main():
         out_splits.append(("test_corpus", test_corpus))
     if test_papers:
         out_splits.append(("test_papers", test_papers))
+    if test_textbook:
+        out_splits.append(("test_textbook", test_textbook))
     for name, rows in out_splits:
         with (OUT / f"{name}.jsonl").open("w", encoding="utf-8") as f:
             for e in rows:
@@ -486,6 +505,19 @@ def main():
     assert tc_chinese_leak == 0, f"test_corpus 中文洩漏 {tc_chinese_leak}"
     assert tc_gloss_leak == 0, f"test_corpus Gloss 洩漏 {tc_gloss_leak}"
     assert tc_pair_leak == 0, f"test_corpus pair 洩漏 {tc_pair_leak}"
+
+    # 台灣手語教材測試集的洩漏檢查，與 test_corpus 分開算。
+    # **只對中文與句對下斷言**：那兩者才是真洩漏（同一個輸入、或同一組輸入輸出
+    # 被模型看過）。Gloss 單獨相同不算——教材句的 Gloss 中位數只有 4 個詞、
+    # 最短 1 個，單 token 的「美麗」這種必然會與訓練集碰撞，那是短序列的
+    # 巧合而非記憶。test_corpus 沒這問題是因為它有 --corpus-test-min-len 6。
+    tb_chinese = {e["chinese"] for e in test_textbook}
+    tb_pairs = {(e["chinese"], e["gloss_text"]) for e in test_textbook}
+    tb_chinese_leak = len(tb_chinese & train_dev_chinese)
+    tb_gloss_leak = len({e["gloss_text"] for e in test_textbook} & train_dev_gloss)
+    tb_pair_leak = len(tb_pairs & train_dev_pairs)
+    assert tb_chinese_leak == 0, f"test_textbook 中文洩漏 {tb_chinese_leak}"
+    assert tb_pair_leak == 0, f"test_textbook pair 洩漏 {tb_pair_leak}"
 
     def ngram4_count(rows):
         n = 0
@@ -509,7 +541,8 @@ def main():
                             if args.use_teacher_reviewed else "confidence-based"),
         "include_words": args.include_words,
         "counts": {"train": len(train), "dev": len(dev), "test": len(test),
-                   "test_corpus": len(test_corpus), "test_papers": len(test_papers)},
+                   "test_corpus": len(test_corpus), "test_papers": len(test_papers),
+                   "test_textbook": len(test_textbook)},
         "train_composition": compo(train),
         "dev_composition": compo(dev),
         "test_composition": compo(test),
@@ -533,6 +566,10 @@ def main():
         "test_corpus_ids_sha256": ids_sha256(test_corpus) if test_corpus else None,
         "test_corpus_groups": len(tc_groups),
         "test_corpus_group_leakage": tc_group_leak,
+        "test_textbook_chinese_leakage": tb_chinese_leak,
+        "test_textbook_pair_leakage": tb_pair_leak,
+        # 只報不斷言，理由見上（短 Gloss 必然碰撞）
+        "test_textbook_gloss_collision": tb_gloss_leak,
         "test_corpus_chinese_leakage": tc_chinese_leak,
         "test_corpus_gloss_leakage": tc_gloss_leak,
         "test_corpus_pair_leakage": tc_pair_leak,

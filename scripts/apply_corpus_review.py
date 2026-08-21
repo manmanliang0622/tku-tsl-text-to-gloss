@@ -49,6 +49,14 @@ BASE = Path(__file__).resolve().parent.parent
 REVIEWS = BASE / "data" / "reviews"
 REVIEW_TAG = "human-reviewed-2026-08-21"
 
+# 校訂表上主審判定欄空白、但事後由使用者口頭補的判定。
+# 分開記是因為它的來源不是那份表——重跑時要能看出這一筆的依據不同，
+# 日後若拿表格重新產生也不會被靜默覆蓋。
+VERDICT_OVERRIDES = {
+    # SYN0565「你是不是要去宜蘭？」表上未填，使用者 2026-08-22 補判定為通過
+    "SYN0565": ("通過", "使用者 2026-08-22 口頭補判定（校訂表該列未填）"),
+}
+
 # 表格欄位（A..X），只用 A:S；T:X 是公式欄，僅供對帳
 COL = {c: i for i, c in enumerate(
     "A B C D E F G H I J K L M N O P Q R S T U V W X".split())}
@@ -126,7 +134,13 @@ def apply_one(sheet_path, source_path, dry_run):
         second, second_gloss = cell(r, "P"), cell(r, "R")
 
         verdict = final_verdict(main, second)
-        if verdict != cell(r, "T"):
+        override = VERDICT_OVERRIDES.get(rid)
+        if override and verdict == "未填":
+            verdict, override_note = override
+            stats["套用口頭補判定"] += 1
+        else:
+            override_note = None
+        if override_note is None and verdict != cell(r, "T"):
             problems.append(f"{rid}: 推導判定「{verdict}」與公式欄「{cell(r,'T')}」不符")
             continue
         if verdict == "需更正":
@@ -158,6 +172,8 @@ def apply_one(sheet_path, source_path, dry_run):
                 stats["未填（維持原狀）"] += 1
                 continue
 
+            if override_note:
+                e["review_note"] = override_note
             if issue:
                 e["review_issue_type"] = issue
             if reason:

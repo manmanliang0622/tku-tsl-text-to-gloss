@@ -33,3 +33,8 @@ data/video/moe_dict_words.json
 # 腳本格式訓練資料：可由 build_script_dataset.py 從 splits＋sign_inventory 再生（16MB），
 # 不入庫；涵蓋率統計 coverage_stats.json 是評估結論，要留。
 data/splits_script/*.jsonl
+
+# 台灣手語教材（tslcopus.deaf.com.tw）：站上無版權宣告、授權未查證。
+# 比照 data/moe/ 保守處理——可本機／VM 用於評估，不推上公開 repo，
+# 論文附錄不附原始句對。要公開請先去信 tsl@deaf.com.tw。
+data/tsl_textbook/

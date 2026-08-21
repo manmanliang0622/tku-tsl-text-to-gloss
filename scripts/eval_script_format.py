@@ -59,7 +59,34 @@ def parse_output(raw: str) -> dict | None:
         return None
 
 
-def evaluate(rows: list[dict]) -> dict:
+# 2026-08-21 在 dev 250 句上選定的門檻。規則事前講定：**recall >= 0.7 下
+# 最大化 precision**，選出 0.02（dev P 0.679／R 0.734／F1 0.705）。
+# 套到 test_corpus：P 0.952／R 0.728／F1 0.825，對照原本貪婪解碼的
+# P 0.941／R 0.118——recall 提升 6.2 倍而 precision 沒有付代價。
+#
+# ⚠️ 事後診斷發現 test_corpus 上 F1 最佳門檻其實是 0.008（F1 0.921），
+# **刻意不採用**：那是拿測試集調參，得到的數字沒有意義。門檻只在 dev 上選。
+# 要重選請重跑 dev 推論並沿用同一條規則，不要看 test 的數字調。
+NEEDS_REVIEW_THRESHOLD = 0.02
+
+
+def obj_nr_fallback(r: dict) -> bool:
+    """抓不到機率時的退路：讀模型自己輸出的 needs_review。"""
+    obj = parse_output(r.get("raw", ""))
+    return bool(obj.get("needs_review", False)) if obj else False
+
+
+def _prf(tp: int, fp: int, fn: int) -> dict:
+    prec = tp / (tp + fp) if (tp + fp) else None
+    rec = tp / (tp + fn) if (tp + fn) else None
+    f1 = (2 * prec * rec / (prec + rec)) if (prec and rec) else None
+    return {"precision": round(prec, 4) if prec is not None else None,
+            "recall": round(rec, 4) if rec is not None else None,
+            "f1": round(f1, 4) if f1 is not None else None,
+            "tp": tp, "fp": fp, "fn": fn}
+
+
+def evaluate(rows: list[dict], nr_threshold: float = NEEDS_REVIEW_THRESHOLD) -> dict:
     id2gloss = load_inventory()
 
     valid = 0
@@ -70,14 +97,36 @@ def evaluate(rows: list[dict]) -> dict:
     ref_gloss, hyp_gloss = [], []
     groups = []
 
-    # needs_review 混淆矩陣
+    # needs_review 混淆矩陣。同時算兩組：
+    #   greedy     — 直接讀模型輸出的 true/false（貪婪解碼的硬決策）
+    #   calibrated — 讀 p_needs_review 再套門檻（需推論時有存該欄）
     tp = fp = tn = fn = 0
+    c_tp = c_fp = c_tn = c_fn = 0
+    have_p = 0
 
     for r in rows:
         obj = parse_output(r.get("raw", ""))
         cands = set(r.get("candidate_ids") or [])
         ref_ids = list(r.get("ref_sign_ids") or [])
         ref_nr = bool(r.get("ref_needs_review", False))
+
+        # 校準決策：有機率就用門檻，抓不到就**退回貪婪**——這才是可上線的策略，
+        # 而且分母與 greedy 那組一致。若把抓不到的排除在外，recall 會被灌水。
+        p_nr = r.get("p_needs_review")
+        if p_nr is not None or obj_nr_fallback(r) is not None:
+            if p_nr is not None:
+                have_p += 1
+                cal = p_nr >= nr_threshold
+            else:
+                cal = obj_nr_fallback(r)
+            if ref_nr and cal:
+                c_tp += 1
+            elif not ref_nr and cal:
+                c_fp += 1
+            elif not ref_nr and not cal:
+                c_tn += 1
+            else:
+                c_fn += 1
 
         if obj is None:
             # 無效輸出：Gloss 記空字串（計為全錯），needs_review 視為未預測
@@ -120,10 +169,6 @@ def evaluate(rows: list[dict]) -> dict:
     except Exception as e:  # noqa: BLE001  指標細節不該擋住主報表
         base = {"metrics_error": str(e)}
 
-    prec = tp / (tp + fp) if (tp + fp) else None
-    rec = tp / (tp + fn) if (tp + fn) else None
-    f1 = (2 * prec * rec / (prec + rec)) if (prec and rec) else None
-
     # 舊的「詞彙表內率」在新格式下已由候選清單取代（候選只從有影片的手語裡出），
     # 留著會顯示 0.0% 誤導成模型全錯。改由 Playable% 承擔這個角色。
     out = {k: v for k, v in base.items() if not k.startswith("InVocab")}
@@ -138,13 +183,21 @@ def evaluate(rows: list[dict]) -> dict:
         "Playable%": (round(100 * (total_pred_ids - unplayable) / total_pred_ids, 2)
                       if total_pred_ids else None),
         "NeedsReview": {
-            "precision": round(prec, 4) if prec is not None else None,
-            "recall": round(rec, 4) if rec is not None else None,
-            "f1": round(f1, 4) if f1 is not None else None,
-            "tp": tp, "fp": fp, "tn": tn, "fn": fn,
+            **_prf(tp, fp, fn), "tn": tn,
             "ref_positive_rate": round((tp + fn) / n, 4) if n else None,
+            "decision": "greedy（模型輸出的 true/false）",
         },
     })
+    if have_p:
+        out["NeedsReview_calibrated"] = {
+            **_prf(c_tp, c_fp, c_fn), "tn": c_tn,
+            "threshold": nr_threshold,
+            "rows_with_prob": have_p,
+            "rows_fallback_to_greedy": n - have_p,
+            "decision": f"p_needs_review >= {nr_threshold}（門檻在 dev 上選定）",
+        }
+    else:
+        out["NeedsReview_calibrated"] = None   # 推論時沒存 p_needs_review
     return out
 
 
@@ -153,11 +206,15 @@ def main() -> int:
     ap.add_argument("--pred", type=Path, required=True,
                     help="逐句預測 jsonl（需含 candidate_ids / ref_sign_ids / raw）")
     ap.add_argument("--out", type=Path, default=None)
+    ap.add_argument("--nr-threshold", type=float, default=NEEDS_REVIEW_THRESHOLD,
+                    help="needs_review 的機率門檻。預設 %(default)s，"
+                         "是 2026-08-21 在 dev 上依『recall>=0.7 下最大化 precision』選的。"
+                         "**不要看 test 的數字調這個。**")
     args = ap.parse_args()
 
     rows = [json.loads(l) for l in
             args.pred.read_text(encoding="utf-8").splitlines() if l.strip()]
-    res = evaluate(rows)
+    res = evaluate(rows, nr_threshold=args.nr_threshold)
     print(json.dumps(res, ensure_ascii=False, indent=2))
 
     out = args.out or args.pred.with_name(args.pred.stem + "_scriptmetrics.json")

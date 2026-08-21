@@ -1,0 +1,38 @@
+{
+  "BLEU-4": 25.92,
+  "ROUGE-L": 63.43,
+  "ExactMatch%": 7.23,
+  "n": 166,
+  "n_groups": 166,
+  "Reference4Grams": 386,
+  "Hypothesis4Grams": 507,
+  "ValidJSON%": 100.0,
+  "ConstraintViolation%_rows": 4.22,
+  "ConstraintViolation%_ids": 0.7,
+  "UnknownSignID": 5,
+  "Playable%": 99.5,
+  "NeedsReview": {
+    "precision": 0.9412,
+    "recall": 0.1176,
+    "f1": 0.2092,
+    "tp": 16,
+    "fp": 1,
+    "fn": 120,
+    "tn": 29,
+    "ref_positive_rate": 0.8193,
+    "decision": "greedy（模型輸出的 true/false）"
+  },
+  "NeedsReview_calibrated": {
+    "precision": 0.9519,
+    "recall": 0.7279,
+    "f1": 0.825,
+    "tp": 99,
+    "fp": 5,
+    "fn": 37,
+    "tn": 25,
+    "threshold": 0.02,
+    "rows_with_prob": 165,
+    "rows_fallback_to_greedy": 1,
+    "decision": "p_needs_review >= 0.02（門檻在 dev 上選定）"
+  }
+}

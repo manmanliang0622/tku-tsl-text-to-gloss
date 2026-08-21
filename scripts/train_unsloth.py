@@ -12,6 +12,7 @@
 
 對齊 v8 的設定（取自 scripts/train_qlora.py 的 argparse 預設）：
   lr 2e-4 / batch 2 / grad_accum 8 / max_len 512 / LoRA r16 alpha32 dropout0.05
+  （dropout 可用 --lora-dropout 改；0 會啟用 Unsloth 的 fast patch，但會少一層正則化）
   / cosine scheduler / warmup_ratio 0.03 / seed 42 / 每 epoch 存檔與評估
 
 差異（Unsloth 無法完全對齊處，報告需註明）：
@@ -53,6 +54,11 @@ ap.add_argument("--grad-accum", type=int, default=8)
 ap.add_argument("--max-len", type=int, default=512)
 ap.add_argument("--lora-r", type=int, default=16)
 ap.add_argument("--lora-alpha", type=int, default=32)
+# Unsloth 只有 dropout=0 才走 LoRA 矩陣的 fast patch，非 0 會退回較慢路徑並印警告。
+# 但這不是免費的速度旋鈕：v14 在 epoch 2 就過擬合（eval_loss 0.1957→0.2325），
+# 拿掉正則化很可能讓它更早發生。要改請速度與 dev loss 一起看，不要只看秒/步。
+# 預設 0.05 是為了與 v11／v13 各輪可比。
+ap.add_argument("--lora-dropout", type=float, default=0.05)
 ap.add_argument("--seed", type=int, default=42)
 args = ap.parse_args()
 
@@ -93,7 +99,7 @@ model = FastModel.get_peft_model(
     finetune_mlp_modules=True,
     r=args.lora_r,
     lora_alpha=args.lora_alpha,
-    lora_dropout=0.05,
+    lora_dropout=args.lora_dropout,
     bias="none",
     random_state=args.seed,
 )

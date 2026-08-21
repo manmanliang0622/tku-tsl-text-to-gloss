@@ -41,6 +41,39 @@ def candidate_ids(user_content: str) -> list[str]:
     return out
 
 
+def needs_review_prob(tok, seq, scores):
+    """回傳模型在 needs_review 那個位置給 true 的機率（相對 false 正規化）。
+
+    為什麼要這個（2026-08-21）：貪婪解碼只給硬 true/false，而 v14 在 test_corpus
+    的表現是 precision 0.941／recall 0.118——它一開口幾乎都對，就是太少開口。
+    這是典型的門檻過保守，用機率＋在 **dev** 上調門檻即可校準，不必重訓。
+    ⚠️ 門檻只能在 dev 上調，拿 test_corpus 調就是對測試集調參。
+
+    只在 true/false 兩個結果之間正規化，不看其他 token——那些與這個決策無關，
+    納入只會讓機率被序列長度稀釋。找不到該位置時回 None（不猜）。
+    """
+    import torch
+    text = ""
+    for i, tid in enumerate(seq.tolist()):
+        piece = tok.decode([tid])
+        low = piece.strip().lower()
+        if "needs_review" in text and low[:4] in ("true", "fals"):
+            if i >= len(scores):
+                return None
+            probs = torch.softmax(scores[i][0].float(), dim=-1)
+            top = torch.topk(probs, 50)
+            pt = pf = 0.0
+            for val, idx in zip(top.values.tolist(), top.indices.tolist()):
+                w = tok.decode([idx]).strip().lower()
+                if w.startswith("true"):
+                    pt += val
+                elif w.startswith("fals"):
+                    pf += val
+            return round(pt / (pt + pf), 6) if (pt + pf) > 0 else None
+        text += piece
+    return None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default=str(Path.home() / "0813/model_service/base_model"))
@@ -91,8 +124,11 @@ def main() -> int:
             enc = tok(text=prompt, return_tensors="pt").to(model.device)
             with torch.no_grad():
                 gen = model.generate(**enc, max_new_tokens=args.max_new,
-                                     do_sample=False, pad_token_id=pad_id)
-            raw = tok.decode(gen[0][enc["input_ids"].shape[1]:], skip_special_tokens=True)
+                                     do_sample=False, pad_token_id=pad_id,
+                                     return_dict_in_generate=True, output_scores=True)
+            seq = gen.sequences[0][enc["input_ids"].shape[1]:]
+            raw = tok.decode(seq, skip_special_tokens=True)
+            p_nr = needs_review_prob(tok, seq, gen.scores)
             ref = json.loads(msgs[2]["content"])
             f.write(json.dumps({
                 "id": r.get("metadata", {}).get("id"),
@@ -100,6 +136,8 @@ def main() -> int:
                 "candidate_ids": candidate_ids(msgs[1]["content"]),
                 "ref_sign_ids": ref.get("sign_ids") or [],
                 "ref_needs_review": bool(ref.get("needs_review", False)),
+                # needs_review 那個位置的機率，供事後調門檻（見 needs_review_prob）
+                "p_needs_review": p_nr,
             }, ensure_ascii=False) + "\n")
             if i % 20 == 0 or i == len(rows):
                 print(f"  {i}/{len(rows)}  {time.time()-t0:.0f}s", flush=True)

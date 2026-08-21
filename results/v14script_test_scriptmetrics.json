@@ -1,0 +1,24 @@
+{
+  "BLEU-4": 78.96,
+  "ROUGE-L": 89.39,
+  "ExactMatch%": 72.73,
+  "n": 33,
+  "n_groups": 33,
+  "Reference4Grams": 5,
+  "Hypothesis4Grams": 3,
+  "ValidJSON%": 100.0,
+  "ConstraintViolation%_rows": 0.0,
+  "ConstraintViolation%_ids": 0.0,
+  "UnknownSignID": 0,
+  "Playable%": 100.0,
+  "NeedsReview": {
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "tp": 0,
+    "fp": 0,
+    "tn": 32,
+    "fn": 1,
+    "ref_positive_rate": 0.0303
+  }
+}

@@ -17,8 +17,20 @@
     "f1": null,
     "tp": 0,
     "fp": 0,
-    "tn": 32,
     "fn": 1,
-    "ref_positive_rate": 0.0303
+    "tn": 32,
+    "ref_positive_rate": 0.0303,
+    "decision": "greedy（模型輸出的 true/false）"
+  },
+  "NeedsReview_calibrated": null,
+  "_ref_scope": "上方 BLEU-4／ROUGE-L／ExactMatch%% 是對**候選內參考**算的（撈不到的詞不在參考裡），回答『有沒有從候選裡挑對』；Full_reference 那組才是含檢索缺口的系統整體水準。",
+  "Full_reference": {
+    "BLEU-4": 77.8,
+    "ROUGE-L": 88.38,
+    "ExactMatch%": 69.7,
+    "ref_tokens_full": 79,
+    "ref_tokens_in_candidates": 78,
+    "ref_tokens_dropped%": 1.27,
+    "rows_matched": 33
   }
 }

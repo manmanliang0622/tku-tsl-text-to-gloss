@@ -34,5 +34,15 @@
     "rows_with_prob": 165,
     "rows_fallback_to_greedy": 1,
     "decision": "p_needs_review >= 0.02（門檻在 dev 上選定）"
+  },
+  "_ref_scope": "上方 BLEU-4／ROUGE-L／ExactMatch%% 是對**候選內參考**算的（撈不到的詞不在參考裡），回答『有沒有從候選裡挑對』；Full_reference 那組才是含檢索缺口的系統整體水準。",
+  "Full_reference": {
+    "BLEU-4": 16.2,
+    "ROUGE-L": 52.33,
+    "ExactMatch%": 2.41,
+    "ref_tokens_full": 1259,
+    "ref_tokens_in_candidates": 877,
+    "ref_tokens_dropped%": 30.34,
+    "rows_matched": 166
   }
 }

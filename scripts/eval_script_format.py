@@ -70,6 +70,25 @@ def parse_output(raw: str) -> dict | None:
 NEEDS_REVIEW_THRESHOLD = 0.02
 
 
+def load_full_refs(path: Path) -> dict[str, str]:
+    """讀原始切分的完整參考 Gloss（id → gloss_text）。
+
+    為什麼需要（2026-08-21）：`ref_sign_ids` 只含**候選撈得到**的詞，撈不到的被
+    移到 `oov_items` 不在參考裡。test_corpus 詞涵蓋率 69.7%，等於參考答案有
+    30.3%（382/1259 個 token）一開始就被拿掉。拿那個當參考算出來的 BLEU
+    回答的是「有沒有從候選裡挑對」，**不是「翻譯對不對」**，數值天生偏高，
+    誤當品質引用會嚴重高估。故另算一組對完整參考的指標並列呈現。
+    """
+    out = {}
+    if not path.exists():
+        return out
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            e = json.loads(line)
+            out.setdefault(e["id"], e["gloss_text"])
+    return out
+
+
 def obj_nr_fallback(r: dict) -> bool:
     """抓不到機率時的退路：讀模型自己輸出的 needs_review。"""
     obj = parse_output(r.get("raw", ""))
@@ -86,7 +105,8 @@ def _prf(tp: int, fp: int, fn: int) -> dict:
             "tp": tp, "fp": fp, "fn": fn}
 
 
-def evaluate(rows: list[dict], nr_threshold: float = NEEDS_REVIEW_THRESHOLD) -> dict:
+def evaluate(rows: list[dict], nr_threshold: float = NEEDS_REVIEW_THRESHOLD,
+             full_refs: dict[str, str] | None = None) -> dict:
     id2gloss = load_inventory()
 
     valid = 0
@@ -172,6 +192,27 @@ def evaluate(rows: list[dict], nr_threshold: float = NEEDS_REVIEW_THRESHOLD) -> 
     # 舊的「詞彙表內率」在新格式下已由候選清單取代（候選只從有影片的手語裡出），
     # 留著會顯示 0.0% 誤導成模型全錯。改由 Playable% 承擔這個角色。
     out = {k: v for k, v in base.items() if not k.startswith("InVocab")}
+    # ---- 對完整參考再算一組（含被候選漏掉的詞，一律計為未命中）----
+    full_block = None
+    if full_refs:
+        f_ref = [full_refs.get(g, "") for g in groups]
+        hit = sum(1 for x in f_ref if x)
+        if hit:
+            try:
+                fb = metrics.evaluate(f_ref, hyp_gloss, vocab, groups=groups)
+                full_block = {k: v for k, v in fb.items()
+                              if k.split("%")[0] in ("BLEU-4", "ROUGE-L", "ExactMatch")
+                              or k in ("BLEU-4", "ROUGE-L", "ExactMatch%")}
+                ref_tok = sum(len([t for t in x.split("/") if t.strip()]) for x in f_ref)
+                trunc_tok = sum(len(r.get("ref_sign_ids") or []) for r in rows)
+                full_block["ref_tokens_full"] = ref_tok
+                full_block["ref_tokens_in_candidates"] = trunc_tok
+                full_block["ref_tokens_dropped%"] = (
+                    round(100 * (ref_tok - trunc_tok) / ref_tok, 2) if ref_tok else None)
+                full_block["rows_matched"] = hit
+            except Exception as e:  # noqa: BLE001
+                full_block = {"metrics_error": str(e)}
+
     out.update({
         "n": n,
         "ValidJSON%": round(100 * valid / n, 2) if n else None,
@@ -198,6 +239,12 @@ def evaluate(rows: list[dict], nr_threshold: float = NEEDS_REVIEW_THRESHOLD) -> 
         }
     else:
         out["NeedsReview_calibrated"] = None   # 推論時沒存 p_needs_review
+
+    # 主 BLEU/ROUGE/EM 是對「候選內參考」算的，改名讓語意不會被誤讀
+    out["_ref_scope"] = ("上方 BLEU-4／ROUGE-L／ExactMatch%% 是對**候選內參考**算的"
+                         "（撈不到的詞不在參考裡），回答『有沒有從候選裡挑對』；"
+                         "Full_reference 那組才是含檢索缺口的系統整體水準。")
+    out["Full_reference"] = full_block
     return out
 
 
@@ -206,6 +253,9 @@ def main() -> int:
     ap.add_argument("--pred", type=Path, required=True,
                     help="逐句預測 jsonl（需含 candidate_ids / ref_sign_ids / raw）")
     ap.add_argument("--out", type=Path, default=None)
+    ap.add_argument("--full-ref", type=Path, default=None,
+                    help="原始切分檔（data/splits/<split>.jsonl），用來對**完整參考**"
+                         "另算一組指標。不給則依 --pred 檔名推斷。")
     ap.add_argument("--nr-threshold", type=float, default=NEEDS_REVIEW_THRESHOLD,
                     help="needs_review 的機率門檻。預設 %(default)s，"
                          "是 2026-08-21 在 dev 上依『recall>=0.7 下最大化 precision』選的。"
@@ -214,7 +264,18 @@ def main() -> int:
 
     rows = [json.loads(l) for l in
             args.pred.read_text(encoding="utf-8").splitlines() if l.strip()]
-    res = evaluate(rows, nr_threshold=args.nr_threshold)
+    split_file = args.full_ref
+    if split_file is None:
+        stem = args.pred.stem
+        for name in ("test_corpus", "test_papers", "test", "dev", "train"):
+            if stem.endswith(name):
+                split_file = BASE / "data" / "splits" / f"{name}.jsonl"
+                break
+    full_refs = load_full_refs(split_file) if split_file else {}
+    if not full_refs:
+        print(f"⚠ 找不到完整參考（{split_file}），Full_reference 那組略過。"
+              f"data/splits/*.jsonl 有 gitignore，需先跑 split_data.py 再生。")
+    res = evaluate(rows, nr_threshold=args.nr_threshold, full_refs=full_refs)
     print(json.dumps(res, ensure_ascii=False, indent=2))
 
     out = args.out or args.pred.with_name(args.pred.stem + "_scriptmetrics.json")

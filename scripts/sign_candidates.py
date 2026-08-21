@@ -51,11 +51,17 @@ class CandidateRetriever:
 
     def __init__(self, inventory: Path = INVENTORY, index: Path = INDEX,
                  use_examples: bool = True):
-        self.rows = [json.loads(l) for l in
-                     inventory.read_text(encoding="utf-8").splitlines() if l.strip()]
+        all_rows = [json.loads(l) for l in
+                    inventory.read_text(encoding="utf-8").splitlines() if l.strip()]
+        # 已驗證的重複收錄（build_sign_inventory.DUPLICATE_OF）不進候選：
+        # 同一支錄影出現兩次只會佔掉候選名額，還讓模型面對兩個等價選項。
+        # ID 不刪除，故 by_id 仍收錄全部，舊資料引用得到才解析得出來。
+        # superseded_by＝同詞有更準確的另一支影片（品質實測後選定），同樣不進候選
+        self.rows = [r for r in all_rows
+                     if "duplicate_of" not in r and "superseded_by" not in r]
         self.by_gloss = {r["gloss"]: r for r in self.rows}
         self.index: dict[str, str] = json.loads(index.read_text(encoding="utf-8"))
-        self.by_id = {r["sign_id"]: r for r in self.rows}
+        self.by_id = {r["sign_id"]: r for r in all_rows}
         self.max_len = max(len(g) for g in self.by_gloss)
         # 字元 → 含該字元的 gloss，供干擾項檢索
         self.by_char: dict[str, list[str]] = {}

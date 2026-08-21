@@ -8,10 +8,14 @@
     "TSL_01692": "TSL_01691",
     "TSL_06664": "TSL_06663"
   },
+  "superseded": {
+    "TSL_00004": "TSL_00883"
+  },
   "new_ids_this_run": 0,
   "index_keys": 16721,
   "alias_keys_added": 53,
   "clean_keys_added": 40,
+  "index_keys_repointed_from_duplicate": 5,
   "gloss_dirty": {
     "control_chars": 2,
     "outer_space": 45,

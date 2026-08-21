@@ -87,7 +87,19 @@ DUPLICATE_OF = {
     "TSL_01692": "TSL_01691",   # 傾聽 moe_05_0022 = moe_02_0097 (8997c78a4918754d)
     "TSL_06664": "TSL_06663",   # 抹黑 moe_12_0711 = moe_13_0773 (c3b4450341292dbc)
 }
-# 另 3 組清理後同名者已比對確認為**不同**錄影，兩支都保留：
+# 同名但**不同錄影**時，若已比對品質並選定用哪一支，記在這裡。被取代者不進候選，
+# ID 同樣不刪。判定依據是 ~/0813/quality_scan/entries_final.csv 的實測欄位，
+# 不是主觀觀感；重驗方式見該檔與 [[0813-video-quality-audit]]。
+SUPERSEDED_BY = {
+    # 事情：moe_04_0090 的 6.83 秒裡只有 97/205（左手）、136/205（右手）幀是舉手狀態，
+    # 一半以上是手放下的空檔，當單詞片段播出等於有 3 秒多沒動作；
+    # 手腕可見度 0.585/0.663（moc 為 1.0/1.0）——缺 landmark 是 retarget 端補不出來的。
+    # 抖動 0.0191 vs 0.0081、畫質 480x360@30 vs 1920x1080@60。moe 唯一勝出的是
+    # flicker 0.107 vs 0.154。線上實際使用的也是 moc 那支（usage 71 vs 0）。
+    "TSL_00004": "TSL_00883",
+}
+
+# 另 3 組清理後同名者已比對確認為**不同**錄影：
 #   事情 TSL_00883（語料庫長片切出的 0.65 秒片段）vs TSL_00004（辭典單詞）
 #   共同 TSL_02059（錄影 label「一同」）vs TSL_02060
 #   軟弱 TSL_14281（錄影 label「弱」）  vs TSL_14282
@@ -180,6 +192,8 @@ def main() -> int:
         })
         if sign_id in DUPLICATE_OF:
             rows[-1]["duplicate_of"] = DUPLICATE_OF[sign_id]
+        if sign_id in SUPERSEDED_BY:
+            rows[-1]["superseded_by"] = SUPERSEDED_BY[sign_id]
 
     # ---- name_key：語義 ID 的命名基礎，碰撞時加序號後綴 ----
     # 依既有 sign_id 排序決定誰不加後綴，重跑結果才穩定（ID 凍結後不可改）。
@@ -226,7 +240,12 @@ def main() -> int:
         for c in collisions:
             ms = "／".join(f"{m['sign_id']}({m['recording']} {m['duration']}s)"
                            for m in c["members"])
-            tag = "重複收錄" if c["verified_duplicate"] else "真變體"
+            if c["verified_duplicate"]:
+                tag = "重複收錄"
+            elif any(m["sign_id"] in SUPERSEDED_BY for m in c["members"]):
+                tag = "真變體·已選定"
+            else:
+                tag = "真變體·未比品質"
             print(f"    [{tag}] {c['gloss_clean']}: {ms}")
         print("  已用 name_key 後綴區分，不影響現有 sign_id。"
               "⚠ 新出現的碰撞未經驗證，需比對 frames 後補進 DUPLICATE_OF。")
@@ -255,24 +274,40 @@ def main() -> int:
             index[n] = by_gloss[gloss]
             alias_added += 1
 
+    # 指向重複收錄的鍵改導向正本：查詢應該拿到正規那支，兩者動作資料本就相同
+    repointed = 0
+    replaced = {**DUPLICATE_OF, **SUPERSEDED_BY}
+    for key, sid in list(index.items()):
+        if sid in replaced:
+            index[key] = replaced[sid]
+            repointed += 1
+    if repointed:
+        print(f"索引改導向：{repointed} 個鍵原指向重複收錄或已被取代的 ID")
+
     # name_key 與索引必須指向同一支影片，否則下游兩條路徑會播出不同的手語
     for r in rows:
+        if r["sign_id"] in SUPERSEDED_BY:
+            continue                      # 已刻意改導向較準確的那支
         if r["name_key"] == r["gloss_clean"] and index.get(r["gloss_clean"]) != r["sign_id"]:
             raise SystemExit(
                 f"name_key 與索引不一致：{r['gloss_clean']} → "
                 f"name_key {r['sign_id']} / 索引 {index.get(r['gloss_clean'])}")
 
     dup_rows = [r for r in rows if "duplicate_of" in r]
+    sup_rows = [r for r in rows if "superseded_by" in r]
     stats = {
         "lexicon_entries": len(lexicon),
         "signs": len(rows),
         # 對外報告用這個數字：扣掉已驗證的重複收錄
         "distinct_signs": len(rows) - len(dup_rows),
         "duplicates": {r["sign_id"]: r["duplicate_of"] for r in dup_rows},
+        # 取代不影響 distinct_signs：詞還在，只是換一支影片演
+        "superseded": {r["sign_id"]: r["superseded_by"] for r in sup_rows},
         "new_ids_this_run": new_count,
         "index_keys": len(index),
         "alias_keys_added": alias_added,
         "clean_keys_added": clean_added,
+        "index_keys_repointed_from_duplicate": repointed,
         "gloss_dirty": dirty,
         "name_key_collisions": collisions,
         "by_source": dict(collections.Counter(r["source"] for r in rows).most_common()),

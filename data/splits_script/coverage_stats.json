@@ -2,73 +2,73 @@
   "k": 40,
   "splits": {
     "train": {
-      "sentences": 8992,
-      "token_recall": 0.9236,
-      "sentence_fully_covered": 0.7392,
-      "needs_review_rate": 0.2608,
-      "oov_tokens": 3971,
-      "oov_not_in_library": 476,
-      "oov_retrieval_miss": 3495,
+      "sentences": 8915,
+      "token_recall": 0.9259,
+      "sentence_fully_covered": 0.7471,
+      "needs_review_rate": 0.2529,
+      "oov_tokens": 3803,
+      "oov_not_in_library": 468,
+      "oov_retrieval_miss": 3335,
       "top_missing": [
         [
           "什麼",
-          108
+          97
         ],
         [
           "那",
-          69
+          71
         ],
         [
           "這",
-          67
-        ],
-        [
-          "棒",
-          60
+          59
         ],
         [
           "再",
-          51
+          52
+        ],
+        [
+          "棒",
+          50
+        ],
+        [
+          "是",
+          38
         ],
         [
           "新北",
           36
         ],
         [
-          "是",
-          34
+          "有",
+          32
         ],
         [
           "像",
           30
         ],
         [
+          "去",
+          28
+        ],
+        [
           "想",
           28
         ],
         [
-          "全部",
-          25
+          "自己",
+          24
         ],
         [
           "第二",
           23
         ],
         [
-          "他們",
-          21
-        ],
-        [
-          "工作",
-          21
-        ],
-        [
-          "第一",
-          21
-        ],
-        [
           "告訴",
-          21
+          22
+        ],
+        [
+          "要",
+          22
         ]
       ],
       "top_missing_not_in_library": [
@@ -81,19 +81,11 @@
           14
         ],
         [
-          "BB",
-          9
-        ],
-        [
-          "call",
-          8
+          "BB call",
+          7
         ],
         [
           "(包+包)交換",
-          6
-        ],
-        [
-          "翻+書",
           6
         ],
         [
@@ -101,15 +93,15 @@
           6
         ],
         [
-          "活++",
-          5
+          "翻+書",
+          6
         ],
         [
           "剖+蚵仔",
           5
         ],
         [
-          "題",
+          "活++",
           5
         ],
         [
@@ -117,35 +109,43 @@
           5
         ],
         [
-          "文件+給",
+          "題",
+          5
+        ],
+        [
+          "畫面+代形詞",
+          4
+        ],
+        [
+          "黃斑++",
+          4
+        ],
+        [
+          "誠實告知++",
+          4
+        ],
+        [
+          "收錄+手機",
           4
         ],
         [
           "相信他",
           4
-        ],
-        [
-          "巴勒斯坦",
-          4
-        ],
-        [
-          "水倒入+杯子",
-          4
         ]
       ]
     },
     "dev": {
-      "sentences": 666,
-      "token_recall": 0.7909,
-      "sentence_fully_covered": 0.5015,
-      "needs_review_rate": 0.4985,
-      "oov_tokens": 595,
+      "sentences": 663,
+      "token_recall": 0.7933,
+      "sentence_fully_covered": 0.5023,
+      "needs_review_rate": 0.4977,
+      "oov_tokens": 587,
       "oov_not_in_library": 18,
-      "oov_retrieval_miss": 577,
+      "oov_retrieval_miss": 569,
       "top_missing": [
         [
           "那",
-          9
+          8
         ],
         [
           "再",
@@ -156,27 +156,23 @@
           7
         ],
         [
-          "可以",
-          7
-        ],
-        [
-          "是",
-          7
+          "畫畫",
+          6
         ],
         [
           "這兩個",
           6
         ],
         [
-          "畫畫",
+          "可以",
           6
         ],
         [
-          "一樣",
+          "針對",
           5
         ],
         [
-          "這",
+          "是",
           5
         ],
         [
@@ -184,23 +180,27 @@
           5
         ],
         [
-          "針對",
+          "棒",
           5
         ],
         [
-          "棒",
+          "一樣",
+          5
+        ],
+        [
+          "讀書",
+          5
+        ],
+        [
+          "學習",
           4
         ],
         [
-          "沒有",
+          "新北",
           4
         ],
         [
-          "以前",
-          4
-        ],
-        [
-          "常常",
+          "我們兩個",
           4
         ]
       ],
@@ -218,31 +218,7 @@
           2
         ],
         [
-          "指揮",
-          1
-        ],
-        [
-          "六月",
-          1
-        ],
-        [
-          "放貨架++",
-          1
-        ],
-        [
-          "洞",
-          1
-        ],
-        [
-          "顆",
-          1
-        ],
-        [
-          "暗",
-          1
-        ],
-        [
-          "擺放++",
+          "交換++",
           1
         ],
         [
@@ -250,11 +226,35 @@
           1
         ],
         [
-          "交換++",
+          "暗",
+          1
+        ],
+        [
+          "洞",
+          1
+        ],
+        [
+          "六月",
+          1
+        ],
+        [
+          "擺放++",
           1
         ],
         [
           "考試S",
+          1
+        ],
+        [
+          "顆",
+          1
+        ],
+        [
+          "指揮",
+          1
+        ],
+        [
+          "放貨架++",
           1
         ]
       ]
@@ -285,13 +285,13 @@
       ]
     },
     "test_corpus": {
-      "sentences": 167,
-      "token_recall": 0.6938,
-      "sentence_fully_covered": 0.1557,
-      "needs_review_rate": 0.8443,
-      "oov_tokens": 388,
-      "oov_not_in_library": 10,
-      "oov_retrieval_miss": 378,
+      "sentences": 166,
+      "token_recall": 0.6966,
+      "sentence_fully_covered": 0.1807,
+      "needs_review_rate": 0.8193,
+      "oov_tokens": 382,
+      "oov_not_in_library": 9,
+      "oov_retrieval_miss": 373,
       "top_missing": [
         [
           "看見",
@@ -307,6 +307,10 @@
         ],
         [
           "他們",
+          4
+        ],
+        [
+          "一樣",
           4
         ],
         [
@@ -326,7 +330,7 @@
           3
         ],
         [
-          "一樣",
+          "煮",
           3
         ],
         [
@@ -347,10 +351,6 @@
         ],
         [
           "棒",
-          3
-        ],
-        [
-          "很",
           3
         ]
       ],
@@ -376,11 +376,7 @@
           1
         ],
         [
-          "QR",
-          1
-        ],
-        [
-          "code",
+          "QR code",
           1
         ],
         [
@@ -399,12 +395,12 @@
     },
     "test_papers": {
       "sentences": 143,
-      "token_recall": 0.7437,
-      "sentence_fully_covered": 0.4126,
-      "needs_review_rate": 0.5874,
-      "oov_tokens": 152,
+      "token_recall": 0.742,
+      "sentence_fully_covered": 0.4056,
+      "needs_review_rate": 0.5944,
+      "oov_tokens": 153,
       "oov_not_in_library": 59,
-      "oov_retrieval_miss": 93,
+      "oov_retrieval_miss": 94,
       "top_missing": [
         [
           "見",
@@ -419,15 +415,15 @@
           4
         ],
         [
+          "沒有",
+          4
+        ],
+        [
           "幫",
           3
         ],
         [
           "三個小時",
-          3
-        ],
-        [
-          "沒有",
           3
         ],
         [

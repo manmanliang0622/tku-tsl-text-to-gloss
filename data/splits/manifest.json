@@ -5,53 +5,54 @@
   "synth_selection": "confidence-based",
   "include_words": 0,
   "counts": {
-    "train": 8992,
-    "dev": 666,
+    "train": 8915,
+    "dev": 663,
     "test": 33,
-    "test_corpus": 167,
+    "test_corpus": 166,
     "test_papers": 143
   },
   "train_composition": {
-    "tslcorpus": 6817,
     "twtsl-sentence": 929,
-    "synth": 1246
+    "synth": 1246,
+    "tslcorpus": 6740
   },
   "dev_composition": {
-    "tslcorpus": 493,
+    "tslcorpus": 490,
     "synth": 129,
     "twtsl-sentence": 44
   },
   "test_composition": {
     "real": 33
   },
-  "leaked_removed": 23,
+  "human_excluded_2026_08_21": 23,
+  "leaked_removed": 24,
   "corpus_test_ratio": 0.12,
   "corrections": {
     "unique": 0,
     "rows_after_weighting": 0
   },
   "length_balance": {
-    "before_total": 5347,
-    "after_total": 8992,
-    "before_ge8_pct": 10.4,
-    "after_ge8_pct": 24.8,
+    "before_total": 5321,
+    "after_total": 8915,
+    "before_ge8_pct": 10.2,
+    "after_ge8_pct": 24.4,
     "buckets": "≤4 ×1、5–7 ×2、≥8 ×4"
   },
-  "context_sentences": 2,
-  "test_corpus_candidate_count": 167,
-  "test_corpus_reviewed_count": 167,
+  "context_sentences": 0,
+  "test_corpus_candidate_count": 166,
+  "test_corpus_reviewed_count": 166,
   "test_corpus_review_excluded_count": 0,
   "test_corpus_review_rejected_ids": [],
   "test_corpus_review_file": null,
   "test_corpus_review_sha256": null,
-  "test_corpus_ids_sha256": "94a0c0edc3b8d5daf50ed389f66e5b80d1fdbf7b4cc7e76d737df76f1a23f98a",
+  "test_corpus_ids_sha256": "d4cc94a4bfb55112fbcb2d78a828abc0664aa5590c35f1dcbbdd9857090aaeb4",
   "test_corpus_groups": 33,
   "test_corpus_group_leakage": 0,
   "test_corpus_chinese_leakage": 0,
   "test_corpus_gloss_leakage": 0,
   "test_corpus_pair_leakage": 0,
   "test_4gram_count": 5,
-  "test_corpus_4gram_count": 766,
+  "test_corpus_4gram_count": 761,
   "split_method": "group-holdout（語料庫按對話 seg_uuid、twtsl 按詞條、synth 按模板整組留存）",
   "dev_group_leakage": 0,
   "n_groups": {
@@ -63,5 +64,5 @@
   "no_corpus": false,
   "use_teacher_reviewed": false,
   "synth_source_note": "無審核閘門，全數納入（2026-08-05 使用者決策）",
-  "note": "test=Stage A 相同的 33 句真實已審核句，永不進訓練；train/dev 來源 synth／twtsl／tslcorpus 目前 review_status=pending，本輪為管線驗證，最終報告需依人工審核結果更新。tslcorpus＝文化部語料庫全爬真實平行語料（最大宗真實資料）。"
+  "note": "test=Stage A 相同的 33 句真實已審核句，永不進訓練；train/dev 來源 synth／twtsl／tslcorpus 已於 2026-08-21 逐句人工校訂（scripts/apply_corpus_review.py：561 筆取代 Gloss、23 筆判定排除不進切分），review_status 見各筆記錄；校訂只涵蓋中文語意與 Gloss 的詞彙與語序，NMS／手形／地區變體屬影片軌，未經母語者確認。tslcorpus＝文化部語料庫全爬真實平行語料（最大宗真實資料）。"
 }

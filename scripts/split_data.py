@@ -101,6 +101,16 @@ def group_key(e, source):
     return f"{source}:{e['id']}"
 
 
+def human_excluded(e):
+    """2026-08-21 人工校訂判定「排除」者（scripts/apply_corpus_review.py 寫入）。
+
+    這是資料可用性判定（語助詞、只是表情、人名、無法由現有資訊修正），
+    與 --use-all 那種「信度政策閘門」不同層次，故預設一律排除；
+    要重現舊切分請加 --keep-excluded。
+    """
+    return e.get("train_eligible") is False
+
+
 def norm_record(e, split_source):
     """統一訓練用欄位。"""
     return {
@@ -180,6 +190,9 @@ def main():
     ap.add_argument("--corpus-test-min-len", type=int, default=0,
                     help="留存語料庫 test 時只取 Gloss 長度 >= 此值的句子"
                          "（0=不限）。長句才是目前的弱項，留長句當 test 更有鑑別度。")
+    ap.add_argument("--keep-excluded", action="store_true",
+                    help="保留 2026-08-21 人工校訂判定「排除」的句子（預設排除）。"
+                         "僅用於重現該次校訂之前的切分。")
     ap.add_argument("--no-papers", action="store_true",
                     help="不納入中正大學手語論文例句（預設在 --use-all 下納入）")
     ap.add_argument("--corpus-test-ratio", type=float, default=None,
@@ -210,9 +223,13 @@ def main():
 
     # --- train 池：synth + twtsl 例句 ---
     pool = []
+    human_excluded_count = 0
     synth = load_jsonl(DATA / "synth" / "tsl_synth.jsonl")
     synth_source_note = "review_status=pending（管線驗證）"
     for e in synth:
+        if not args.keep_excluded and human_excluded(e):
+            human_excluded_count += 1
+            continue
         if args.use_all:
             pass                      # 無審核閘門：全部納入
         elif args.use_teacher_reviewed:
@@ -229,6 +246,9 @@ def main():
         synth_source_note = "無審核閘門，全數納入（2026-08-05 使用者決策）"
     twtsl_sents = load_jsonl(DATA / "twtsl" / "twtsl_sentences.jsonl")
     for e in twtsl_sents:
+        if not args.keep_excluded and human_excluded(e):
+            human_excluded_count += 1
+            continue
         pool.append(norm_record(e, "twtsl-sentence"))
 
     # --- 人工修正回饋（scripts/add_correction.py 產出）---
@@ -276,6 +296,9 @@ def main():
             attach_context(raw_corpus, n_prev=args.context)
         corpus_recs = []
         for e in raw_corpus:
+            if not args.keep_excluded and human_excluded(e):
+                human_excluded_count += 1
+                continue
             if len(e.get("gloss", [])) < args.min_gloss_len:
                 corpus_dropped_short += 1
                 continue
@@ -490,6 +513,7 @@ def main():
         "train_composition": compo(train),
         "dev_composition": compo(dev),
         "test_composition": compo(test),
+        "human_excluded_2026_08_21": human_excluded_count,
         "leaked_removed": leaked,
         "corpus_test_ratio": args.corpus_test_ratio,
         "corrections": {"unique": corrections, "rows_after_weighting": len(corrections_rows)},
@@ -531,8 +555,10 @@ def main():
              "散布仍須另補文化部語料＋中正辭典授權。")
             if args.use_teacher_reviewed else
             ("test=Stage A 相同的 33 句真實已審核句，永不進訓練；"
-             "train/dev 來源 synth／twtsl／tslcorpus 目前 review_status=pending，"
-             "本輪為管線驗證，最終報告需依人工審核結果更新。"
+             "train/dev 來源 synth／twtsl／tslcorpus 已於 2026-08-21 逐句人工校訂"
+             "（scripts/apply_corpus_review.py：561 筆取代 Gloss、23 筆判定排除不進切分），"
+             "review_status 見各筆記錄；校訂只涵蓋中文語意與 Gloss 的詞彙與語序，"
+             "NMS／手形／地區變體屬影片軌，未經母語者確認。"
              "tslcorpus＝文化部語料庫全爬真實平行語料（最大宗真實資料）。")),
     }
     (OUT / "manifest.json").write_text(

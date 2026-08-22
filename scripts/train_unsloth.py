@@ -59,6 +59,13 @@ ap.add_argument("--lora-alpha", type=int, default=32)
 # 拿掉正則化很可能讓它更早發生。要改請速度與 dev loss 一起看，不要只看秒/步。
 # 預設 0.05 是為了與 v11／v13 各輪可比。
 ap.add_argument("--lora-dropout", type=float, default=0.05)
+# needs_review 是 24.8%（train）對 81.9%（test_corpus）的分布不匹配重災區，
+# v14 靠推論端機率校準繞過（recall 0.118→0.728），但校準換一批資料就退化
+# （教材集 0.574）。正攻法是訓練時把該欄位的布林 token loss 加權。
+# 目標 JSON 裡 true/false **只**出現在 needs_review 欄位（sign_ids 是中文
+# 語義 ID、oov_items 是中文詞），所以直接對布林 token 加權即可，不必定位欄位。
+ap.add_argument("--nr-loss-weight", type=float, default=1.0,
+                help="needs_review 布林值 token 的 loss 權重；1=關閉（與 v13/v14 同）")
 ap.add_argument("--seed", type=int, default=42)
 args = ap.parse_args()
 
@@ -205,6 +212,51 @@ except SystemExit:
     raise
 except Exception as e:  # noqa: BLE001  檢查失敗不該擋住訓練
     print(f"[train] 遮罩檢查略過（{e}）", flush=True)
+
+if args.nr_loss_weight != 1.0:
+    # 只在**訓練**時加權；eval 走原路（模型自帶 fused loss），eval_loss 才能
+    # 與 v13/v14 直接對照。手動 CE 會把 logits 整批實體化（bf16 下
+    # B2×L768×V262k ≈ 0.8GB 外加 backward 緩衝），smoke 時要盯峰值顯存。
+    import torch.nn.functional as F  # noqa: E402
+
+    # Gemma 4 的 tokenizer 是多模態 processor（坑 8），encode 要走內層 tokenizer
+    _tok = getattr(tokenizer, "tokenizer", tokenizer)
+    _nr_ids = sorted({tid for s in (" true", " false", "true", "false")
+                      for tid in _tok.encode(s, add_special_tokens=False)})
+    _nr_ids_t = torch.tensor(_nr_ids)
+    _seen = {"train": False, "eval": False}
+    print(f"[train] needs_review loss 加權 {args.nr_loss_weight}×，"
+          f"布林 token ids={_nr_ids}"
+          f"（{[tokenizer.decode([t]) for t in _nr_ids]}）", flush=True)
+
+    def compute_loss(model, inputs, return_outputs=False, **kwargs):
+        labels = inputs.pop("labels")
+        if not model.training:  # eval：原路，不加權
+            if not _seen["eval"]:
+                _seen["eval"] = True
+                print("[train] 自訂 compute_loss：eval 走未加權原路 ✓", flush=True)
+            outputs = model(**inputs, labels=labels)
+            return (outputs.loss, outputs) if return_outputs else outputs.loss
+        outputs = model(**inputs)
+        logits = outputs.logits
+        shift_logits = logits[:, :-1, :]
+        shift_labels = labels[:, 1:]
+        loss_tok = F.cross_entropy(
+            shift_logits.reshape(-1, shift_logits.size(-1)).float(),
+            shift_labels.reshape(-1), ignore_index=-100, reduction="none",
+        ).view(shift_labels.shape)
+        mask = (shift_labels != -100).float()
+        is_nr = torch.isin(shift_labels, _nr_ids_t.to(shift_labels.device))
+        w = torch.where(is_nr, args.nr_loss_weight, 1.0).float()
+        if not _seen["train"]:
+            _seen["train"] = True
+            n_nr = int((is_nr & (shift_labels != -100)).sum())
+            print(f"[train] 自訂 compute_loss：train 加權生效 ✓ "
+                  f"（本 batch 加權 token 數 {n_nr}）", flush=True)
+        loss = (loss_tok * mask * w).sum() / (mask * w).sum().clamp(min=1.0)
+        return (loss, outputs) if return_outputs else loss
+
+    trainer.compute_loss = compute_loss
 
 torch.cuda.reset_peak_memory_stats()
 t0 = time.time()

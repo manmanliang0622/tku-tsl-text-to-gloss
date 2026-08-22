@@ -38,3 +38,4 @@ data/splits_script/*.jsonl
 # 比照 data/moe/ 保守處理——可本機／VM 用於評估，不推上公開 repo，
 # 論文附錄不附原始句對。要公開請先去信 tsl@deaf.com.tw。
 data/tsl_textbook/
+data/splits_script_k60/*.jsonl

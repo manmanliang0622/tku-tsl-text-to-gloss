@@ -22,12 +22,17 @@
 故佔比最高。
 
 用法：
-  python3 scripts/make_human_eval_sheet.py --model-tag v12 --n-corpus 60 --n-papers 30 --n-core 20
+  舊格式（v11 等，結果檔已含 chinese/pred/ref）：
+    python3 scripts/make_human_eval_sheet.py --model-tag v11 --n-corpus 60 --n-papers 30 --n-core 20
+  腳本格式（v14 起，模型輸出是 sign_id）：
+    python3 scripts/make_human_eval_sheet.py --model-tag v14script --format script \
+        --n-corpus 50 --n-textbook 40 --n-core 10
 """
 import argparse
 import hashlib
 import json
 import random
+import sys
 from pathlib import Path
 
 import openpyxl
@@ -37,6 +42,9 @@ from openpyxl.worksheet.datavalidation import DataValidation
 BASE = Path(__file__).resolve().parent.parent
 RESULTS = BASE / "results"
 OUT = BASE / "outputs"
+SPLITS = BASE / "data" / "splits"
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 
 def load_results(tag, split):
@@ -48,6 +56,53 @@ def load_results(tag, split):
     return []
 
 
+def load_results_script(tag, split):
+    """讀腳本格式（tsl-script-v1，v14 起）的逐句結果並還原成 gloss。
+
+    與舊格式三個不同，都得在這裡處理：
+      - 模型輸出是 sign_id 序列，須經 sign_inventory 轉回 gloss 才能給人評。
+        總表查無的 ID（幻覺）去掉 TSL_ 前綴照列——若保留前綴，評分者一眼
+        就看得出哪邊是機器，盲測就破了；哪些是幻覺記在對照 key。
+      - 結果檔沒有中文與參考，須用 id 對回 data/splits/<split>.jsonl。
+      - 參考一律用**完整參考**（原始 gloss_text）。`ref_sign_ids` 只含候選
+        撈得到的詞，拿那個當參考等於把檢索缺口藏起來，會高估模型
+        （同 eval_script_format.py 的 Full_reference 那組的理由）。
+    """
+    from eval_script_format import load_inventory, parse_output
+
+    pred_path = RESULTS / f"{tag}_{split}.jsonl"
+    split_path = SPLITS / f"{split}.jsonl"
+    if not pred_path.exists() or not split_path.exists():
+        return []
+    id2gloss = load_inventory()
+    meta = {}
+    for line in split_path.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            e = json.loads(line)
+            meta.setdefault(e["id"], e)
+
+    out = []
+    for line in pred_path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        r = json.loads(line)
+        m = meta.get(r.get("id"))
+        if not m:
+            continue
+        obj = parse_output(r.get("raw", "")) or {}
+        pred_ids = [str(i) for i in obj.get("sign_ids", [])]
+        pred = "/".join(id2gloss.get(i, i.removeprefix("TSL_")) for i in pred_ids)
+        ref = "/".join(t.strip() for t in m["gloss_text"].split("/") if t.strip())
+        out.append({
+            "id": r["id"], "chinese": m["chinese"], "pred": pred, "ref": ref,
+            "sign_ids": pred_ids,
+            "hallucinated_ids": [i for i in pred_ids if i not in id2gloss],
+            "needs_review": bool(obj.get("needs_review", False)),
+            "oov_items": obj.get("oov_items", []),
+        })
+    return out
+
+
 def side_for(chinese):
     """以句子雜湊決定模型輸出放 A 或 B（可重現、與抽樣無關）。"""
     h = hashlib.sha256(chinese.encode("utf-8")).hexdigest()
@@ -56,35 +111,56 @@ def side_for(chinese):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model-tag", default="v12", help="結果檔前綴，如 v12")
+    ap.add_argument("--model-tag", default="v12", help="結果檔前綴，如 v11、v14script")
+    ap.add_argument("--format", choices=("legacy", "script"), default="legacy",
+                    help="legacy＝結果檔已含 chinese/pred/ref（v11 等）；"
+                         "script＝tsl-script-v1（v14 起），sign_id 經總表還原、"
+                         "參考用完整參考、教材句取代論文例句")
     ap.add_argument("--n-corpus", type=int, default=60)
-    ap.add_argument("--n-papers", type=int, default=30)
+    ap.add_argument("--n-papers", type=int, default=30, help="僅 legacy 格式使用")
+    ap.add_argument("--n-textbook", type=int, default=40, help="僅 script 格式使用")
     ap.add_argument("--n-core", type=int, default=20)
     ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
 
     rng = random.Random(args.seed)
-    sources = [
-        ("語料庫長句", "test_corpus", args.n_corpus),
-        ("論文例句", "test_papers", args.n_papers),
-        ("核心短句", "core33", args.n_core),
-    ]
+    if args.format == "script":
+        # 論文例句 2026-08-22 已停用，改教材句；核心 33 句的結果檔叫 <tag>_test
+        sources = [
+            ("語料庫長句", "test_corpus", args.n_corpus),
+            ("教材句", "test_textbook", args.n_textbook),
+            ("核心短句", "test", args.n_core),
+        ]
+        loader = load_results_script
+    else:
+        sources = [
+            ("語料庫長句", "test_corpus", args.n_corpus),
+            ("論文例句", "test_papers", args.n_papers),
+            ("核心短句", "core33", args.n_core),
+        ]
+        loader = load_results
 
     rows = []
     for label, split, n in sources:
-        recs = load_results(args.model_tag, split)
+        recs = loader(args.model_tag, split)
         if not recs:
             print(f"  ⚠ 找不到 {args.model_tag}_{split} 的結果檔，略過「{label}」")
             continue
-        # 只評「與參考不同」者才有判定價值；完全相同者另外計數即可
+        # 只評「與參考不同」者才有判定價值；完全相同者另外計數即可。
+        # 輸出為空（needs_review 拒答且無 sign_ids）者沒有 gloss 可評，也排除。
         diff = [r for r in recs if r.get("pred") and r["pred"] != r["ref"]]
-        same = len(recs) - len(diff)
+        same = sum(1 for r in recs if r.get("pred") and r["pred"] == r["ref"])
+        empty = len(recs) - len(diff) - same
         rng.shuffle(diff)
         picked = diff[:n]
-        print(f"  {label}: 共 {len(recs)} 句（與參考相同 {same}），抽 {len(picked)} 句待判定")
+        print(f"  {label}: 共 {len(recs)} 句（與參考相同 {same}、輸出為空 {empty}），"
+              f"抽 {len(picked)} 句待判定")
         for r in picked:
             rows.append({"group": label, "chinese": r["chinese"],
-                         "model": r["pred"], "ref": r["ref"]})
+                         "model": r["pred"], "ref": r["ref"],
+                         **{k: r[k] for k in
+                            ("id", "sign_ids", "hallucinated_ids",
+                             "needs_review", "oov_items") if k in r}})
 
     if not rows:
         print("沒有可評估的資料，請先產生模型結果檔。")
@@ -136,7 +212,10 @@ def main():
                    a.replace("/", " / "), b.replace("/", " / "),
                    "", "", "", "", "", "", "", "", ""])
         key_rows.append({"編號": i, "中文": r["chinese"], "模型輸出在": model_side,
-                         "模型輸出": r["model"], "語料庫參考": r["ref"], "類型": r["group"]})
+                         "模型輸出": r["model"], "語料庫參考": r["ref"], "類型": r["group"],
+                         **{k: r[k] for k in
+                            ("id", "sign_ids", "hallucinated_ids",
+                             "needs_review", "oov_items") if k in r}})
 
     first, last = hrow + 1, ws.max_row
     dv_score = DataValidation(type="list", formula1='"1,2,3,4,5"', allow_blank=True)

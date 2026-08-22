@@ -123,6 +123,24 @@ hook，每 token 慢到約 35 秒（全放 GPU 是 0.06 秒/token）。
 OOV 判定基準為「詞彙總表 ∪ 訓練詞彙」（13,663 詞），非訓練詞彙——後者會把
 合法但訓練未出現的手語詞誤判成造詞，實測高估 67%。
 
+### 與未微調基線的對照（2026-08-13，教授回饋第 4 點）
+
+同一套推論堆疊（同 4-bit 設定、同 chat template、greedy 無 beam），**唯一差別是有沒有掛 adapter**；310 句 × 3 策略 = 930 次生成。完整表見 [results/baseline_vs_finetuned_report.md](results/baseline_vs_finetuned_report.md)。
+
+| | zero | rules | fewshot | **v11** |
+|---|---:|---:|---:|---:|
+| `test_corpus` ROUGE-L | 34.89 | 35.98 | 36.66 | **50.08** |
+| `test_papers` ROUGE-L | 48.62 | 53.32 | 48.19 | **57.08** |
+| `test_corpus` 未知詞句佔比 | 73.05% | 59.28% | 70.06% | **33.53%** |
+| `test_papers` 未知詞句佔比 | 47.55% | 32.87% | 50.35% | **22.38%** |
+
+沒有任何一格是基線勝出。但**幅度必須誠實講**：真實對話長句 ROUGE-L +13.42，
+論文短句只有 +3.76、可播放率只差 1.51 個百分點——**論文型短句用規則提示就能
+逼近微調**，微調的價值集中在規則罩不住的長篇對話。
+
+微調真正改變的是「用不用手語詞」：基線的典型輸出是逐字照抄中文，未知詞句佔
+47–73%，微調後降到 22–34%。
+
 ### 標籤品質（2026-08-13 稽核，教授回饋第 3 點）
 
 JSON 目標的 `question_type`／`negation`／`nonmanual`／`topic`／`verb` **全部由
@@ -142,11 +160,15 @@ JSON 目標的 `question_type`／`negation`／`nonmanual`／`topic`／`verb` **�
 
 ### 尚未具備的證據
 
-- **母語者人工評估未執行**。工具已備妥（`scripts/make_human_eval_sheet.py`，
-  盲測 A/B 設計），尚未產表送出。語意維度自動指標答不了。
-- **未微調基線只在核心 33 句上跑過**（zero 27.27%／rules 30.30%／
-  fewshot 36.36% EM），與 `test_corpus`／`test_papers` 重疊為 0。
-  「微調到底有沒有幫助」在兩個誠實測試集上**目前無法回答**。
+- **母語者人工評估未執行**。表已產出（`outputs/人工評估表_v11_盲測.xlsx`，
+  100 題，`scripts/make_human_eval_sheet.py` 盲測 A/B 設計），**尚未送出、
+  尚未有任何母語者評過**。語意維度自動指標答不了，故本卡不宣稱語意正確性。
+- **訓練資料未經母語者抽查**。表已產出（`outputs/訓練資料抽查表_train.xlsx`，
+  150 題，`scripts/make_data_audit_sheet.py` 五層分層抽樣），同樣尚未送出。
+  train 5,347 句中，合成句只有 85 句有審核紀錄，其餘皆為 `pending`
+  ——**「資料已經老師審核」這句話不可對外宣稱**。
+- **NMS 不在評估範圍**。本卡列的疑問／否定正確率是**文字層標記**，
+  不等於表情、搖頭、揚眉等實際動作，後者需母語者看影片裁定。
 
 - 詳細設定與錯誤分析：[results/stageB_v11_generalization_report.md](results/stageB_v11_generalization_report.md)、
   [教授回饋對帳與D1進度_2026-08-13.md](教授回饋對帳與D1進度_2026-08-13.md)。

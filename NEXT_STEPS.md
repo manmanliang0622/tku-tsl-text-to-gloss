@@ -145,7 +145,24 @@
 **做法**：同一 Gloss 目標配多種中文說法（5,272 × 3 ≈ 15k）。
 **注意**：改寫需保證語意不變，否則會製造錯誤標籤。
 
-### 3. 人工評估（計畫 6.2）— 工具已備妥，待執行
+### 3. 兩張人工表 — 表已產出，**尚未送出、尚未有人評過**
+
+⚠️ **這是兩件不同的事，不可互相取代**。教授回饋第 2 點與第 3 點各要一張：
+
+| | 審什麼 | 取樣自 | 腳本 | 產物 |
+|---|---|---|---|---|
+| 訓練資料抽查（第 2 點） | **資料本身**的 Gloss 對不對 | `train` 5,347 句 | `make_data_audit_sheet.py` | `outputs/訓練資料抽查表_train.xlsx`（150 題） |
+| 人工評估（第 3 點／計畫 6.2） | **模型輸出**對不對 | 三個留存測試集 | `make_human_eval_sheet.py` | `outputs/人工評估表_v11_盲測.xlsx`（100 題） |
+
+#### 3a. 訓練資料抽查
+
+分五層抽樣：語料庫長度落差大 40／語料庫一般 40／辭典例句 25／合成句未審核 35／
+合成句已審核 10（信度對照組）。老師判「正確／可接受但不道地／需修正／無法只憑文字判斷」。
+
+> **先前說法要更正**：「合成句經老師 2026-07-24 審核」實際只涵蓋 train 內 835 句
+> 合成句中的 **85 句**，其餘 **750 句仍是 `pending`**。當時審的是 115 句高風險句。
+
+#### 3b. 人工評估（盲測 A/B）
 
 盲測 A/B 評分表產生器：`scripts/make_human_eval_sheet.py`。
 模型輸出與語料庫參考以 A/B 呈現、順序由句子雜湊決定，評分者不知孰為機器
@@ -206,7 +223,8 @@
 | 語料庫輸出稽核 | `python3 scripts/audit_corpus_outputs.py --n 60 --tag ZZZ` |
 | **三層診斷** | `python3 scripts/build_eval_tiers.py` 然後 `python3 scripts/eval_three_tier.py --adapter XXX --ple gpu` |
 | **fallback 離線量測** | `python3 scripts/eval_fallback_offline.py` |
-| **人工評估表（盲測）** | `python3 scripts/make_human_eval_sheet.py --model-tag v12` |
+| **人工評估表（盲測）** | `python3 scripts/make_human_eval_sheet.py --model-tag v11`（⚠️ 預設 v12 但無 v12 結果檔） |
+| **訓練資料抽查表** | `python3 scripts/make_data_audit_sheet.py` |
 | **教育部辭典爬取** | `python3 scripts/scrape_moe_signdict.py`（授權未查證，資料不入版控） |
 
 **宣稱界線**：對外報告一律用 `test_corpus` / `test_papers` 的數字；

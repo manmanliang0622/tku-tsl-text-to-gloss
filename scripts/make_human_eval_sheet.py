@@ -65,16 +65,16 @@ def main():
 
     rng = random.Random(args.seed)
     sources = [
-        ("語料庫長句", f"{args.model_tag}_test_corpus", args.n_corpus),
-        ("論文例句", f"{args.model_tag}_test_papers", args.n_papers),
-        ("核心短句", f"{args.model_tag}_core33", args.n_core),
+        ("語料庫長句", "test_corpus", args.n_corpus),
+        ("論文例句", "test_papers", args.n_papers),
+        ("核心短句", "core33", args.n_core),
     ]
 
     rows = []
-    for label, tag, n in sources:
-        recs = load_results(tag, "")
+    for label, split, n in sources:
+        recs = load_results(args.model_tag, split)
         if not recs:
-            print(f"  ⚠ 找不到 {tag} 的結果檔，略過「{label}」")
+            print(f"  ⚠ 找不到 {args.model_tag}_{split} 的結果檔，略過「{label}」")
             continue
         # 只評「與參考不同」者才有判定價值；完全相同者另外計數即可
         diff = [r for r in recs if r.get("pred") and r["pred"] != r["ref"]]

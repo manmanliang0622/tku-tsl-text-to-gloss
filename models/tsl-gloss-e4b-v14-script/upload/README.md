@@ -1,5 +1,5 @@
 ---
-license: gemma
+license: apache-2.0
 base_model: google/gemma-4-E4B-it
 library_name: peft
 pipeline_tag: translation
@@ -135,6 +135,7 @@ User／Assistant：
 
 ## 授權
 
-- adapter 為 **Gemma 衍生物**，散布須遵守 [Google Gemma Terms of Use](https://ai.google.dev/gemma/terms)，
-  含其使用限制。使用者自負確認責任。
+- 基礎模型 Gemma 4 適用 [Apache License 2.0](https://ai.google.dev/gemma/docs/gemma_4_license)
+  （2026-08-22 查證：Gemma Terms of Use 明文僅涵蓋 Gemma 1–3n，不含 Gemma 4）。
+  本 adapter 同以 Apache 2.0 釋出。
 - 資料出處如上，散布時須一併標明。

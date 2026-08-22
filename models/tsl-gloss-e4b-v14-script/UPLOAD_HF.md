@@ -40,9 +40,13 @@ huggingface-cli upload <你的HF帳號>/tsl-gloss-e4b-v14-script \
 
 ## ⚠️ 轉公開前必須先處理的兩件事
 
-1. **Google Gemma Terms of Use**。adapter 是 Gemma 衍生物，散布須遵守其條款
-   （含使用限制）。MODEL_CARD.md 明寫「公開權重前請先確認 Gemma 條款；
-   本卡不代為認定」——**這是專案自己標記的未解決閘門，不是形式**。
+1. **Gemma 授權：已於 2026-08-22 查證，閘門解除。** Gemma 4 適用
+   Apache 2.0，不適用 Gemma Terms of Use（該條款明文僅涵蓋 Gemma 1–3n）。
+   依據與細節見 `Gemma條款查證_2026-08-22.md`。upload/README 的 frontmatter
+   已改 `license: apache-2.0`——**若 HF 上已傳的是舊版 README
+   （`license: gemma`），轉公開前要把新版 README 重新上傳**。
+   按下轉公開前花一分鐘重看 https://ai.google.dev/gemma/terms 開頭的
+   適用範圍聲明還在不在即可。
 2. **model card 的出處完整性**：文化部臺灣手語語料庫、中正辭典
    （蔡素娟、戴浩一、劉世凱、陳怡君 2026，中正大學）。已寫在 README，
    轉公開前再確認一次沒被改掉。

@@ -35,7 +35,7 @@ supersedes: v4 teacher-reviewed (2026-08-04)
 ## 基礎模型
 
 - `google/gemma-4-E4B-it`（Gemma 4 E4B，instruction-tuned）。
-- **授權提醒**：本 adapter 為 Gemma 衍生物，散布 Gemma 衍生權重須遵守 **Google Gemma Terms of Use**（需隨附條款、含使用限制）。公開權重前請先確認 Gemma 條款；本卡不代為認定。
+- **授權（2026-08-22 已查證）**：基礎模型 Gemma 4 適用 **Apache License 2.0**，不適用 Gemma Terms of Use（該條款明文僅涵蓋 Gemma 1–3n）。公開 adapter 在 Google 授權側無阻擋，僅需標明衍生來源；查證依據與仍要守的資料層義務見 [Gemma條款查證_2026-08-22.md](Gemma條款查證_2026-08-22.md)。
 
 ## 資料與出處（散布須標明）
 
@@ -184,10 +184,10 @@ adapter 目前只在訓練 VM：`outputs/qlora_e4b_v11_holdout/checkpoint-1124`�
 1. **重跑**：依上方三步（seed 42 固定）即可重現同一 adapter。
 2. **取檔**：有 VM 存取權者
    `scp -r tku-gpu:.../qlora_e4b_v11_holdout/checkpoint-1124 ./`。
-   若日後要公開權重，建議發到 Hugging Face Hub（內建 LFS）並附本卡出處與 Gemma 條款。
+   若日後要公開權重，建議發到 Hugging Face Hub（內建 LFS）並附本卡出處（基礎模型 Apache 2.0，見 [Gemma條款查證_2026-08-22.md](Gemma條款查證_2026-08-22.md)）。
 
 ## 引用
 
 - 文化部臺灣手語語料庫（測試版）。文化部。<https://tslcorpus.moc.gov.tw/>
 - 蔡素娟、戴浩一、劉世凱、陳怡君。2026。《台灣手語線上辭典（中文版第五版）》。嘉義：國立中正大學手語語言學台灣研究中心。<https://twtsl.ccu.edu.tw/>
-- 基礎模型：Google Gemma 4 E4B（依 Gemma Terms of Use）。
+- 基礎模型：Google Gemma 4 E4B（Apache License 2.0）。

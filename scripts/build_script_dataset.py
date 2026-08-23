@@ -74,14 +74,18 @@ SEMANTIC_IDS = _semantic_ids()
 
 
 def convert_row(row: dict, retr: CandidateRetriever, k: int,
-                split: str, compact: bool = False, n_syn: int = 0) -> tuple[dict, dict]:
+                split: str, compact: bool = False, n_syn: int = 0,
+                n_sem: int = 0, n_core: int = 30,
+                distractor_ratio: float = 0.2) -> tuple[dict, dict]:
     text = str(row.get("chinese", "")).strip()
     gloss_raw = str(row.get("gloss_text", "")).strip()
     tokens = [t.strip() for t in gloss_raw.split("/") if t.strip()]
 
     # train 句必須排掉自己：例句遷移會把同一句撈回來，等於直接把正解塞進候選，
     # 訓練出「照抄檢索結果」的捷徑，上線無此捷徑即失效。
-    cands = retr.candidates(text, k=k, exclude_id=row.get("id"), n_syn=n_syn)
+    cands = retr.candidates(text, k=k, exclude_id=row.get("id"), n_syn=n_syn,
+                            n_sem=n_sem, n_core=n_core,
+                            distractor_ratio=distractor_ratio)
     cand_ids = {c["sign_id"] for c in cands}
 
     sign_ids, oov = [], []
@@ -156,12 +160,26 @@ def main() -> int:
                     help="同義展開通道的名額上限。**預設 0＝關閉**：實測 train "
                          "涵蓋率 92.6%%→90.7%%、dev 僅 +0.1pp，是淨負的。"
                          "見 sign_candidates._from_synonyms")
+    ap.add_argument("--n-sem", type=int, default=0,
+                    help="語義向量通道名額（預設 0＝關閉）。>0 時載入 "
+                         "semantic_channel.SemanticRanker，需 .venv-emb 環境")
+    ap.add_argument("--n-core", type=int, default=30, help="高頻核心手語名額")
+    ap.add_argument("--distractor-ratio", type=float, default=0.2,
+                    help="字元重疊干擾項佔 k 的比例上限")
+    ap.add_argument("--out", type=Path, default=None,
+                    help="輸出資料夾（預設 data/splits_script）")
     ap.add_argument("--dry-run", action="store_true", help="只算涵蓋率不寫檔")
     ap.add_argument("--limit", type=int, default=0, help="每個切分只處理前 N 句（除錯用）")
     args = ap.parse_args()
 
+    global OUT
+    if args.out is not None:
+        OUT = args.out
     print("載入 sign 總表與檢索器…", flush=True)
     retr = CandidateRetriever()
+    if args.n_sem > 0:
+        from semantic_channel import SemanticRanker
+        retr.semantic = SemanticRanker(retr.rows)
     print(f"動作庫 {len(retr.rows)} 個手語；訓練例句 {len(retr._ex_rows)} 句", flush=True)
 
     all_stats = {}
@@ -178,7 +196,9 @@ def main() -> int:
         records, stats = [], []
         for i, row in enumerate(rows):
             rec, st = convert_row(row, retr, args.k, split, compact=args.compact,
-                                  n_syn=args.n_syn)
+                                  n_syn=args.n_syn, n_sem=args.n_sem,
+                                  n_core=args.n_core,
+                                  distractor_ratio=args.distractor_ratio)
             records.append(rec)
             stats.append(st)
             if (i + 1) % 500 == 0:
@@ -220,9 +240,13 @@ def main() -> int:
                 for rec in records:
                     f.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
+    if getattr(retr, "semantic", None) is not None:
+        retr.semantic.flush()
     if not args.dry_run:
         (OUT / "coverage_stats.json").write_text(
-            json.dumps({"k": args.k, "splits": all_stats}, ensure_ascii=False, indent=2),
+            json.dumps({"k": args.k, "n_sem": args.n_sem, "n_core": args.n_core,
+                        "distractor_ratio": args.distractor_ratio,
+                        "splits": all_stats}, ensure_ascii=False, indent=2),
             encoding="utf-8")
         print(f"\n寫出 {OUT}")
     return 0

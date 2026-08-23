@@ -309,7 +309,8 @@ class CandidateRetriever:
     # 的關鍵對應「天氣很好→晴朗」出現在相似度第 4 名的訓練句，top-3 撈不到。
     def candidates(self, text: str, k: int = 20, n_examples: int = 8,
                    distractor_ratio: float = 0.2, n_align: int = 12,
-                   n_core: int = 30, exclude_id=None, n_syn: int = 0) -> list[dict]:
+                   n_core: int = 30, exclude_id=None, n_syn: int = 0,
+                   n_sem: int = 0) -> list[dict]:
         """回傳 [{sign_id, gloss}]，長度上限 k。順序穩定（可重現）。
 
         五個通道依序填：字面命中 → 例句遷移 → 詞對齊 → 高頻核心 →
@@ -322,6 +323,12 @@ class CandidateRetriever:
         把那些高價值候選擠掉了；dev 的例句遷移較不準，擠掉的損失才較小。
         留著是因為表與通道有其他用途（見 build_synonym_groups.py），
         且 k 若拉高到候選不再稀缺時值得重測。
+
+        **n_sem 預設 0＝語義通道關閉**（2026-08-23）。啟用需先設
+        `self.semantic = semantic_channel.SemanticRanker(self.rows)`，
+        建資料端（Mac）才裝得起向量模型；線上服務不載入、行為不變。
+        插在詞對齊之後、核心詞之前：它撈的是「學到了→學習」這類語義對應，
+        價值高於核心詞的尾端（dev 實測核心第 21–30 名只命中 3.1% token）。
         """
         ordered: list[str] = []
         seen: set[str] = set()
@@ -343,6 +350,15 @@ class CandidateRetriever:
         add([g for g in literal if len(g) == 1])
         add(self._from_examples(text, n_examples, exclude_id=exclude_id))
         add(self._from_align(text, n_align))
+        if n_sem and getattr(self, "semantic", None) is not None:
+            got = 0
+            for g in self.semantic.rank(text):
+                if got >= n_sem:
+                    break
+                if g not in seen and g in self.by_gloss:
+                    seen.add(g)
+                    ordered.append(g)
+                    got += 1
         add(self._core[:n_core])
         room = max(0, k - len(ordered))
         if room:

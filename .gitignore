@@ -40,3 +40,5 @@ data/splits_script/*.jsonl
 data/tsl_textbook/
 data/splits_script_k60/*.jsonl
 .venv-emb/
+data/signs/gloss_emb_bge_small_zh.npz
+data/signs/semantic_query_cache.json

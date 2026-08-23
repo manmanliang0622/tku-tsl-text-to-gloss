@@ -1,0 +1,48 @@
+{
+  "BLEU-4": 25.29,
+  "ROUGE-L": 65.67,
+  "ExactMatch%": 15.84,
+  "n": 423,
+  "n_groups": 423,
+  "Reference4Grams": 429,
+  "Hypothesis4Grams": 649,
+  "ValidJSON%": 99.76,
+  "ConstraintViolation%_rows": 6.15,
+  "ConstraintViolation%_ids": 2.87,
+  "UnknownSignID": 34,
+  "Playable%": 98.16,
+  "NeedsReview": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": null,
+    "tp": 0,
+    "fp": 4,
+    "fn": 228,
+    "tn": 191,
+    "ref_positive_rate": 0.539,
+    "decision": "greedy（模型輸出的 true/false）"
+  },
+  "NeedsReview_calibrated": {
+    "precision": 0.4965,
+    "recall": 0.6272,
+    "f1": 0.5543,
+    "tp": 143,
+    "fp": 145,
+    "fn": 85,
+    "tn": 50,
+    "threshold": 0.007577,
+    "rows_with_prob": 422,
+    "rows_fallback_to_greedy": 1,
+    "decision": "p_needs_review >= 0.007577（門檻在 dev 上選定）"
+  },
+  "_ref_scope": "上方 BLEU-4／ROUGE-L／ExactMatch%% 是對**候選內參考**算的（撈不到的詞不在參考裡），回答『有沒有從候選裡挑對』；Full_reference 那組才是含檢索缺口的系統整體水準。",
+  "Full_reference": {
+    "BLEU-4": 22.56,
+    "ROUGE-L": 60.51,
+    "ExactMatch%": 14.42,
+    "ref_tokens_full": 1969,
+    "ref_tokens_in_candidates": 1577,
+    "ref_tokens_dropped%": 19.91,
+    "rows_matched": 423
+  }
+}

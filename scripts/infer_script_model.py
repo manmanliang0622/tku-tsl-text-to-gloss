@@ -80,6 +80,9 @@ def main() -> int:
     ap.add_argument("--adapter", required=True)
     ap.add_argument("--split", default="test")
     ap.add_argument("--tag", required=True)
+    ap.add_argument("--data", default=str(DATA),
+                    help="切分資料夾。⚠️ 必須與訓練用的同一份（候選 k 不同就是"
+                         "不同的任務分布），v15 起用 data/splits_script_k60")
     ap.add_argument("--max-new", type=int, default=256,
                     help="腳本目標比舊 JSON 長（sign_ids 陣列），預設放寬到 256")
     ap.add_argument("--max-len-ctx", type=int, default=768,
@@ -87,7 +90,7 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=0)
     args = ap.parse_args()
 
-    src = DATA / f"{args.split}.jsonl"
+    src = Path(args.data) / f"{args.split}.jsonl"
     rows = [json.loads(l) for l in src.read_text(encoding="utf-8").splitlines() if l.strip()]
     if args.limit:
         rows = rows[:args.limit]

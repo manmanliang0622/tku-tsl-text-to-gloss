@@ -78,7 +78,11 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default=str(Path.home() / "0813/model_service/base_model"))
     ap.add_argument("--adapter", required=True)
-    ap.add_argument("--split", default="test")
+    ap.add_argument("--split", nargs="+", default=["test"],
+                    help="可一次給多個切分：同一程序內共用已載入的模型，"
+                         "切分之間不釋放 GPU——2026-08-25 教訓：逐切分開新程序"
+                         "會在模型重載的空窗被看門狗搶走 GPU，之後整批掉進"
+                         "CPU offload 慢 70 倍")
     ap.add_argument("--tag", required=True)
     ap.add_argument("--data", default=str(DATA),
                     help="切分資料夾。⚠️ 必須與訓練用的同一份（候選 k 不同就是"
@@ -89,11 +93,6 @@ def main() -> int:
                     help="載入時的 max_seq_length，需 >= 訓練時的值")
     ap.add_argument("--limit", type=int, default=0)
     args = ap.parse_args()
-
-    src = Path(args.data) / f"{args.split}.jsonl"
-    rows = [json.loads(l) for l in src.read_text(encoding="utf-8").splitlines() if l.strip()]
-    if args.limit:
-        rows = rows[:args.limit]
 
     import torch
     # 用 Unsloth 的 FastModel 載入，與 train_unsloth.py 同一條路徑。
@@ -114,7 +113,19 @@ def main() -> int:
     pad_id = _tk.pad_token_id if _tk.pad_token_id is not None else _tk.eos_token_id
 
     RESULTS.mkdir(exist_ok=True)
-    out_path = RESULTS / f"{args.tag}_{args.split}.jsonl"
+    for split in args.split:
+        run_split(split, args, model, tok, pad_id)
+    return 0
+
+
+def run_split(split, args, model, tok, pad_id):
+    import torch
+    src = Path(args.data) / f"{split}.jsonl"
+    rows = [json.loads(l) for l in src.read_text(encoding="utf-8").splitlines() if l.strip()]
+    if args.limit:
+        rows = rows[:args.limit]
+    out_path = RESULTS / f"{args.tag}_{split}.jsonl"
+    print(f"=== {split} ===", flush=True)
     t0 = time.time()
     with out_path.open("w", encoding="utf-8") as f:
         for i, r in enumerate(rows, 1):
@@ -145,7 +156,6 @@ def main() -> int:
             if i % 20 == 0 or i == len(rows):
                 print(f"  {i}/{len(rows)}  {time.time()-t0:.0f}s", flush=True)
     print(f"寫出 {out_path}")
-    return 0
 
 
 if __name__ == "__main__":

@@ -16,8 +16,21 @@ CPU（GPU 常駐約 3.1GB）——與 v17 實測 peak 11.8GB 的 unsloth 全 GPU
   * 步數核對：8915 句 ÷ (batch 2 × grad_accum 8) = 557.2 → 558 步/epoch，
     與 checkpoint-558 / checkpoint-1116 相符。
 
-**與原件可能的差異無法完全排除。** 要驗證忠實度，用 v17 的原始設定重訓一次，
-看 eval_loss 是否落在 epoch1=0.1910 / epoch2=0.2279 附近（見 --verify-v17）。
+**已驗證忠實（2026-08-27）**：用 --verify-v17 以 v17 的原始設定完整重訓一次，
+結果全部落在 1.2% 以內，量級與本專案已知的 bf16 跨行程非決定性相同：
+
+    指標             重建版      v17      相對差
+    eval_loss ep1    0.1923    0.1910    +0.69%
+    eval_loss ep2    0.2282    0.2279    +0.13%
+    train_loss       0.1122    0.1109    +1.17%
+    wall_min         157.8     157.0     +0.54%
+    peak_alloc_gb    10.99     11.80     -6.86%
+
+BEST_EPOCH 兩邊同為 epoch 1；adapter_config 逐項相同；adapter 權重檔大小
+完全一致（146,888,168 bytes）。產物留在 outputs/qlora_e4b_v17script_k40sem_rebuild。
+
+改動這支腳本後請重跑一次 --verify-v17，它會自動核對可訓練參數量（見
+TARGET_MODULES 的註解——第一次重建就是栽在這裡）。
 
 用法：
   # 重建 v17（驗證用）
@@ -43,6 +56,23 @@ DEFAULT_BASE = "/home/b310ai/0813/model_service/base_model"
 # 只在 model 段算 loss：prompt 含 40 個候選 ID，不遮罩的話會淹沒學習訊號。
 INSTRUCTION_PART = "<|turn>user\n"
 RESPONSE_PART = "<|turn>model\n"
+
+# **逐字抄自 v17 的 checkpoint-558/adapter_config.json**，不是自己寫的。
+# 這是 unsloth 產生的正規表示式，只打在 language/text 相關模組上。
+# 第一次重建時用了明確清單 ["q_proj", "k_proj", ...]，結果連視覺塔與音訊塔
+# 一起打進去：可訓練參數 42,401,792 (0.53%) vs v17 的 36,700,160 (0.46%)，
+# 多出 5,701,632 個。差異剛好等於 base 總數的差，證實就是多掛的那些 LoRA。
+# 這會讓 --verify-v17 失去意義（對不上時分不清是重建問題還是模組範圍不同），
+# 也會產生與線上 adapter 結構不同的權重。改動前先確認 v17 的 adapter_config。
+TARGET_MODULES = (
+    r"(?:.*?(?:language|text).*?(?:self_attn|attention|attn|mixer|mlp|feed_forward|ffn|dense|mixer)"
+    r".*?(?:k_proj|q_proj|v_proj|o_proj|gate_proj|up_proj|down_proj|per_layer_input_gate"
+    r"|per_layer_projection|linear|embedding_projection|relative_k_proj))"
+    r"|(?:\bmodel\.layers\.[\d]{1,}\.(?:self_attn|attention|attn|mixer|mlp|feed_forward|ffn|dense|mixer)"
+    r"\.(?:(?:k_proj|q_proj|v_proj|o_proj|gate_proj|up_proj|down_proj|per_layer_input_gate"
+    r"|per_layer_projection|linear|embedding_projection|relative_k_proj)))"
+)
+V17_TRAINABLE = 36_700_160      # v17 的可訓練參數量，--verify-v17 會核對
 
 # v17 的實際設定，--verify-v17 用來重現
 V17 = dict(data=str(REPO / "data" / "splits_script_k40sem"),
@@ -127,11 +157,18 @@ def main():
         lora_alpha=args.lora_alpha,
         lora_dropout=args.lora_dropout,
         bias="none",
-        target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
-                        "gate_proj", "up_proj", "down_proj"],
+        target_modules=TARGET_MODULES,
         use_gradient_checkpointing="unsloth",
         random_state=args.seed,
     )
+
+    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    log(f"可訓練參數 {trainable:,}（v17 為 {V17_TRAINABLE:,}）")
+    if args.verify_v17 and trainable != V17_TRAINABLE:
+        raise SystemExit(
+            f"可訓練參數 {trainable:,} != v17 的 {V17_TRAINABLE:,}，"
+            f"差 {trainable - V17_TRAINABLE:+,}。target_modules 與 v17 不同，"
+            f"對照 eval_loss 會失去意義。先核對 v17 的 adapter_config.json。")
 
     data_dir = Path(args.data)
     train_rows = load_split(data_dir, "train")

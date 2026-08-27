@@ -1,0 +1,189 @@
+{
+  "date": "2026-08-27",
+  "model": "qlora_e4b_v17script_k40sem + constrained decode",
+  "old": {
+    "threshold": 0.095349,
+    "rule": "recall>=0.7 下最大化 precision"
+  },
+  "new": {
+    "threshold": 0.039707,
+    "rule": "最大化 F1（在 dev 上選）"
+  },
+  "note": "只重算 NeedsReview_calibrated；BLEU/ROUGE/違反率/Full_reference 與門檻無關。重算管線 scripts/nr_threshold.py 已用舊門檻逐欄比對過既有 *_scriptmetrics.json。",
+  "selection_on_dev": {
+    "max_f1": {
+      "threshold": 0.039707,
+      "precision": 0.617,
+      "recall": 0.9283,
+      "f1": 0.7413
+    },
+    "legacy_recall>=0.7_max_precision": {
+      "threshold": 0.095349,
+      "precision": 0.693,
+      "recall": 0.7103,
+      "f1": 0.7015
+    }
+  },
+  "splits": {
+    "v17cd_dev": {
+      "n": 663,
+      "NeedsReview_greedy": {
+        "precision": 0.7808,
+        "recall": 0.1776,
+        "f1": 0.2893,
+        "tp": 57,
+        "fp": 16,
+        "fn": 264,
+        "tn": 326,
+        "ref_positive_rate": 0.4842,
+        "decision": "greedy（模型輸出的 true/false）"
+      },
+      "calibrated_old": {
+        "precision": 0.693,
+        "recall": 0.7103,
+        "f1": 0.7015,
+        "tp": 228,
+        "fp": 101,
+        "fn": 93,
+        "tn": 241,
+        "threshold": 0.095349,
+        "rows_with_prob": 663,
+        "rows_fallback_to_greedy": 0,
+        "decision": "p_needs_review >= 0.095349（門檻在 dev 上選定）"
+      },
+      "calibrated_new": {
+        "precision": 0.617,
+        "recall": 0.9283,
+        "f1": 0.7413,
+        "tp": 298,
+        "fp": 185,
+        "fn": 23,
+        "tn": 157,
+        "threshold": 0.039707,
+        "rows_with_prob": 663,
+        "rows_fallback_to_greedy": 0,
+        "decision": "p_needs_review >= 0.039707（門檻在 dev 上選定）"
+      }
+    },
+    "v17cd_test_corpus": {
+      "n": 166,
+      "NeedsReview_greedy": {
+        "precision": 0.9688,
+        "recall": 0.2246,
+        "f1": 0.3647,
+        "tp": 31,
+        "fp": 1,
+        "fn": 107,
+        "tn": 27,
+        "ref_positive_rate": 0.8313,
+        "decision": "greedy（模型輸出的 true/false）"
+      },
+      "calibrated_old": {
+        "precision": 0.9279,
+        "recall": 0.7464,
+        "f1": 0.8273,
+        "tp": 103,
+        "fp": 8,
+        "fn": 35,
+        "tn": 20,
+        "threshold": 0.095349,
+        "rows_with_prob": 165,
+        "rows_fallback_to_greedy": 1,
+        "decision": "p_needs_review >= 0.095349（門檻在 dev 上選定）"
+      },
+      "calibrated_new": {
+        "precision": 0.8776,
+        "recall": 0.9348,
+        "f1": 0.9053,
+        "tp": 129,
+        "fp": 18,
+        "fn": 9,
+        "tn": 10,
+        "threshold": 0.039707,
+        "rows_with_prob": 165,
+        "rows_fallback_to_greedy": 1,
+        "decision": "p_needs_review >= 0.039707（門檻在 dev 上選定）"
+      }
+    },
+    "v17cd_test_textbook": {
+      "n": 423,
+      "NeedsReview_greedy": {
+        "precision": 0.84,
+        "recall": 0.1834,
+        "f1": 0.3011,
+        "tp": 42,
+        "fp": 8,
+        "fn": 187,
+        "tn": 186,
+        "ref_positive_rate": 0.5414,
+        "decision": "greedy（模型輸出的 true/false）"
+      },
+      "calibrated_old": {
+        "precision": 0.7,
+        "recall": 0.6114,
+        "f1": 0.6527,
+        "tp": 140,
+        "fp": 60,
+        "fn": 89,
+        "tn": 134,
+        "threshold": 0.095349,
+        "rows_with_prob": 423,
+        "rows_fallback_to_greedy": 0,
+        "decision": "p_needs_review >= 0.095349（門檻在 dev 上選定）"
+      },
+      "calibrated_new": {
+        "precision": 0.591,
+        "recall": 0.8646,
+        "f1": 0.7021,
+        "tp": 198,
+        "fp": 137,
+        "fn": 31,
+        "tn": 57,
+        "threshold": 0.039707,
+        "rows_with_prob": 423,
+        "rows_fallback_to_greedy": 0,
+        "decision": "p_needs_review >= 0.039707（門檻在 dev 上選定）"
+      }
+    },
+    "v17cd_test": {
+      "n": 33,
+      "NeedsReview_greedy": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": null,
+        "tp": 0,
+        "fp": 1,
+        "fn": 1,
+        "tn": 31,
+        "ref_positive_rate": 0.0303,
+        "decision": "greedy（模型輸出的 true/false）"
+      },
+      "calibrated_old": {
+        "precision": 0.2,
+        "recall": 1.0,
+        "f1": 0.3333,
+        "tp": 1,
+        "fp": 4,
+        "fn": 0,
+        "tn": 28,
+        "threshold": 0.095349,
+        "rows_with_prob": 33,
+        "rows_fallback_to_greedy": 0,
+        "decision": "p_needs_review >= 0.095349（門檻在 dev 上選定）"
+      },
+      "calibrated_new": {
+        "precision": 0.0909,
+        "recall": 1.0,
+        "f1": 0.1667,
+        "tp": 1,
+        "fp": 10,
+        "fn": 0,
+        "tn": 22,
+        "threshold": 0.039707,
+        "rows_with_prob": 33,
+        "rows_fallback_to_greedy": 0,
+        "decision": "p_needs_review >= 0.039707（門檻在 dev 上選定）"
+      }
+    }
+  }
+}

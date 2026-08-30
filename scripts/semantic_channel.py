@@ -38,7 +38,11 @@ def _ngrams(text: str) -> list[str]:
     for n in (2, 3, 4):
         for i in range(len(t) - n + 1):
             qs.add(t[i:i + n])
-    return [q for q in qs if q]
+    # **一定要排序**：set 的迭代順序隨 PYTHONHASHSEED 每個行程都不同，而這個
+    # 順序就是 encode() 的批次順序——批次組成不同會讓 transformer 的浮點結果
+    # 差在末位，近似並列的候選排名因此翻面。2026-08-30 實測：同一條建資料指令
+    # 連跑兩次，40 句裡有 3 句候選清單不同；固定 PYTHONHASHSEED 後降為 0 句。
+    return sorted(q for q in qs if q)
 
 
 class SemanticRanker:
@@ -94,7 +98,8 @@ class SemanticRanker:
             return self._qcache[key]
         qmat = self.encode(_ngrams(key))
         sims = (self.gmat @ qmat.T).max(axis=1)
-        order = np.argsort(-sims)[: self.top]
+        # kind="stable"：分數完全相同時依 gloss 在總表的順序決定，不看排序法內部實作
+        order = np.argsort(-sims, kind="stable")[: self.top]
         ranked = [self.glosses[i] for i in order]
         self._qcache[key] = ranked
         self._dirty += 1

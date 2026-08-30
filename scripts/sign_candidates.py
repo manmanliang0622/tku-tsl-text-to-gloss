@@ -183,7 +183,11 @@ class CandidateRetriever:
                 continue
             scored = [(g, (n / total) * (1.0 / (1.0 + gfreq[g] ** 0.5)))
                       for g, n in bucket.items() if n >= 2]
-            scored.sort(key=lambda x: -x[1])
+            # 同分時**必須**用 gloss 當第二鍵：bucket 的鍵序來自上面 `for c in frags`
+            # 迭代 set 的順序，而那個順序隨 PYTHONHASHSEED 每個行程都不同。只按分數
+            # 排會讓同分者保持那個任意順序，_align 表因此每次跑都不一樣——2026-08-30
+            # 實測同一條建資料指令連跑兩次，40 句裡有 2 句候選清單不同。
+            scored.sort(key=lambda x: (-x[1], x[0]))
             if scored:
                 self._align[c] = scored[:8]
 

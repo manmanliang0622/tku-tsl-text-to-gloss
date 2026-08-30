@@ -310,7 +310,7 @@ class CandidateRetriever:
     def candidates(self, text: str, k: int = 20, n_examples: int = 8,
                    distractor_ratio: float = 0.2, n_align: int = 12,
                    n_core: int = 30, exclude_id=None, n_syn: int = 0,
-                   n_sem: int = 0) -> list[dict]:
+                   n_sem: int = 0, pin_core: int = 0) -> list[dict]:
         """回傳 [{sign_id, gloss}]，長度上限 k。順序穩定（可重現）。
 
         五個通道依序填：字面命中 → 例句遷移 → 詞對齊 → 高頻核心 →
@@ -329,6 +329,27 @@ class CandidateRetriever:
         建資料端（Mac）才裝得起向量模型；線上服務不載入、行為不變。
         插在詞對齊之後、核心詞之前：它撈的是「學到了→學習」這類語義對應，
         價值高於核心詞的尾端（dev 實測核心第 21–30 名只命中 3.1% token）。
+        **v17 的訓練資料（splits_script_k40sem）就是用這個通道建的**，
+        拿掉它就無法重新產生 v17 的訓練集——這是它留著的主要理由。
+
+        **pin_core 預設 0＝關閉，實測淨負，留著只為記錄這個否定結果。**
+        動機：2026-08-27 的診斷發現高頻核心排在第五順位，k=40 時經常整批被
+        `ordered[:k]` 截掉——而漏檢名單的頭部（這／什麼／有／是／那／再／他）
+        全都在 core-30 裡，且這些詞在別句撈得到（「這」出現在 6,359 句的候選
+        清單裡卻在 18 句漏掉）。看起來像純排序問題。
+
+        但實測是**單調變差**的（k=40，參考詞落在候選內的總數）：
+
+            pin_core      0     5    10    15    20
+            dev         828   -1    -3    -6   -11
+            corpus      848   -6   -12   -21   -37
+            textbook    936   -2    -3    -9   -17
+
+        原因與 n_syn 完全相同——**固定 k 之下候選是零和的**。當初的估算只算了
+        「釘進來能回收多少 OOV」，沒算「被擠掉的例句遷移／詞對齊本來撈到多少
+        別的參考詞」，而後者比前者大。這已經是同一個教訓的第三次（同義通道、
+        語義通道、核心保底），三次都指向同一個結論：k=40 的候選組合已經在
+        局部最佳，靠「多塞一個通道」沒有出路，只能走「撈寬再重排壓窄」。
         """
         ordered: list[str] = []
         seen: set[str] = set()
@@ -347,6 +368,9 @@ class CandidateRetriever:
         add(multi)
         if n_syn:
             add(self._from_synonyms(multi, n_syn))
+        if pin_core:
+            # 保底名額：插在多字命中之後、其餘通道之前，確保不會被 [:k] 截掉。
+            add(self._core[:pin_core])
         add([g for g in literal if len(g) == 1])
         add(self._from_examples(text, n_examples, exclude_id=exclude_id))
         add(self._from_align(text, n_align))

@@ -76,7 +76,8 @@ SEMANTIC_IDS = _semantic_ids()
 def convert_row(row: dict, retr: CandidateRetriever, k: int,
                 split: str, compact: bool = False, n_syn: int = 0,
                 n_sem: int = 0, n_core: int = 30,
-                distractor_ratio: float = 0.2) -> tuple[dict, dict]:
+                distractor_ratio: float = 0.2,
+                pin_core: int = 0) -> tuple[dict, dict]:
     text = str(row.get("chinese", "")).strip()
     gloss_raw = str(row.get("gloss_text", "")).strip()
     tokens = [t.strip() for t in gloss_raw.split("/") if t.strip()]
@@ -85,7 +86,8 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
     # 訓練出「照抄檢索結果」的捷徑，上線無此捷徑即失效。
     cands = retr.candidates(text, k=k, exclude_id=row.get("id"), n_syn=n_syn,
                             n_sem=n_sem, n_core=n_core,
-                            distractor_ratio=distractor_ratio)
+                            distractor_ratio=distractor_ratio,
+                            pin_core=pin_core)
     cand_ids = {c["sign_id"] for c in cands}
 
     sign_ids, oov = [], []
@@ -106,6 +108,8 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
     # 同樣預算下壓縮後可以多放 15 個候選，涵蓋率換得更划算。
     # 語義 ID（TSL_今天）自己就是詞面，再附「=今天」等於把 gloss 寫兩次；
     # 實測 dev 中位數 472→377 token。流水號（TSL_01084）看不懂才需要附。
+    # v17 的 splits_script_k40sem 就是走 SEMANTIC_IDS 這條（候選是純 ID），
+    # 拿掉這個分支產出的資料會與 v17 訓練集不同。
     if compact and SEMANTIC_IDS:
         candidates = [c["sign_id"] for c in cands]
     elif compact:
@@ -162,12 +166,15 @@ def main() -> int:
                          "見 sign_candidates._from_synonyms")
     ap.add_argument("--n-sem", type=int, default=0,
                     help="語義向量通道名額（預設 0＝關閉）。>0 時載入 "
-                         "semantic_channel.SemanticRanker，需 .venv-emb 環境")
+                         "semantic_channel.SemanticRanker，需 .venv-emb 環境。"
+                         "v17 的 splits_script_k40sem 即用此通道建成")
     ap.add_argument("--n-core", type=int, default=30, help="高頻核心手語名額")
     ap.add_argument("--distractor-ratio", type=float, default=0.2,
                     help="字元重疊干擾項佔 k 的比例上限")
+    ap.add_argument("--pin-core", type=int, default=0,
+                    help="高頻核心保底名額；實測淨負，見 sign_candidates.candidates 的 docstring")
     ap.add_argument("--out", type=Path, default=None,
-                    help="輸出資料夾（預設 data/splits_script）")
+                    help="輸出目錄，預設 data/splits_script（會覆蓋！建新版務必指定）")
     ap.add_argument("--dry-run", action="store_true", help="只算涵蓋率不寫檔")
     ap.add_argument("--limit", type=int, default=0, help="每個切分只處理前 N 句（除錯用）")
     args = ap.parse_args()
@@ -198,7 +205,8 @@ def main() -> int:
             rec, st = convert_row(row, retr, args.k, split, compact=args.compact,
                                   n_syn=args.n_syn, n_sem=args.n_sem,
                                   n_core=args.n_core,
-                                  distractor_ratio=args.distractor_ratio)
+                                  distractor_ratio=args.distractor_ratio,
+                                  pin_core=args.pin_core)
             records.append(rec)
             stats.append(st)
             if (i + 1) % 500 == 0:
@@ -244,8 +252,10 @@ def main() -> int:
         retr.semantic.flush()
     if not args.dry_run:
         (OUT / "coverage_stats.json").write_text(
-            json.dumps({"k": args.k, "n_sem": args.n_sem, "n_core": args.n_core,
+            json.dumps({"k": args.k, "n_syn": args.n_syn, "n_sem": args.n_sem,
+                        "n_core": args.n_core,
                         "distractor_ratio": args.distractor_ratio,
+                        "pin_core": args.pin_core,
                         "splits": all_stats}, ensure_ascii=False, indent=2),
             encoding="utf-8")
         print(f"\n寫出 {OUT}")

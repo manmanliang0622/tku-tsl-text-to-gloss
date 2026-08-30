@@ -16,9 +16,28 @@
 Gloss 層的 BLEU/ROUGE/EM 仍沿用 metrics.py，把 sign_id 序列轉回 gloss 後計算，
 才能與 v8/v11 等舊模型放在同一張表上比較。
 
+2026-08-27 補回兩塊當初改在 VM 上、沒有 commit 的邏輯。v14–v17 的
+*_scriptmetrics.json 都含這兩塊，但腳本只 commit 過 8/20 那一版
+（commit 5362e3d，在未合併的 origin/video-coverage-eval 上），
+導致那些數字一度無法從頭重現：
+
+  * **Full_reference** — 上面那組 BLEU/ROUGE/EM 是對「候選內參考」算的，
+    撈不到的詞根本不在參考裡，回答的是「有沒有從候選裡挑對」。Full_reference
+    改用 data/splits/<split>.jsonl 的 gloss_text（完整、保留語序的參考），
+    才是含檢索缺口的系統整體水準。兩個口徑差很多——2026-08-27 的診斷顯示
+    corpus 有 30.2% 的參考詞從未進入候選，所以引用單一數字時務必標明口徑。
+  * **NeedsReview_calibrated** — 讀 p_needs_review 配門檻判定，而不是看模型
+    自己輸出的硬 true/false（後者 recall 只有 0.15–0.22，幾乎不拒答）。
+    門檻選定見 scripts/nr_threshold.py。
+
+回歸測試：tests/test_eval_script_format.py 會拿 results/v17cd_* 重跑，
+與既有的 *_scriptmetrics.json 逐欄比對。改動這支腳本後務必跑一次。
+
 用法：
-    python3 scripts/eval_script_format.py --pred results/xxx_test.jsonl
-    # pred 檔每行需有 candidates（該題的候選 ID）、ref_sign_ids、pred_raw
+    python3 scripts/eval_script_format.py --pred results/v17cd_dev.jsonl \\
+        --threshold 0.039707
+    # split 會從檔名推斷（v17cd_dev → data/splits/dev.jsonl），也可 --split 指定
+    # 給 --no-full-reference 可退回 8/20 那版的行為
 
 輸出：console 報表 + 同名 _scriptmetrics.json
 """
@@ -26,6 +45,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -34,17 +54,62 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import metrics  # noqa: E402
 
 BASE = Path(__file__).resolve().parent.parent
-INVENTORY = BASE / "data" / "signs" / "sign_inventory.jsonl"
+
+# 動作庫不在本 repo（歸 0821 服務管），依序找：環境變數 → 本 repo → 0821。
+INVENTORY_CANDIDATES = [
+    Path(os.environ["SIGN_INVENTORY"]) if os.environ.get("SIGN_INVENTORY") else None,
+    BASE / "data" / "signs" / "sign_inventory.jsonl",
+    Path("/home/b310ai/0821/model_service/data/signs/sign_inventory.jsonl"),
+]
+
+REF_SCOPE_NOTE = (
+    "上方 BLEU-4／ROUGE-L／ExactMatch%% 是對**候選內參考**算的"
+    "（撈不到的詞不在參考裡），回答『有沒有從候選裡挑對』；"
+    "Full_reference 那組才是含檢索缺口的系統整體水準。"
+)
+
+
+def find_inventory() -> Path:
+    for path in INVENTORY_CANDIDATES:
+        if path and path.exists():
+            return path
+    tried = "\n  ".join(str(p) for p in INVENTORY_CANDIDATES if p)
+    raise SystemExit(f"找不到 sign_inventory.jsonl，試過：\n  {tried}\n"
+                     f"可用 SIGN_INVENTORY=<路徑> 指定。")
 
 
 def load_inventory() -> dict[str, str]:
     """sign_id → gloss。用來把 ID 序列轉回 gloss 以沿用既有指標。"""
     out = {}
-    with INVENTORY.open(encoding="utf-8") as f:
+    with find_inventory().open(encoding="utf-8") as f:
         for line in f:
             if line.strip():
                 r = json.loads(line)
                 out[r["sign_id"]] = r["gloss"]
+    return out
+
+
+def guess_split(pred: Path) -> Path | None:
+    """v17cd_test_corpus.jsonl → data/splits/test_corpus.jsonl。
+
+    比對已知的 split 名，取最長的匹配（test_corpus 要贏 test）。"""
+    stem = pred.stem
+    split_dir = BASE / "data" / "splits"
+    names = sorted((p.stem for p in split_dir.glob("*.jsonl")), key=len, reverse=True)
+    for name in names:
+        if stem == name or stem.endswith("_" + name):
+            return split_dir / f"{name}.jsonl"
+    return None
+
+
+def load_full_reference(split: Path) -> dict[str, str]:
+    """id → 完整參考 gloss_text（保留語序，含候選撈不到的詞）。"""
+    out = {}
+    with split.open(encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                r = json.loads(line)
+                out[r["id"]] = r.get("gloss_text", "")
     return out
 
 
@@ -59,54 +124,88 @@ def parse_output(raw: str) -> dict | None:
         return None
 
 
-# 2026-08-21 在 dev 250 句上選定的門檻。規則事前講定：**recall >= 0.7 下
-# 最大化 precision**，選出 0.02（dev P 0.679／R 0.734／F1 0.705）。
-# 套到 test_corpus：P 0.952／R 0.728／F1 0.825，對照原本貪婪解碼的
-# P 0.941／R 0.118——recall 提升 6.2 倍而 precision 沒有付代價。
-#
-# ⚠️ 事後診斷發現 test_corpus 上 F1 最佳門檻其實是 0.008（F1 0.921），
-# **刻意不採用**：那是拿測試集調參，得到的數字沒有意義。門檻只在 dev 上選。
-# 要重選請重跑 dev 推論並沿用同一條規則，不要看 test 的數字調。
-NEEDS_REVIEW_THRESHOLD = 0.02
-
-
-def load_full_refs(path: Path) -> dict[str, str]:
-    """讀原始切分的完整參考 Gloss（id → gloss_text）。
-
-    為什麼需要（2026-08-21）：`ref_sign_ids` 只含**候選撈得到**的詞，撈不到的被
-    移到 `oov_items` 不在參考裡。test_corpus 詞涵蓋率 69.7%，等於參考答案有
-    30.3%（382/1259 個 token）一開始就被拿掉。拿那個當參考算出來的 BLEU
-    回答的是「有沒有從候選裡挑對」，**不是「翻譯對不對」**，數值天生偏高，
-    誤當品質引用會嚴重高估。故另算一組對完整參考的指標並列呈現。
-    """
-    out = {}
-    if not path.exists():
-        return out
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if line.strip():
-            e = json.loads(line)
-            out.setdefault(e["id"], e["gloss_text"])
-    return out
-
-
-def obj_nr_fallback(r: dict) -> bool:
-    """抓不到機率時的退路：讀模型自己輸出的 needs_review。"""
-    obj = parse_output(r.get("raw", ""))
-    return bool(obj.get("needs_review", False)) if obj else False
-
-
-def _prf(tp: int, fp: int, fn: int) -> dict:
+def _prf(tp: int, fp: int, fn: int):
     prec = tp / (tp + fp) if (tp + fp) else None
     rec = tp / (tp + fn) if (tp + fn) else None
     f1 = (2 * prec * rec / (prec + rec)) if (prec and rec) else None
-    return {"precision": round(prec, 4) if prec is not None else None,
-            "recall": round(rec, 4) if rec is not None else None,
-            "f1": round(f1, 4) if f1 is not None else None,
-            "tp": tp, "fp": fp, "fn": fn}
+    return prec, rec, f1
 
 
-def evaluate(rows: list[dict], nr_threshold: float = NEEDS_REVIEW_THRESHOLD,
-             full_refs: dict[str, str] | None = None) -> dict:
+def calibrated_needs_review(rows: list[dict], threshold: float) -> dict:
+    """讀 p_needs_review 配門檻；沒有機率的列落回模型自己的 true/false。"""
+    tp = fp = tn = fn = 0
+    with_prob = fallback = 0
+    for r in rows:
+        ref_nr = bool(r.get("ref_needs_review", False))
+        prob = r.get("p_needs_review")
+        if prob is None:
+            obj = parse_output(r.get("raw", ""))
+            pred_nr = bool(obj.get("needs_review", False)) if obj else False
+            fallback += 1
+        else:
+            pred_nr = prob >= threshold
+            with_prob += 1
+        if ref_nr and pred_nr:
+            tp += 1
+        elif not ref_nr and pred_nr:
+            fp += 1
+        elif not ref_nr and not pred_nr:
+            tn += 1
+        else:
+            fn += 1
+    prec, rec, f1 = _prf(tp, fp, fn)
+    return {
+        "precision": round(prec, 4) if prec is not None else None,
+        "recall": round(rec, 4) if rec is not None else None,
+        "f1": round(f1, 4) if f1 is not None else None,
+        "tp": tp, "fp": fp, "fn": fn, "tn": tn,
+        "threshold": threshold,
+        "rows_with_prob": with_prob,
+        "rows_fallback_to_greedy": fallback,
+        "decision": f"p_needs_review >= {threshold}（門檻在 dev 上選定）",
+    }
+
+
+def full_reference_block(rows: list[dict], full_ref: dict[str, str],
+                         id2gloss: dict[str, str], vocab: set) -> dict:
+    """對完整參考（含候選撈不到的詞）重算一次，這才是系統整體水準。"""
+    refs, hyps, groups = [], [], []
+    tokens_full = tokens_in_cand = 0
+    matched = 0
+    for r in rows:
+        rid = r.get("id")
+        if rid not in full_ref:
+            continue
+        matched += 1
+        gold = full_ref[rid]
+        obj = parse_output(r.get("raw", ""))
+        pred_ids = [str(x) for x in (obj.get("sign_ids") or [])] if obj else []
+        refs.append(gold)
+        hyps.append("/".join(id2gloss.get(i, i) for i in pred_ids))
+        groups.append(rid)
+        tokens_full += len([t for t in gold.split("/") if t])
+        tokens_in_cand += len(r.get("ref_sign_ids") or [])
+
+    try:
+        base = metrics.evaluate(refs, hyps, vocab, groups=groups)
+    except Exception as e:  # noqa: BLE001
+        return {"metrics_error": str(e)}
+
+    dropped = tokens_full - tokens_in_cand
+    return {
+        "BLEU-4": base.get("BLEU-4"),
+        "ROUGE-L": base.get("ROUGE-L"),
+        "ExactMatch%": base.get("ExactMatch%"),
+        "ref_tokens_full": tokens_full,
+        "ref_tokens_in_candidates": tokens_in_cand,
+        "ref_tokens_dropped%": (round(100 * dropped / tokens_full, 2)
+                                if tokens_full else None),
+        "rows_matched": matched,
+    }
+
+
+def evaluate(rows: list[dict], threshold: float | None = None,
+             full_ref: dict[str, str] | None = None) -> dict:
     id2gloss = load_inventory()
 
     valid = 0
@@ -117,36 +216,14 @@ def evaluate(rows: list[dict], nr_threshold: float = NEEDS_REVIEW_THRESHOLD,
     ref_gloss, hyp_gloss = [], []
     groups = []
 
-    # needs_review 混淆矩陣。同時算兩組：
-    #   greedy     — 直接讀模型輸出的 true/false（貪婪解碼的硬決策）
-    #   calibrated — 讀 p_needs_review 再套門檻（需推論時有存該欄）
+    # needs_review 混淆矩陣（greedy：模型自己輸出的 true/false）
     tp = fp = tn = fn = 0
-    c_tp = c_fp = c_tn = c_fn = 0
-    have_p = 0
 
     for r in rows:
         obj = parse_output(r.get("raw", ""))
         cands = set(r.get("candidate_ids") or [])
         ref_ids = list(r.get("ref_sign_ids") or [])
         ref_nr = bool(r.get("ref_needs_review", False))
-
-        # 校準決策：有機率就用門檻，抓不到就**退回貪婪**——這才是可上線的策略，
-        # 而且分母與 greedy 那組一致。若把抓不到的排除在外，recall 會被灌水。
-        p_nr = r.get("p_needs_review")
-        if p_nr is not None or obj_nr_fallback(r) is not None:
-            if p_nr is not None:
-                have_p += 1
-                cal = p_nr >= nr_threshold
-            else:
-                cal = obj_nr_fallback(r)
-            if ref_nr and cal:
-                c_tp += 1
-            elif not ref_nr and cal:
-                c_fp += 1
-            elif not ref_nr and not cal:
-                c_tn += 1
-            else:
-                c_fn += 1
 
         if obj is None:
             # 無效輸出：Gloss 記空字串（計為全錯），needs_review 視為未預測
@@ -189,30 +266,11 @@ def evaluate(rows: list[dict], nr_threshold: float = NEEDS_REVIEW_THRESHOLD,
     except Exception as e:  # noqa: BLE001  指標細節不該擋住主報表
         base = {"metrics_error": str(e)}
 
+    prec, rec, f1 = _prf(tp, fp, fn)
+
     # 舊的「詞彙表內率」在新格式下已由候選清單取代（候選只從有影片的手語裡出），
     # 留著會顯示 0.0% 誤導成模型全錯。改由 Playable% 承擔這個角色。
     out = {k: v for k, v in base.items() if not k.startswith("InVocab")}
-    # ---- 對完整參考再算一組（含被候選漏掉的詞，一律計為未命中）----
-    full_block = None
-    if full_refs:
-        f_ref = [full_refs.get(g, "") for g in groups]
-        hit = sum(1 for x in f_ref if x)
-        if hit:
-            try:
-                fb = metrics.evaluate(f_ref, hyp_gloss, vocab, groups=groups)
-                full_block = {k: v for k, v in fb.items()
-                              if k.split("%")[0] in ("BLEU-4", "ROUGE-L", "ExactMatch")
-                              or k in ("BLEU-4", "ROUGE-L", "ExactMatch%")}
-                ref_tok = sum(len([t for t in x.split("/") if t.strip()]) for x in f_ref)
-                trunc_tok = sum(len(r.get("ref_sign_ids") or []) for r in rows)
-                full_block["ref_tokens_full"] = ref_tok
-                full_block["ref_tokens_in_candidates"] = trunc_tok
-                full_block["ref_tokens_dropped%"] = (
-                    round(100 * (ref_tok - trunc_tok) / ref_tok, 2) if ref_tok else None)
-                full_block["rows_matched"] = hit
-            except Exception as e:  # noqa: BLE001
-                full_block = {"metrics_error": str(e)}
-
     out.update({
         "n": n,
         "ValidJSON%": round(100 * valid / n, 2) if n else None,
@@ -224,27 +282,22 @@ def evaluate(rows: list[dict], nr_threshold: float = NEEDS_REVIEW_THRESHOLD,
         "Playable%": (round(100 * (total_pred_ids - unplayable) / total_pred_ids, 2)
                       if total_pred_ids else None),
         "NeedsReview": {
-            **_prf(tp, fp, fn), "tn": tn,
+            "precision": round(prec, 4) if prec is not None else None,
+            "recall": round(rec, 4) if rec is not None else None,
+            "f1": round(f1, 4) if f1 is not None else None,
+            "tp": tp, "fp": fp, "fn": fn, "tn": tn,
             "ref_positive_rate": round((tp + fn) / n, 4) if n else None,
             "decision": "greedy（模型輸出的 true/false）",
         },
     })
-    if have_p:
-        out["NeedsReview_calibrated"] = {
-            **_prf(c_tp, c_fp, c_fn), "tn": c_tn,
-            "threshold": nr_threshold,
-            "rows_with_prob": have_p,
-            "rows_fallback_to_greedy": n - have_p,
-            "decision": f"p_needs_review >= {nr_threshold}（門檻在 dev 上選定）",
-        }
-    else:
-        out["NeedsReview_calibrated"] = None   # 推論時沒存 p_needs_review
 
-    # 主 BLEU/ROUGE/EM 是對「候選內參考」算的，改名讓語意不會被誤讀
-    out["_ref_scope"] = ("上方 BLEU-4／ROUGE-L／ExactMatch%% 是對**候選內參考**算的"
-                         "（撈不到的詞不在參考裡），回答『有沒有從候選裡挑對』；"
-                         "Full_reference 那組才是含檢索缺口的系統整體水準。")
-    out["Full_reference"] = full_block
+    if threshold is not None:
+        out["NeedsReview_calibrated"] = calibrated_needs_review(rows, threshold)
+
+    if full_ref:
+        out["_ref_scope"] = REF_SCOPE_NOTE
+        out["Full_reference"] = full_reference_block(rows, full_ref, id2gloss, vocab)
+
     return out
 
 
@@ -253,30 +306,28 @@ def main() -> int:
     ap.add_argument("--pred", type=Path, required=True,
                     help="逐句預測 jsonl（需含 candidate_ids / ref_sign_ids / raw）")
     ap.add_argument("--out", type=Path, default=None)
-    ap.add_argument("--full-ref", type=Path, default=None,
-                    help="原始切分檔（data/splits/<split>.jsonl），用來對**完整參考**"
-                         "另算一組指標。不給則依 --pred 檔名推斷。")
-    ap.add_argument("--nr-threshold", type=float, default=NEEDS_REVIEW_THRESHOLD,
-                    help="needs_review 的機率門檻。預設 %(default)s，"
-                         "是 2026-08-21 在 dev 上依『recall>=0.7 下最大化 precision』選的。"
-                         "**不要看 test 的數字調這個。**")
+    ap.add_argument("--threshold", type=float, default=None,
+                    help="needs_review 門檻；給了才算 NeedsReview_calibrated")
+    ap.add_argument("--split", type=Path, default=None,
+                    help="data/splits/<name>.jsonl，用來取完整參考；預設從檔名推斷")
+    ap.add_argument("--no-full-reference", action="store_true",
+                    help="退回 2026-08-20 那版行為，只算候選內參考")
     args = ap.parse_args()
 
     rows = [json.loads(l) for l in
             args.pred.read_text(encoding="utf-8").splitlines() if l.strip()]
-    split_file = args.full_ref
-    if split_file is None:
-        stem = args.pred.stem
-        # 長名在前：test_textbook 若排在 test 之後會先被 "test" 誤配
-        for name in ("test_textbook", "test_corpus", "test_papers", "test", "dev", "train"):
-            if stem.endswith(name):
-                split_file = BASE / "data" / "splits" / f"{name}.jsonl"
-                break
-    full_refs = load_full_refs(split_file) if split_file else {}
-    if not full_refs:
-        print(f"⚠ 找不到完整參考（{split_file}），Full_reference 那組略過。"
-              f"data/splits/*.jsonl 有 gitignore，需先跑 split_data.py 再生。")
-    res = evaluate(rows, nr_threshold=args.nr_threshold, full_refs=full_refs)
+
+    full_ref = None
+    if not args.no_full_reference:
+        split = args.split or guess_split(args.pred)
+        if split and split.exists():
+            full_ref = load_full_reference(split)
+            print(f"[完整參考] {split}", file=sys.stderr)
+        else:
+            print("[完整參考] 找不到對應的 split，跳過 Full_reference"
+                  "（--split 可指定）", file=sys.stderr)
+
+    res = evaluate(rows, threshold=args.threshold, full_ref=full_ref)
     print(json.dumps(res, ensure_ascii=False, indent=2))
 
     out = args.out or args.pred.with_name(args.pred.stem + "_scriptmetrics.json")

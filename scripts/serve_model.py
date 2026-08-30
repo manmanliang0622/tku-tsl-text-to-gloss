@@ -1,26 +1,34 @@
 #!/usr/bin/env python3
-"""中文 → TSL Gloss 推論 API（供前端 /手語前端優化 測試用）。
+"""中文 → 臺灣手語腳本（tsl-script-v1）推論 API。
 
 僅用標準函式庫的 http.server，避免在共用機安裝額外套件。
-模型只載入一次常駐記憶體；每次請求做一次 greedy 生成。
+模型只載入一次常駐記憶體；每次請求做一次 greedy 生成——`--target script`
+時預設帶約束解碼，把 sign_ids 鎖在該句候選清單內（見「約束解碼」段）。
 
-啟動（VM 上）：
-  python3 scripts/serve_model.py --adapter outputs/qlora_e4b_v6_all/checkpoint-XXX --port 8018
-
-前端（Mac）經 SSH 通道連入：
-  ssh -p 2288 -N -L 8018:localhost:8018 b310ai@<VM>
+線上（0821_bundle）由 bundle_server.py 以子行程啟動，實際參數見其 model_cmd()：
+  .venv/bin/python3 model_service/scripts/serve_model.py \
+    --base model_service/base_model --adapter model_service/checkpoint \
+    --target script --max-new 256 --port 8878
+現行模型：qlora_e4b_v17script_k40sem／checkpoint-558（2026-08-27 上線）。
 
 API：
-  GET  /health              → {"status":"ok","adapter":...}
-  POST /translate           → body {"text":"我要喝水","context":"前一句（選填）"}
-                              回 {"chinese":...,"gloss":["我","水","喝","要"],
-                                  "gloss_text":"我/水/喝/要","seconds":1.2}
+  GET  /health              → {"status":"ok","adapter":...,"model":...,"target":...}
+  POST /translate           → body {"text":"我想喝水"}
+                              回 {"chinese":...,"sign_ids":["TSL_我","TSL_想","TSL_水","TSL_喝"],
+                                  "gloss":["我","想","水","喝"],"gloss_text":"我/想/水/喝",
+                                  "needs_review":false,"needs_review_prob":0.026,
+                                  "dropped_ids":[],"candidates_k":40,
+                                  "schema_version":"tsl-script-v1","raw":"{...}","seconds":6.1}
+  舊的 --target gloss／json 模式仍保留（歷史 adapter 用），欄位見 translate()。
+  訓練配方與格式說明見封包 README「語言模型」一節。
 
 CORS：前端以 file:// 開啟時 Origin 為 null，故一律回 Access-Control-Allow-Origin: *
 （本服務只在 SSH 通道內對本機開放，不對外網暴露）。
 """
 import argparse
+import os
 import json
+import re
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -68,10 +76,17 @@ def _assert_system_matches_training() -> None:
                     "推論 prompt 與訓練不同會讓指標整組掛零：\n"
                     f"  訓練：{trained!r}\n  服務：{SCRIPT_SYSTEM!r}")
             return
-# 2026-08-21 在 dev 250 句上依「recall>=0.7 下最大化 precision」選定。
-# 貪婪解碼的硬 true/false 是 P0.941/R0.118（幾乎不拒答）；改讀機率後
-# P0.952/R0.728。**門檻只能在 dev 上重選，不要看 test 的數字調。**
-NEEDS_REVIEW_THRESHOLD = 0.02
+# 門檻只能在 dev 上重選，不要看 test 的數字調。選法用
+# scripts/nr_threshold.py（tku-tsl-text-to-gloss）重跑即可。
+#
+# 2026-08-27 改選法：舊規則「recall>=0.7 下最大化 precision」偏保守，
+# 在 v17 dev 上選到 0.095349（P0.693/R0.710/F1 0.702）。改成直接最大化
+# F1 選到 0.039707（P0.617/R0.928/F1 0.741），且在兩個測試集同向更好
+# （corpus F1 0.827→0.905、textbook 0.653→0.702），所以不是過擬合 dev。
+# 關鍵是漏放行大幅減少：dev 93→23、corpus 35→9、textbook 89→31——
+# 這個旗標的錯誤本來就不對稱（漏放行會讓錯句直接送去給虛擬人比出來，
+# 誤攔只是多一次人看），所以偏 recall 是對的方向。
+NEEDS_REVIEW_THRESHOLD = 0.039707  # v17 dev 上最大化 F1（2026-08-27）
 
 
 def load(base_model, adapter, ple_on_gpu=None):
@@ -190,6 +205,97 @@ def _needs_review_prob(tok, seq, scores):
     return None
 
 
+
+# ── 約束解碼 ─────────────────────────────────────────────────────────
+# 解碼時就把 sign_ids 陣列內的字串鎖在候選清單上，而不是生成後才過濾。
+# 文字級狀態機：每步解碼已生成文字，游標在字串常值內時，只允許「能接成
+# 某個候選 id」的 token；比對不到（模型用合併 token 帶進怪字首）就整步
+# 放行，交回 translate_script 既有的事後過濾兜底——寧可漏擋，不可擋出
+# 破 JSON。CONSTRAINED_DECODE=0 可整個關掉。
+#
+# 2026-08-27 追加退化守衛（MAX_RUN / MAX_SIGNS）。動機：greedy 解碼在離線
+# 8 句上崩壞，最嚴重的 TB0296 參考只有 1 個詞、模型吐出 32 個（TSL_二十
+# 連續 27 次）。原本的約束擋不住——重複的 id 本身就在候選清單裡，合法。
+# **不要改用 no_repeat_ngram_size**：它是 token 級的，而元素分隔符 '", "'
+# 每個元素都重複，n-gram 封鎖會直接吐出破 JSON；而且重複在臺灣手語裡是
+# 合法的（重疊表複數／強調），參考答案有 5–10% 的句子重複用詞。
+# 兩個上限取參考答案實測極值，10,200 句參考驗證過零排除。
+# 與 tku-tsl-text-to-gloss/scripts/constrained_decode.py 同一套邏輯，改動要同步。
+CONSTRAINED_DECODE = os.environ.get("CONSTRAINED_DECODE", "1") != "0"
+MAX_RUN = 6        # 同一個 sign_id 最多連續出現幾次（參考實測極值）
+MAX_SIGNS = 18     # sign_ids 陣列最多幾個元素（參考最長 15，留 3 緩衝）
+_ELEMENT_RE = re.compile(r'"([^"]*)"')
+_VOCAB_BY_FIRST = None
+
+def _vocab_index(tok):
+    global _VOCAB_BY_FIRST
+    if _VOCAB_BY_FIRST is None:
+        idx = {}
+        for tid, piece in enumerate(tok.convert_ids_to_tokens(list(range(len(tok))))):
+            if piece is None or (piece.startswith("<") and piece.endswith(">")):
+                continue          # special / byte-fallback token 不參與
+            text = piece.replace("\u2581", " ")
+            if text:
+                idx.setdefault(text[0], []).append((tid, text))
+        _VOCAB_BY_FIRST = idx
+    return _VOCAB_BY_FIRST
+
+def _constrained_prefix_fn(tok, prompt_len, cand_ids):
+    all_ids = list(range(len(tok)))
+    index = _vocab_index(tok)
+    cands = sorted(cand_ids)
+
+    def fn(_batch, input_ids):
+        gen = tok.decode(input_ids[prompt_len:], skip_special_tokens=True)
+        m = gen.rfind('"sign_ids"')
+        if m < 0:
+            return all_ids
+        seg = gen[m + 10:]
+        b = seg.find("[")
+        if b < 0 or "]" in seg[b:]:
+            return all_ids                      # 還沒進陣列，或陣列已關閉
+        seg = seg[b + 1:]
+
+        emitted = _ELEMENT_RE.findall(seg)      # 已完成的元素（成對引號才算）
+
+        if seg.count('"') % 2 == 0:
+            # 不在字串常值內。長度到頂就收掉陣列——但只在沒有逗號待補時，
+            # 否則會生出 ["a", ] 這種尾逗號破 JSON。
+            if len(emitted) >= MAX_SIGNS and not seg.rstrip().endswith(","):
+                close = sorted({tid for tid, text in index.get("]", [])
+                                if text.startswith("]")})
+                if close:
+                    return close
+            return all_ids
+        partial = seg[seg.rfind('"') + 1:]
+
+        # 連續重複到頂：把那個 id 從這一步的候選裡拿掉，逼模型改選別的。
+        banned = set()
+        if emitted:
+            last = emitted[-1]
+            run = 1
+            for prev in reversed(emitted[:-1]):
+                if prev != last:
+                    break
+                run += 1
+            if run >= MAX_RUN:
+                banned = {last}
+
+        allowed = set()
+        for c in cands:
+            if c in banned or not c.startswith(partial):
+                continue
+            rest = c[len(partial):]
+            if not rest:                        # 候選打完了 → 只准關引號
+                for tid, _text in index.get('"', []):
+                    allowed.add(tid)
+                continue
+            for tid, text in index.get(rest[0], []):
+                if rest.startswith(text) or text.startswith(rest + '"'):
+                    allowed.add(tid)
+        return sorted(allowed) if allowed else all_ids
+    return fn
+
 def translate_script(text):
     """tsl-script-v1：跑候選檢索 → 模型從候選挑 sign_id → 對回 gloss 與影片。"""
     _load_script_assets()
@@ -203,7 +309,11 @@ def translate_script(text):
                                      return_tensors="pt", return_dict=True).to(model.device)
     t0 = time.time()
     with torch.no_grad():
+        prefix_fn = (_constrained_prefix_fn(tok, inputs["input_ids"].shape[1],
+                                            [c["sign_id"] for c in cands])
+                     if CONSTRAINED_DECODE else None)
         out = model.generate(**inputs, max_new_tokens=STATE["max_new"], do_sample=False,
+                             prefix_allowed_tokens_fn=prefix_fn,
                              return_dict_in_generate=True, output_scores=True)
     seq = out.sequences[0][inputs["input_ids"].shape[1]:]
     gen = tok.decode(seq, skip_special_tokens=True)

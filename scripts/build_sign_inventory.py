@@ -176,7 +176,7 @@ def main() -> int:
 
     if not args.lexicon.exists():
         print(f"找不到 {args.lexicon}\n"
-              f"先抓下來：scp -P 2288 b310ai@163.13.202.125:"
+              f"先抓下來：scp tku-gpu:"
               f"'~/0813/recordings/lexicon.json' data/video/", file=sys.stderr)
         return 1
 

@@ -16,7 +16,7 @@
 
 用法（lexicon.json 在學校主機上，先抓下來）:
 
-    scp -P 2288 b310ai@163.13.202.125:'~/0813/recordings/lexicon.json' data/video/
+    scp tku-gpu:'~/0813/recordings/lexicon.json' data/video/
     python scripts/eval_video_coverage.py
 
 輸出：console 報表 + data/video/video_gap.json（逐詞缺口，可直接排補片順序）
@@ -203,7 +203,7 @@ def main() -> int:
 
     if not args.lexicon.is_file():
         print(f"找不到 {args.lexicon}\n"
-              f"先抓下來：scp -P 2288 b310ai@163.13.202.125:"
+              f"先抓下來：scp tku-gpu:"
               f"'~/0813/recordings/lexicon.json' {args.lexicon.parent}/")
         return 1
 

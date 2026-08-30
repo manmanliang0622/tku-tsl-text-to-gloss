@@ -29,7 +29,7 @@ setsid nohup python3 scripts/serve_model.py \
 ### 2. Mac：開 SSH 通道（此視窗保持開著）
 
 ```bash
-ssh -p 2288 -N -L 8018:localhost:8018 b310ai@<VM 位址>
+ssh -N -L 8018:localhost:8018 tku-gpu
 ```
 
 驗證：

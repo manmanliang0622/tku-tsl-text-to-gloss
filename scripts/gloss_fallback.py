@@ -5,7 +5,7 @@
 會直接把中文貼上去。未見層 45 個表外詞中 27 個屬這類自創／照抄，例如
 「看久」「辦畫展」「聰學校」。這對下游是致命的——動作庫查不到就無法播放。
 
-**判定基準用詞彙總表（7,002 詞）而非訓練詞彙**。拿訓練詞彙當基準會把
+**判定基準用詞彙總表（7,002 詞）＋動作庫詞條，而非訓練詞彙**。拿訓練詞彙當基準會把
 「模型產出了合法但訓練樣本內沒出現的手語詞」（如「畫家」「幼稚園」）誤判為
 造詞——實測未見層 45 個表外詞中有 18 個（40%）屬此，會嚴重高估問題規模。
 
@@ -73,9 +73,35 @@ MOE = BASE / "data" / "moe" / "moe_vocab_clean.jsonl"
 # 7 個詞被正確認出為合法手語詞（概念、鬧鐘、寶寶、安定、診所、警報、社區）。
 USE_MOE_VOCAB = os.environ.get("TSL_USE_MOE_VOCAB", "1") != "0"
 
+# 動作庫（0813/recordings/lexicon.json）：**這裡才是「下游播不播得出來」的真正依據**。
+# 先前只看總表＋訓練集＋教育部詞表（合計 13,663 詞），2026-08-18 實測發現動作庫
+# 17,078 條裡有 4,184 條被判成表外、降級成指拼——導盲犬、盲人、阿公、停電、酪梨、
+# 連江縣都中招，而前端那 26 個字母動作根本還沒錄（見 composer.js 的指拼段），
+# 標成指拼等於整個詞播不出來，比留著原詞更糟。
+# 每次匯入新素材詞庫就會變大，所以直接讀那個檔、不另外維護副本。
+# 找檔順序：TSL_LEXICON_PATH → 打包進 0813 時的相對位置 → 主機上的預設位置；
+# 都找不到就當作沒有（公開 repo 的使用者不會有這個檔，程式要照樣能跑）。
+USE_LEXICON_VOCAB = os.environ.get("TSL_USE_LEXICON_VOCAB", "1") != "0"
+
+# 帶這些字元的鍵不是單一個詞（複合標記、斷詞符號），當成可播放詞會誤導修復規則
+_LEXICON_SKIP_CHARS = frozenset(" \t+→~/／")
+
+
+def lexicon_path():
+    env = os.environ.get("TSL_LEXICON_PATH")
+    if env:
+        return Path(env)
+    for cand in (
+        BASE.parent / "recordings" / "lexicon.json",
+        Path.home() / "0813" / "recordings" / "lexicon.json",
+    ):
+        if cand.is_file():
+            return cand
+    return BASE.parent / "recordings" / "lexicon.json"
+
 
 @lru_cache(maxsize=1)
-def load_vocab(master_path=None, train_path=None):
+def load_vocab(master_path=None, train_path=None, lexicon_path_=None):
     """回傳 (合法詞, 可播放詞)。
 
     **合法詞＝詞彙總表 ∪ 訓練集實際用過的 Gloss。**
@@ -84,8 +110,8 @@ def load_vocab(master_path=None, train_path=None):
     初版漏了這一項，導致 Seen 層 EM 反而掉 2 分：模型本來預測正確的詞
     被 fallback「修」壞了。既然語料庫用過，它就是合法的手語詞。
 
-    可播放詞仍只取有辭典詞條者——那是下游動作庫真的查得到動作的範圍，
-    也是修復時要退到的目標。
+    可播放詞取有辭典詞條者，**再聯集動作庫 lexicon.json 的鍵**——動作庫有鍵
+    就代表下游真的切得出那段動作，那才是修復時該退到的目標。
     """
     path = Path(master_path) if master_path else MASTER
     all_v, rend = set(), set()
@@ -112,6 +138,15 @@ def load_vocab(master_path=None, train_path=None):
             all_v.update(e.get("aliases") or [])
             if e.get("has_video"):      # 有示範影片＝下游有動作可播
                 rend.add(e["surface"])
+
+    lpath = Path(lexicon_path_) if lexicon_path_ else lexicon_path()
+    if USE_LEXICON_VOCAB and lpath.is_file():
+        for key in json.loads(lpath.read_text(encoding="utf-8")):
+            if not key or _LEXICON_SKIP_CHARS & set(key):
+                continue
+            all_v.add(key)
+            rend.add(key)       # 動作庫有這個鍵＝真的播得出來
+
     return frozenset(all_v), frozenset(rend)
 
 

@@ -12,6 +12,7 @@
   test_inventory_legacy_id  legacy_sign_id 不被重建覆寫（追溯欄位的冪等性）
   test_comitative           伴隨句雙數收攏規則（重點在不該補的一個都沒補）
   test_bundle_deps          serve_model 的部署相依宣告與程式碼一致
+  test_clause_breaks        子句邊界的定義、對齊與失敗退路
 """
 import os
 import subprocess
@@ -29,6 +30,7 @@ SCRIPT_TESTS = [
     "test_inventory_legacy_id.py",
     "test_comitative.py",
     "test_bundle_deps.py",
+    "test_clause_breaks.py",
 ]
 # unittest 形式的
 UNITTEST_MODULES = ["test_metrics"]

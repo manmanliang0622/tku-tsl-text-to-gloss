@@ -152,6 +152,12 @@ def norm_record(e, split_source):
         # 保留 NMS（非手部標記）：JSON 目標格式的 nonmanual 欄位需要，
         # 且下游虛擬人的表情同步也要用（計畫第 1 節）。
         "nms": e.get("nms"),
+        # 子句切分（2026-08-31）：只有中正辭典例句有這個欄位，語料庫與合成句
+        # 都沒有。**保留的是子句的 token 數，不是字串**——2026-08-21 的人工校訂
+        # 只更新 gloss_text，clauses 與 gloss_raw 都沒跟著改，10 筆 -corrected
+        # 的內容已經對不起來。下游 build_script_dataset.clause_breaks() 因此
+        # 只採計數並對 gloss_text 驗總數，對不上就退回空陣列，不猜。
+        "clauses": e.get("clauses") or None,
         # 上下文（SCOPE 路線）：同段落的前文中文句，由 attach_context() 填入。
         # 依據：留存測試集實測 22.3% 的參考 Gloss token 無法從中文字面推得，
         # 需前文才能還原（例：「聾人和重聽者能看到手語翻譯和字幕」的參考含

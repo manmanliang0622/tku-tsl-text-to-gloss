@@ -60,13 +60,60 @@ SCHEMA_VERSION = script_schema.CURRENT
 SYSTEM = SYSTEM_BY_SCHEMA[SCHEMA_VERSION]
 
 
-def clause_breaks(gloss_tokens: list[str], raw: str) -> list[int]:
-    """子句邊界：語料庫用 ++、中正辭典用 //。沒有標記就回空陣列，不硬猜。"""
-    breaks = []
-    for i, tok in enumerate(gloss_tokens):
-        if "//" in tok or tok.strip() in {"++", "//"}:
-            breaks.append(i)
-    return breaks
+def clause_breaks(clauses, gloss_tokens: list[str],
+                  kept_positions: list[int]) -> tuple[list[int], str]:
+    """子句邊界，表示成 **sign_ids 陣列裡的索引**。
+
+    回傳 (breaks, reason)。reason 供統計用：ok／no_annotation／unaligned／collapsed。
+
+    2026-08-31 重寫。舊版壞在三處，實測 8,915 列訓練資料的 clause_breaks
+    **全部是空陣列**——欄位是死的，模型只學會固定輸出 []：
+
+      1. 先用 `/` 切 gloss_text 再找 `//`，但 `//` 在切分那一步就消失了。
+      2. 只認獨立的 `++` token，而語料庫的實際寫法是 `買++` 這種後綴。
+      3. 把 `++` 與 `//` 當成同一件事。它們來自不相交的兩個來源、意思也不同：
+         `++` 只出現在文化部語料庫（303 筆），是**重複**記號；
+         `//` 只出現在中正辭典例句（40 筆），才是**子句邊界**。
+         兩者從未共存於同一筆。混為一談是舊版最根本的錯。
+
+    正確的來源是上游就有的 `clauses` 欄位（twtsl 544/544 筆都有），
+    由 split_data 帶進切分記錄。但**不能直接信它的字串**：2026-08-21 的人工
+    校訂只更新 gloss_text，clauses 與 gloss_raw 都沒跟著改，10 筆
+    `-corrected` 已經對不起來（例：clauses 寫 `蟑螂媽媽`，gloss_text 是
+    `蟑螂/媽媽`）。所以這裡只採**每個子句的 token 數**，再對現行 gloss_text
+    的 token 總數驗證；總數對不上就退回空陣列並記 unaligned，不猜。
+    唯一那筆同時多子句又 stale 的（TWS0086）改的是錯字 `這倆個→這兩個`，
+    token 數沒變，計數對齊照樣正確。
+
+    **索引空間是 sign_ids 不是 gloss token**：OOV 的詞不會進 sign_ids，
+    所以要用 kept_positions（第 i 個 gloss token 對應 sign_ids 的哪個位置，
+    被丟掉的是 None）把邊界搬過去。整個子句都被丟掉時兩個邊界會疊在一起，
+    去重；落在頭尾的邊界沒有意義（切不出兩段），丟掉。
+    """
+    if not clauses or len(clauses) < 2:
+        return [], "no_annotation"
+
+    counts = [len([t for t in str(c).split("/") if t.strip()]) for c in clauses]
+    if sum(counts) != len(gloss_tokens):
+        # 校訂改動了 token 數（合併／拆開／刪詞），邊界位置不再可信
+        return [], "unaligned"
+
+    # gloss token 索引空間的邊界＝各子句的累積長度（不含最後一個）
+    cuts, acc = [], 0
+    for n in counts[:-1]:
+        acc += n
+        cuts.append(acc)
+
+    out = []
+    n_signs = sum(1 for p in kept_positions if p is not None)
+    for c in cuts:
+        # 該邊界之前有幾個 token 進了 sign_ids
+        pos = sum(1 for p in kept_positions[:c] if p is not None)
+        if 0 < pos < n_signs and pos not in out:
+            out.append(pos)
+    if not out:
+        return [], "collapsed"
+    return out, "ok"
 
 
 def _semantic_ids() -> bool:
@@ -86,8 +133,10 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
                 distractor_ratio: float = 0.2,
                 pin_core: int = 0) -> tuple[dict, dict]:
     text = str(row.get("chinese", "")).strip()
-    gloss_raw = str(row.get("gloss_text", "")).strip()
-    tokens = [t.strip() for t in gloss_raw.split("/") if t.strip()]
+    # 命名注意：這是 gloss_text（已攤平、無 // 與方位標記），不是來源檔的
+    # gloss_raw 欄位。舊版變數叫 gloss_raw，害 clause_breaks 以為拿得到 //。
+    gloss_text = str(row.get("gloss_text", "")).strip()
+    tokens = [t.strip() for t in gloss_text.split("/") if t.strip()]
 
     # train 句必須排掉自己：例句遷移會把同一句撈回來，等於直接把正解塞進候選，
     # 訓練出「照抄檢索結果」的捷徑，上線無此捷徑即失效。
@@ -103,17 +152,23 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
     #   unusable_asset  有 ID 但影片演不出動作    → 要換源重錄（2026-08-31 新增）
     #   retrieval_miss  庫裡有、影片也好，沒撈到  → 要改進檢索
     oov_reason = {}
+    # 第 i 個 gloss token 落在 sign_ids 的哪個位置；被丟掉的記 None。
+    # clause_breaks 要靠它把邊界從 gloss token 索引搬到 sign_ids 索引。
+    kept_positions: list[int | None] = []
     for tok in tokens:
         sid = retr.resolve(tok)
         if sid is None:
             oov.append(tok)
             oov_reason[tok] = "not_in_library"
+            kept_positions.append(None)
         elif sid not in cand_ids:
             oov.append(tok)
             cls = (retr.by_id.get(sid) or {}).get("asset_class")
             oov_reason[tok] = ("unusable_asset"
                                if cls in retr.UNUSABLE_CLASSES else "retrieval_miss")
+            kept_positions.append(None)
         else:
+            kept_positions.append(len(sign_ids))
             sign_ids.append(sid)
 
     # 旗標的定義：參考 Gloss 有沒有全部落進候選清單。這是候選覆蓋率風險，
@@ -134,11 +189,13 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
         candidates = [f"{c['sign_id']}={c['gloss']}" for c in cands]
     else:
         candidates = cands
+    breaks, breaks_reason = clause_breaks(row.get("clauses"), tokens, kept_positions)
+
     user = {"text": text, "candidates": candidates}
     assistant = {
         "schema_version": SCHEMA_VERSION,
         "sign_ids": sign_ids,
-        "clause_breaks": clause_breaks(tokens, gloss_raw),
+        "clause_breaks": breaks,
         SCHEMA_FIELD[SCHEMA_VERSION]: coverage_risk,
         "oov_items": oov,
     }
@@ -161,6 +218,8 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
         "covered": len(sign_ids),
         "oov": len(oov),
         "coverage_risk": coverage_risk,
+        "clause_breaks": breaks,
+        "clause_breaks_reason": breaks_reason,
         "oov_items": oov,
         "not_in_library": [t for t in oov if oov_reason.get(t) == "not_in_library"],
         "unusable_asset": [t for t in oov if oov_reason.get(t) == "unusable_asset"],
@@ -242,6 +301,8 @@ def main() -> int:
         tok_total = sum(s["tokens"] for s in stats)
         tok_cov = sum(s["covered"] for s in stats)
         n_ok = sum(1 for s in stats if not s["coverage_risk"])
+        cb_reason = collections.Counter(st["clause_breaks_reason"] for st in stats)
+        cb_rows = sum(1 for st in stats if st["clause_breaks"])
         miss = collections.Counter()
         miss_lib = collections.Counter()
         miss_asset = collections.Counter()
@@ -262,6 +323,15 @@ def main() -> int:
             "oov_retrieval_miss": (sum(miss.values()) - sum(miss_lib.values())
                                    - sum(miss_asset.values())),
             "top_missing_unusable_asset": miss_asset.most_common(15),
+            # 子句邊界的產出情形（2026-08-31）。**覆蓋率極低是事實不是 bug**：
+            # 只有中正辭典例句有 clauses 欄位，且 504/544 是單子句，
+            # 全資料集真正有邊界的只有 40 筆。引用時務必連同這個數字一起講。
+            "clause_breaks": {
+                "rows_with_breaks": cb_rows,
+                "rows_with_breaks_pct": (round(100 * cb_rows / len(stats), 2)
+                                         if stats else None),
+                "reasons": dict(cb_reason),
+            },
             "top_missing": miss.most_common(15),
             "top_missing_not_in_library": miss_lib.most_common(15),
         }
@@ -275,6 +345,8 @@ def main() -> int:
               f" + 影片不堪用 {summary['oov_unusable_asset']}（要重錄）"
               f" + 檢索沒撈到 {summary['oov_retrieval_miss']}（要改檢索）")
         print(f"  最常缺：{summary['top_missing'][:8]}")
+        print(f"  子句邊界 {cb_rows} 列有（{summary['clause_breaks']['rows_with_breaks_pct']}%）"
+              f"／{dict(cb_reason)}")
 
         if not args.dry_run:
             OUT.mkdir(parents=True, exist_ok=True)

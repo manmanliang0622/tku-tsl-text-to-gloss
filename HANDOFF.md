@@ -77,6 +77,9 @@
 >   `scripts/build_script_dataset.py` 的 schema 說明：預設已改為 **v2**
 >   （旗標欄位 `needs_review` → `candidate_coverage_risk`），且候選池預設
 >   **排除品質判定為 severe 的影片**。兩者都改變訓練分布，**必須重訓才生效**。
+> - ⚠️ **切分記錄新增 `clauses` 欄位**（2026-08-31）：`clause_breaks` 現在靠它
+>   產生，舊切分沒有這個欄位，用舊 `data/splits/` 重建 splits_script 會讓
+>   `clause_breaks` 又變回全空。重建前務必先重跑 `split_data.py`。
 >   要重建 v17 那份完全一樣的資料：
 >   `--schema-version tsl-script-v1`，並在 `CandidateRetriever` 傳
 >   `exclude_unusable=False`。

@@ -205,6 +205,22 @@ python3 scripts/eval_script_format.py --pred results/v17cd_test_textbook.jsonl \
 唯一差別是有沒有掛 adapter）。**這是短句集，不可外推**：未微調在語料庫留存句上
 的 BLEU-4 僅 6.74（見 v17 報告 §6.1），微調後也只到 16.61——長句仍是弱項。
 
+## 部署到 0821_bundle 的必帶檔案
+
+`serve_model.py` 依賴 `scripts/` 底下數個本地模組，少一個就起不來。清單由
+`serve_model.BUNDLE_MODULES` 宣告，並由 `scripts/check_bundle_deps.py`
+以 AST 算出遞移相依對帳（CI 會跑，加了 import 忘了更新清單就會紅）。
+
+```bash
+python3 scripts/check_bundle_deps.py --list          # 印出必帶檔案
+python3 scripts/check_bundle_deps.py --deploy-check  # 印出部署端的驗證指令
+```
+
+> **2026-08-31**：`constrained_decode.py` 與 `script_schema.py` 是本日新增的
+> 相依，**目前不在 0821_bundle 裡**。線上跑的仍是 517141b 那版（無此相依，
+> 安全但比 branch 舊）。下次部署 serve_model 時這兩個檔必須一起帶，否則啟動
+> 即死——`script_schema` 是模組層 import，會最先炸。
+
 ## 已知限制
 
 - **切分曾有表面形式洩漏（2026-08-31 已修）**：`split_data.py` 原本只比對

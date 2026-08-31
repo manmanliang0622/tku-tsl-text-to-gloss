@@ -35,3 +35,6 @@ jobs:
 
       - name: 資料 preflight（缺料時據實回報，不當成通過）
         run: python scripts/data_preflight.py
+
+      - name: 部署相依對帳（serve_model 的 BUNDLE_MODULES）
+        run: python scripts/check_bundle_deps.py

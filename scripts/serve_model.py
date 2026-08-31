@@ -40,6 +40,27 @@ from transformers import AutoTokenizer, BitsAndBytesConfig
 import prompt_common as pc
 import script_schema
 
+# ── 部署相依 ─────────────────────────────────────────────────────────
+# 部署到 0821_bundle 時，這些 scripts/ 底下的模組**必須一起帶**，
+# 少一個 serve_model 就起不來（或在請求進來時才炸）。
+#
+# 這不是備忘錄而是契約：scripts/check_bundle_deps.py 會用 AST 算出
+# serve_model 的遞移本地相依，與這份清單對帳，不一致就讓 CI 紅。
+# 2026-08-31 的教訓——commit 279d35c 一次加了 constrained_decode 與
+# script_schema 兩個相依，但註解只提到一個、數量還寫錯成「第四個相依」，
+# 那版部署上去會啟動即死。註解不會失敗，清單會。
+BUNDLE_MODULES = (
+    "comitative",          # 伴隨句雙數收攏（缺檔會 warn 後停用，不擋啟動）
+    "constrained_decode",  # 約束解碼；缺檔**故意**讓服務起不來，見下方說明
+    "eval_video_coverage",  # sign_candidates 的 gloss 正規化（fold／norm）
+    "gloss_fallback",
+    "prompt_common",
+    "rag_retrieve",
+    "script_schema",       # schema 常數與旗標欄位名；模組層 import，缺檔最先炸
+    "sign_candidates",
+    "train_qlora",         # load_model／can_fit_ple_on_gpu
+)
+
 BASE = Path(__file__).resolve().parent.parent
 
 STATE = {"model": None, "tokenizer": None, "adapter": None, "model_name": None, "max_new": 64,
@@ -207,8 +228,7 @@ CONSTRAINED_DECODE = os.environ.get("CONSTRAINED_DECODE", "1") != "0"
 # 伴隨句雙數收攏規則（見 comitative.py）。COMITATIVE_DUAL=0 可關掉。
 # 只作用在線上服務；離線評估腳本刻意不套，讓 v17 之前的指標保持可比。
 COMITATIVE_DUAL = os.environ.get("COMITATIVE_DUAL", "1") != "0"
-# 部署到 0821_bundle 時 comitative.py **必須一起帶**（serve_model 的四個相依之一，
-# 另三個是 prompt_common、sign_candidates、constrained_decode）。這裡在載入時就吵，不要等到請求進來
+# 部署到 0821_bundle 時 comitative.py **必須一起帶**（見上方 BUNDLE_MODULES）。這裡在載入時就吵，不要等到請求進來
 # 才每次 import 失敗——那會變成「服務看起來正常、規則靜默失效」。
 try:
     import comitative
@@ -221,8 +241,7 @@ except ImportError:                      # noqa: BLE001 - 缺檔不該讓整個�
 # 教授審查意見 4.3 要求「離線推論與服務端 import 同一份」。副本消失，
 # 漂移的可能性也跟著消失。
 #
-# ⚠️ 部署到 0821_bundle 時 constrained_decode.py **必須一起帶**，這是
-# serve_model 的第四個相依（前三個是 prompt_common、sign_candidates、comitative）。
+# ⚠️ 部署到 0821_bundle 時 constrained_decode.py **必須一起帶**（見上方 BUNDLE_MODULES）。
 # 這裡刻意**不**做 try/except 兜底：約束解碼是「輸出 ID 一定在候選內」這條
 # 保證的來源，靜默停用會讓服務看起來正常、實際卻退回 v14 那種 4.22% 違反率。
 # 缺檔就讓服務起不來，比帶病上線好。

@@ -5,38 +5,38 @@
   "synth_selection": "confidence-based",
   "include_words": 0,
   "counts": {
-    "train": 9064,
-    "dev": 548,
+    "train": 8915,
+    "dev": 663,
     "test": 33,
     "test_corpus": 166,
     "test_papers": 0,
     "test_textbook": 423
   },
   "train_composition": {
-    "tslcorpus": 6904,
-    "twtsl-sentence": 914,
-    "synth": 1246
+    "twtsl-sentence": 929,
+    "synth": 1246,
+    "tslcorpus": 6740
   },
   "dev_composition": {
-    "tslcorpus": 376,
-    "twtsl-sentence": 43,
-    "synth": 129
+    "tslcorpus": 490,
+    "synth": 129,
+    "twtsl-sentence": 44
   },
   "test_composition": {
     "real": 33
   },
   "human_excluded_2026_08_21": 23,
-  "leaked_removed": 30,
+  "leaked_removed": 24,
   "corpus_test_ratio": 0.12,
   "corrections": {
     "unique": 0,
     "rows_after_weighting": 0
   },
   "length_balance": {
-    "before_total": 5400,
-    "after_total": 9064,
-    "before_ge8_pct": 10.4,
-    "after_ge8_pct": 24.7,
+    "before_total": 5321,
+    "after_total": 8915,
+    "before_ge8_pct": 10.2,
+    "after_ge8_pct": 24.4,
     "buckets": "≤4 ×1、5–7 ×2、≥8 ×4"
   },
   "context_sentences": 0,
@@ -59,15 +59,9 @@
   "test_corpus_4gram_count": 761,
   "split_method": "group-holdout（語料庫按對話 seg_uuid、twtsl 按詞條、synth 按模板整組留存）",
   "dev_group_leakage": 0,
-  "surface_normalization": {
-    "applied": "NFKC + 標點空白移除 + 臺→台/妳→你/祂牠→他",
-    "scope": "去洩漏比對與去重鍵；不改寫實際寫出的語料內容",
-    "text_clusters_merged": 42,
-    "train_dev_normalized_chinese_overlap": 0
-  },
   "n_groups": {
-    "train": 669,
-    "dev": 62
+    "train": 668,
+    "dev": 65
   },
   "corpus_dropped_short": 0,
   "min_gloss_len": 1,

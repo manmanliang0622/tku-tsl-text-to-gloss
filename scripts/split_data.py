@@ -39,8 +39,36 @@ import hashlib
 import json
 import random
 import re
+import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
+
+# ── 表面形式正規化（2026-08-31，教授審查意見 2.4）────────────────────────
+# 原本的去洩漏與去重都比對**原始中文字串**，所以只差一個句號的兩句會被當成
+# 不同句。實測後果：核心 33 句有 3 句（我住在台北。／我知道／我不知道）的
+# 去標點形式出現在 train；dev 與 train 更有 6 句原字串就完全相同——因為去重
+# 鍵是 (chinese, gloss_text)，同一句中文配不同 Gloss 就兩邊都留。dev 同時
+# 決定 checkpoint 選擇與 needs_review 門檻，那個洩漏比 test 的還直接。
+_PUNCT = "，。？！?!,.、;；:：…「」『』（）()《》〈〉“”\"' 　\t"
+# 異體字與臺／台：同一個詞的兩種寫法，不是兩個詞。
+_VARIANT = str.maketrans({"臺": "台", "妳": "你", "祂": "他", "牠": "他"})
+
+
+def normalize_text(s: str) -> str:
+    """比對用的中文正規形。全半形統一 → 異體字折疊 → 去標點與空白。
+
+    只用於「這兩句算不算同一句」的判斷，**不改寫實際寫進切分檔的內容**——
+    語料的原始寫法要保留，正規化只是比對的鏡片。
+    """
+    s = unicodedata.normalize("NFKC", str(s))
+    s = s.translate(_VARIANT)
+    return re.sub(f"[{re.escape(_PUNCT)}]", "", s).strip()
+
+
+def normalize_gloss(s: str) -> str:
+    """Gloss 的比對用正規形：逐 token 折疊異體字，去空白。"""
+    toks = [t.strip().translate(_VARIANT) for t in str(s).split("/")]
+    return "/".join(t for t in toks if t)
 
 BASE = Path(__file__).resolve().parent.parent
 DATA = BASE / "data"
@@ -222,8 +250,9 @@ def main():
     # --- test：真實句（排除模板佔位符句） ---
     real = load_jsonl(DATA / "tsl_sentences.jsonl")
     test = [norm_record(e, "real") for e in real if not e.get("is_template")]
-    test_chinese = {e["chinese"] for e in test}
-    test_gloss = {e["gloss_text"] for e in test}
+    # 正規形比對（見 normalize_text）：只差標點的句子必須算同一句。
+    test_chinese = {normalize_text(e["chinese"]) for e in test}
+    test_gloss = {normalize_gloss(e["gloss_text"]) for e in test}
 
     # --- train 池：synth + twtsl 例句 ---
     pool = []
@@ -341,8 +370,9 @@ def main():
                         continue      # 短句不列入 test（長句才是弱項）
                     # test_corpus 自身去重，且不與核心 33 句 test 重複
                     k = (e["chinese"], e["gloss_text"])
-                    if k in picked_seen or e["chinese"] in test_chinese \
-                            or e["gloss_text"] in test_gloss:
+                    if k in picked_seen \
+                            or normalize_text(e["chinese"]) in test_chinese \
+                            or normalize_gloss(e["gloss_text"]) in test_gloss:
                         continue
                     picked_seen.add(k)
                     test_corpus_candidates.append(e)
@@ -389,10 +419,12 @@ def main():
                 test_corpus_rejected.append(rv)
 
     # 原始候選（含教師排除列）也納入洩漏 blocklist，確保訓練池不含其相同句。
-    tc_chinese = {e["chinese"] for e in test_corpus} | {e["chinese"] for e in test_papers}
-    tc_gloss = {e["gloss_text"] for e in test_corpus} | {e["gloss_text"] for e in test_papers}
-    tc_block_chinese = {e["chinese"] for e in test_corpus_blocklist}
-    tc_block_gloss = {e["gloss_text"] for e in test_corpus_blocklist}
+    tc_chinese = {normalize_text(e["chinese"]) for e in test_corpus} \
+        | {normalize_text(e["chinese"]) for e in test_papers}
+    tc_gloss = {normalize_gloss(e["gloss_text"]) for e in test_corpus} \
+        | {normalize_gloss(e["gloss_text"]) for e in test_papers}
+    tc_block_chinese = {normalize_text(e["chinese"]) for e in test_corpus_blocklist}
+    tc_block_gloss = {normalize_gloss(e["gloss_text"]) for e in test_corpus_blocklist}
 
     if args.include_words > 0:
         words = load_jsonl(DATA / "twtsl" / "twtsl_words.jsonl")
@@ -407,27 +439,75 @@ def main():
     # --- 去重 + 洩漏防護 ---
     seen, dedup, leaked = set(), [], 0
     for e in pool:
-        if e["chinese"] in test_chinese or e["gloss_text"] in test_gloss \
-                or e["chinese"] in tc_block_chinese \
-                or e["gloss_text"] in tc_block_gloss:
+        nc, ng = normalize_text(e["chinese"]), normalize_gloss(e["gloss_text"])
+        if nc in test_chinese or ng in test_gloss \
+                or nc in tc_block_chinese or ng in tc_block_gloss:
             leaked += 1
             continue
-        key = (e["chinese"], e["gloss_text"])
+        # 去重鍵改用正規形的句對。**仍是句對不是單看中文**：同一句中文配不同
+        # Gloss 可能是合法的變體標註，直接丟掉會少掉訓練資料；真正該防的是它們
+        # 跨 train/dev，那由下面的 text cluster 處理。
+        key = (nc, ng)
         if key in seen:
             continue
         seen.add(key)
         dedup.append(e)
 
-    # --- 依 source 分層、依 group 去洩漏抽 dev（整組進 train 或 dev） ---
+    # --- 群組合併：同一句中文（正規形）的所有列必須同進退 ---------------
+    # 原本只靠 e["group"] 去洩漏，但同一句話會以不同 group 重複收錄——語料庫
+    # 同一段話被切在兩個對話編號（corpus:G3D11 與 G3C26 都是「吃飯時不許看
+    # 手機」），辭典例句則同時掛在多個詞條底下（「我會三種語言」同時是
+    # twtsl:口語 與 twtsl:語言 的例句）。group 不同、內容相同，於是 6 句
+    # 原字串完全相同的句子同時出現在 train 與 dev。
+    #
+    # 解法：用 union-find 把「共用同一個正規化中文」的 group 併成一個 cluster，
+    # 之後整個 cluster 一起進 train 或 dev。
+    parent = {}
+
+    def find(x):
+        parent.setdefault(x, x)
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(a, b):
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[rb] = ra
+
+    for e in dedup:
+        find((e["source"], e["group"]))
+    by_text = defaultdict(list)
+    for e in dedup:
+        by_text[normalize_text(e["chinese"])].append((e["source"], e["group"]))
+    merged_clusters = 0
+    for gkeys in by_text.values():
+        if len(set(gkeys)) > 1:
+            merged_clusters += 1
+            first = gkeys[0]
+            for g in gkeys[1:]:
+                union(first, g)
+
+    # cluster 的 source 取其成員的多數（只有極少數 cluster 會跨來源——實測 1 個，
+    # 「我是學生」同時是 synth 模板句與 twtsl 例句）。分層抽樣仍照 source 走，
+    # 但 cluster 是不可分割的最小單位。
+    cluster_rows = defaultdict(list)
+    for e in dedup:
+        cluster_rows[find((e["source"], e["group"]))].append(e)
+    cluster_src = {c: Counter(e["source"] for e in rows).most_common(1)[0][0]
+                   for c, rows in cluster_rows.items()}
+
+    # --- 依 source 分層、依 cluster 去洩漏抽 dev（整組進 train 或 dev） ---
 
     by_src = defaultdict(list)
-    for e in dedup:
-        by_src[e["source"]].append(e)
+    for c, rows in cluster_rows.items():
+        by_src[cluster_src[c]].extend(rows)
     train, dev = [], []
     for src, items in by_src.items():
         groups = defaultdict(list)
         for e in items:
-            groups[e["group"]].append(e)
+            groups[find((e["source"], e["group"]))].append(e)
         gkeys = list(groups.keys())
         rng.shuffle(gkeys)
         target = round(len(items) * args.dev_ratio) if len(items) >= 10 else 0
@@ -476,6 +556,15 @@ def main():
     group_leak = len(train_groups & dev_groups_all)
     assert group_leak == 0, f"分組洩漏 {group_leak} 組同時在 train/dev"
 
+    # 正規形去洩漏驗證（2026-08-31，教授審查意見 2.4）。group 相同不代表內容
+    # 不同——同一句話會掛在不同對話編號／不同詞條底下，光靠 group 擋不住。
+    # 這裡直接對「正規化後的中文」下斷言，是最終防線。
+    train_norm = {normalize_text(e["chinese"]) for e in train}
+    dev_norm = {normalize_text(e["chinese"]) for e in dev}
+    norm_leak = sorted(train_norm & dev_norm)
+    assert not norm_leak, (
+        f"train/dev 正規化中文重疊 {len(norm_leak)} 句，前 5 句：{norm_leak[:5]}")
+
     # test.jsonl = 核心 33 句（向後相容，eval 預設讀此檔）；另出 test_corpus.jsonl
     out_splits = [("train", train), ("dev", dev), ("test", test)]
     if test_corpus:
@@ -495,10 +584,24 @@ def main():
     assert tc_group_leak == 0, f"test_corpus 群組洩漏 {tc_group_leak} 組進 train/dev"
 
     train_dev = train + dev
-    train_dev_chinese = {e["chinese"] for e in train_dev}
-    train_dev_gloss = {e["gloss_text"] for e in train_dev}
-    train_dev_pairs = {(e["chinese"], e["gloss_text"]) for e in train_dev}
-    tc_pairs = {(e["chinese"], e["gloss_text"]) for e in test_corpus}
+    # 全部用正規形比對——tc_chinese／tc_gloss 在上面就已經是正規形了，
+    # 這裡若還用原字串會變成兩種口徑相減，等於檢查失效。
+    train_dev_chinese = {normalize_text(e["chinese"]) for e in train_dev}
+    train_dev_gloss = {normalize_gloss(e["gloss_text"]) for e in train_dev}
+    train_dev_pairs = {(normalize_text(e["chinese"]), normalize_gloss(e["gloss_text"]))
+                       for e in train_dev}
+    tc_pairs = {(normalize_text(e["chinese"]), normalize_gloss(e["gloss_text"]))
+                for e in test_corpus}
+    # 每個測試集的正規化中文都不得出現在 train/dev。這是 2026-08-31 之前
+    # 漏掉的那一層：核心 33 句有 3 句（我住在台北。／我知道／我不知道）
+    # 去標點後就在 train 裡。
+    train_dev_norm = {normalize_text(e["chinese"]) for e in train_dev}
+    for _name, _rows in (("test（核心 33）", test), ("test_corpus", test_corpus),
+                         ("test_papers", test_papers), ("test_textbook", test_textbook)):
+        _leak = sorted({normalize_text(e["chinese"]) for e in _rows} & train_dev_norm)
+        assert not _leak, (
+            f"{_name} 有 {len(_leak)} 句正規化中文出現在 train/dev：{_leak[:5]}")
+
     tc_chinese_leak = len(tc_chinese & train_dev_chinese)
     tc_gloss_leak = len(tc_gloss & train_dev_gloss)
     tc_pair_leak = len(tc_pairs & train_dev_pairs)
@@ -511,10 +614,12 @@ def main():
     # 被模型看過）。Gloss 單獨相同不算——教材句的 Gloss 中位數只有 4 個詞、
     # 最短 1 個，單 token 的「美麗」這種必然會與訓練集碰撞，那是短序列的
     # 巧合而非記憶。test_corpus 沒這問題是因為它有 --corpus-test-min-len 6。
-    tb_chinese = {e["chinese"] for e in test_textbook}
-    tb_pairs = {(e["chinese"], e["gloss_text"]) for e in test_textbook}
+    tb_chinese = {normalize_text(e["chinese"]) for e in test_textbook}
+    tb_pairs = {(normalize_text(e["chinese"]), normalize_gloss(e["gloss_text"]))
+                for e in test_textbook}
     tb_chinese_leak = len(tb_chinese & train_dev_chinese)
-    tb_gloss_leak = len({e["gloss_text"] for e in test_textbook} & train_dev_gloss)
+    tb_gloss_leak = len({normalize_gloss(e["gloss_text"]) for e in test_textbook}
+                        & train_dev_gloss)
     tb_pair_leak = len(tb_pairs & train_dev_pairs)
     assert tb_chinese_leak == 0, f"test_textbook 中文洩漏 {tb_chinese_leak}"
     assert tb_pair_leak == 0, f"test_textbook pair 洩漏 {tb_pair_leak}"
@@ -577,6 +682,13 @@ def main():
         "test_corpus_4gram_count": ngram4_count(test_corpus),
         "split_method": "group-holdout（語料庫按對話 seg_uuid、twtsl 按詞條、synth 按模板整組留存）",
         "dev_group_leakage": group_leak,
+        # 2026-08-31 起的表面形式正規化（審查意見 2.4）
+        "surface_normalization": {
+            "applied": "NFKC + 標點空白移除 + 臺→台/妳→你/祂牠→他",
+            "scope": "去洩漏比對與去重鍵；不改寫實際寫出的語料內容",
+            "text_clusters_merged": merged_clusters,
+            "train_dev_normalized_chinese_overlap": len(norm_leak),
+        },
         "n_groups": {"train": len(train_groups), "dev": len(dev_groups_all)},
         "corpus_dropped_short": corpus_dropped_short,
         "min_gloss_len": args.min_gloss_len,

@@ -42,3 +42,23 @@ data/splits_script_k60/*.jsonl
 .venv-emb/
 data/signs/gloss_emb_bge_small_zh.npz
 data/signs/semantic_query_cache.json
+
+# IG @tslsigner 的補片素材：第三方影片，已取得作者授權供本專案使用，但不散布，
+# 不入庫。要重抓見 scripts/match_ig_tslsigner.py --download。
+data/video/ig_tslsigner_clips/
+
+# v17／v17cd 當時的凍結切分（data/splits_v17/）**要入庫**，它是歷史數字的對帳
+# 錨點，讓乾淨 clone 也能跑 tests/test_eval_script_format.py（審查意見 5.2）。
+# 唯一例外是教材集：比照上面 data/tsl_textbook/ 的保守處理，授權未查證，不公開。
+data/splits_v17/test_textbook.jsonl
+
+# 影片品質掃描表：0813 quality_scan/entries_final.csv 的鏡像，與 lexicon.json
+# 同屬非公開訓練素材，比照處理。掃描結果的**結論**（asset_class／quality_tier）
+# 已寫進受版控的 data/signs/sign_inventory.jsonl，下游不需要這份原始檔；
+# 只有重建總表時要，取得方式見 scripts/data_preflight.py 的提示。
+data/video/entries_final.csv
+
+# 來源雜湊快照：由 scripts/data_preflight.py --write-manifest 產生。
+# 目前不入庫——本分支的 data/tslcorpus/parallel.jsonl 還在人工校訂中，
+# 先鎖 hash 會變成對他人在製品的絆索。校訂落地後再產一份 commit 進來。
+data/source_manifest.json

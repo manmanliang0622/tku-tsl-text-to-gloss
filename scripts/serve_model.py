@@ -222,6 +222,18 @@ def _needs_review_prob(tok, seq, scores):
 # 兩個上限取參考答案實測極值，10,200 句參考驗證過零排除。
 # 與 tku-tsl-text-to-gloss/scripts/constrained_decode.py 同一套邏輯，改動要同步。
 CONSTRAINED_DECODE = os.environ.get("CONSTRAINED_DECODE", "1") != "0"
+# 伴隨句雙數收攏規則（見 comitative.py）。COMITATIVE_DUAL=0 可關掉。
+# 只作用在線上服務；離線評估腳本刻意不套，讓 v17 之前的指標保持可比。
+COMITATIVE_DUAL = os.environ.get("COMITATIVE_DUAL", "1") != "0"
+# 部署到 0821_bundle 時 comitative.py **必須一起帶**（serve_model 的第三個相依，
+# 前兩個是 prompt_common、sign_candidates）。這裡在載入時就吵，不要等到請求進來
+# 才每次 import 失敗——那會變成「服務看起來正常、規則靜默失效」。
+try:
+    import comitative
+except ImportError:                      # noqa: BLE001 - 缺檔不該讓整個服務起不來
+    comitative = None
+    print("[serve] ⚠ 找不到 comitative.py，伴隨句雙數收攏規則停用（部署時漏帶？）",
+          flush=True)
 MAX_RUN = 6        # 同一個 sign_id 最多連續出現幾次（參考實測極值）
 MAX_SIGNS = 18     # sign_ids 陣列最多幾個元素（參考最長 15，留 3 緩衝）
 _ELEMENT_RE = re.compile(r'"([^"]*)"')
@@ -333,9 +345,21 @@ def translate_script(text):
     needs_review = (p_nr >= NEEDS_REVIEW_THRESHOLD) if p_nr is not None else model_nr
 
     toks = [STATE["id2gloss"][i] for i in sign_ids]
+
+    # 伴隨句雙數收攏（2026-08-31）：「我跟X…」補「我們兩個」。
+    # 為什麼在解碼後補而不是修候選：`我跟媽媽去吃飯` 的 k=40 候選裡根本沒有
+    # 「我們兩個」，約束解碼不可能吐出它；而加候選通道在固定 k 之下是零和的，
+    # 本專案已有三個否定結果（見 sign_candidates.candidates）。詳見 comitative.py。
+    if COMITATIVE_DUAL and comitative is not None:
+        sign_ids, toks, dual_added = comitative.apply_ids(
+            text, sign_ids, toks, STATE["cand_retriever"].index, max_signs=MAX_SIGNS)
+    else:
+        dual_added = False
+
     return {
         "chinese": text, "gloss": toks, "gloss_text": "/".join(toks), "glosses": toks,
         "sign_ids": sign_ids,
+        "comitative_dual": dual_added,
         "needs_review": needs_review,
         "needs_review_prob": round(p_nr, 6) if p_nr is not None else None,
         "needs_review_model": model_nr,

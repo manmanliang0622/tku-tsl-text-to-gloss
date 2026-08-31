@@ -51,6 +51,11 @@ data/video/ig_tslsigner_clips/
 # 錨點，讓乾淨 clone 也能跑 tests/test_eval_script_format.py（審查意見 5.2）。
 # 唯一例外是教材集：比照上面 data/tsl_textbook/ 的保守處理，授權未查證，不公開。
 data/splits_v17/test_textbook.jsonl
+# 論文例句同樣不公開：來源是中正手語研究的學位論文 PDF（魏彥宜 2022 等四篇）。
+# 2026-08-04 確認「訓練＋散布皆合法」的是文化部語料庫與中正線上辭典，
+# **不含**學位論文；沒有認定就比照教材集保守處理。這份也不在現行切分裡
+# （--no-papers），沒有下游依賴。
+data/splits_v17/test_papers.jsonl
 
 # 影片品質掃描表：0813 quality_scan/entries_final.csv 的鏡像，與 lexicon.json
 # 同屬非公開訓練素材，比照處理。掃描結果的**結論**（asset_class／quality_tier）

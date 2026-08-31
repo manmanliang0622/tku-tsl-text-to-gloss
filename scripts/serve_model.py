@@ -16,7 +16,9 @@ API：
   POST /translate           → body {"text":"我想喝水"}
                               回 {"chinese":...,"sign_ids":["TSL_我","TSL_想","TSL_水","TSL_喝"],
                                   "gloss":["我","想","水","喝"],"gloss_text":"我/想/水/喝",
-                                  "needs_review":false,"needs_review_prob":0.026,
+                                  "candidate_coverage_risk":false,
+                                  "candidate_coverage_risk_prob":0.026,
+                                  "needs_review":false,   # 相容別名，同值
                                   "dropped_ids":[],"candidates_k":40,
                                   "schema_version":"tsl-script-v1","raw":"{...}","seconds":6.1}
   舊的 --target gloss／json 模式仍保留（歷史 adapter 用），欄位見 translate()。
@@ -28,7 +30,6 @@ CORS：前端以 file:// 開啟時 Origin 為 null，故一律回 Access-Control
 import argparse
 import os
 import json
-import re
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -37,6 +38,7 @@ import torch
 from transformers import AutoTokenizer, BitsAndBytesConfig
 
 import prompt_common as pc
+import script_schema
 
 BASE = Path(__file__).resolve().parent.parent
 
@@ -44,38 +46,19 @@ STATE = {"model": None, "tokenizer": None, "adapter": None, "model_name": None, 
          "target": "gloss", "retriever": None, "rag_k": 0, "rag_min": 0.05,
          "json_targets": {}, "cand_retriever": None, "id2gloss": {}, "k": 40}
 
-# ---- tsl-script-v1（新格式）----------------------------------------------
-# system 字串必須與 scripts/build_script_dataset.py 的 SYSTEM **逐字相同**。
-# 既有教訓：2026-08-20 因為推論端自組 prompt 與訓練不一致，33 句 test 的 EM 與
-# ValidJSON 全部掛零，看起來像模型壞掉，其實模型是好的。改這裡等於改訓練契約。
-SCRIPT_SYSTEM = ("將繁體中文轉成可執行的臺灣手語腳本。只能使用候選清單中的 sign_id，"
-                 "不得創造新 ID。缺少必要手語時，必須輸出 needs_review=true。只輸出 JSON。")
+# ---- 手語腳本格式 ---------------------------------------------------------
+# **這台服務目前載入的 checkpoint 是用哪個 schema 訓練的。**
+# v17（部署中）＝ tsl-script-v1，旗標欄位 needs_review。
+# 換上 v2 訓練的 checkpoint 時，這一行要跟著改，否則 system prompt 與訓練
+# 不一致——2026-08-20 就因為推論端 prompt 與訓練不同，33 句 test 的 EM 與
+# ValidJSON 全部掛零，看起來像模型壞掉，其實模型是好的。
+DEPLOYED_SCHEMA = script_schema.V1
 
+# 2026-08-31：原本這裡硬寫一份 system 字串，再用 ast 讀 build_script_dataset.py
+# 的 SYSTEM 字面值比對，防兩份複本漂移。現在兩邊都從 script_schema 取同一份，
+# 複本消失、比對也就不需要了（審查意見 4.3 的「共用模組」同樣適用於 prompt）。
+SCRIPT_SYSTEM = script_schema.SYSTEM_BY_SCHEMA[DEPLOYED_SCHEMA]
 
-def _assert_system_matches_training() -> None:
-    """在 repo 裡跑時，斷言上面的字串與 build_script_dataset.SYSTEM 逐字相同。
-
-    這兩份必然是複本——部署到 0821 時只帶服務程式，不會帶 build_script_dataset。
-    複本會漂移，而這個特定的漂移代價很高：2026-08-20 就因為推論端 prompt 與
-    訓練不一致，33 句 test 的 EM 與 ValidJSON 全部掛零，花了時間才確認模型是好的。
-    故在**找得到訓練腳本時**主動比對；部署環境找不到就靜默略過（不是錯誤）。
-    用 ast 讀字面值而非 import，避免把 sign_candidates 等重依賴拖進服務啟動。
-    """
-    import ast
-    src = BASE / "scripts" / "build_script_dataset.py"
-    if not src.exists():
-        return                      # 部署環境沒有訓練腳本，正常
-    tree = ast.parse(src.read_text(encoding="utf-8"))
-    for node in tree.body:
-        if isinstance(node, ast.Assign) and any(
-                getattr(t, "id", None) == "SYSTEM" for t in node.targets):
-            trained = ast.literal_eval(node.value)
-            if trained != SCRIPT_SYSTEM:
-                raise SystemExit(
-                    "serve_model.SCRIPT_SYSTEM 與 build_script_dataset.SYSTEM 不一致，"
-                    "推論 prompt 與訓練不同會讓指標整組掛零：\n"
-                    f"  訓練：{trained!r}\n  服務：{SCRIPT_SYSTEM!r}")
-            return
 # 門檻只能在 dev 上重選，不要看 test 的數字調。選法用
 # scripts/nr_threshold.py（tku-tsl-text-to-gloss）重跑即可。
 #
@@ -174,7 +157,6 @@ def _load_script_assets():
     否則模型學到的候選分布與線上不同，約束就失效了。"""
     if STATE["cand_retriever"] is not None:
         return
-    _assert_system_matches_training()
     from sign_candidates import CandidateRetriever
     STATE["cand_retriever"] = CandidateRetriever()
     STATE["id2gloss"] = {r["sign_id"]: r.get("gloss_clean") or r["gloss"]
@@ -183,12 +165,12 @@ def _load_script_assets():
 
 
 def _needs_review_prob(tok, seq, scores):
-    """needs_review 那個位置給 true 的機率（只在 true/false 之間正規化）。"""
+    """覆蓋風險旗標那個位置給 true 的機率（只在 true/false 之間正規化）。"""
     text = ""
     for i, tid in enumerate(seq.tolist()):
         piece = tok.decode([tid])
         low = piece.strip().lower()
-        if "needs_review" in text and low[:4] in ("true", "fals"):
+        if any(k in text for k in script_schema.FLAG_KEYS) and low[:4] in ("true", "fals"):
             if i >= len(scores):
                 return None
             probs = torch.softmax(scores[i][0].float(), dim=-1)
@@ -225,8 +207,8 @@ CONSTRAINED_DECODE = os.environ.get("CONSTRAINED_DECODE", "1") != "0"
 # 伴隨句雙數收攏規則（見 comitative.py）。COMITATIVE_DUAL=0 可關掉。
 # 只作用在線上服務；離線評估腳本刻意不套，讓 v17 之前的指標保持可比。
 COMITATIVE_DUAL = os.environ.get("COMITATIVE_DUAL", "1") != "0"
-# 部署到 0821_bundle 時 comitative.py **必須一起帶**（serve_model 的第三個相依，
-# 前兩個是 prompt_common、sign_candidates）。這裡在載入時就吵，不要等到請求進來
+# 部署到 0821_bundle 時 comitative.py **必須一起帶**（serve_model 的四個相依之一，
+# 另三個是 prompt_common、sign_candidates、constrained_decode）。這裡在載入時就吵，不要等到請求進來
 # 才每次 import 失敗——那會變成「服務看起來正常、規則靜默失效」。
 try:
     import comitative
@@ -234,79 +216,24 @@ except ImportError:                      # noqa: BLE001 - 缺檔不該讓整個�
     comitative = None
     print("[serve] ⚠ 找不到 comitative.py，伴隨句雙數收攏規則停用（部署時漏帶？）",
           flush=True)
-MAX_RUN = 6        # 同一個 sign_id 最多連續出現幾次（參考實測極值）
-MAX_SIGNS = 18     # sign_ids 陣列最多幾個元素（參考最長 15，留 3 緩衝）
-_ELEMENT_RE = re.compile(r'"([^"]*)"')
-_VOCAB_BY_FIRST = None
-
-def _vocab_index(tok):
-    global _VOCAB_BY_FIRST
-    if _VOCAB_BY_FIRST is None:
-        idx = {}
-        for tid, piece in enumerate(tok.convert_ids_to_tokens(list(range(len(tok))))):
-            if piece is None or (piece.startswith("<") and piece.endswith(">")):
-                continue          # special / byte-fallback token 不參與
-            text = piece.replace("\u2581", " ")
-            if text:
-                idx.setdefault(text[0], []).append((tid, text))
-        _VOCAB_BY_FIRST = idx
-    return _VOCAB_BY_FIRST
-
-def _constrained_prefix_fn(tok, prompt_len, cand_ids):
-    all_ids = list(range(len(tok)))
-    index = _vocab_index(tok)
-    cands = sorted(cand_ids)
-
-    def fn(_batch, input_ids):
-        gen = tok.decode(input_ids[prompt_len:], skip_special_tokens=True)
-        m = gen.rfind('"sign_ids"')
-        if m < 0:
-            return all_ids
-        seg = gen[m + 10:]
-        b = seg.find("[")
-        if b < 0 or "]" in seg[b:]:
-            return all_ids                      # 還沒進陣列，或陣列已關閉
-        seg = seg[b + 1:]
-
-        emitted = _ELEMENT_RE.findall(seg)      # 已完成的元素（成對引號才算）
-
-        if seg.count('"') % 2 == 0:
-            # 不在字串常值內。長度到頂就收掉陣列——但只在沒有逗號待補時，
-            # 否則會生出 ["a", ] 這種尾逗號破 JSON。
-            if len(emitted) >= MAX_SIGNS and not seg.rstrip().endswith(","):
-                close = sorted({tid for tid, text in index.get("]", [])
-                                if text.startswith("]")})
-                if close:
-                    return close
-            return all_ids
-        partial = seg[seg.rfind('"') + 1:]
-
-        # 連續重複到頂：把那個 id 從這一步的候選裡拿掉，逼模型改選別的。
-        banned = set()
-        if emitted:
-            last = emitted[-1]
-            run = 1
-            for prev in reversed(emitted[:-1]):
-                if prev != last:
-                    break
-                run += 1
-            if run >= MAX_RUN:
-                banned = {last}
-
-        allowed = set()
-        for c in cands:
-            if c in banned or not c.startswith(partial):
-                continue
-            rest = c[len(partial):]
-            if not rest:                        # 候選打完了 → 只准關引號
-                for tid, _text in index.get('"', []):
-                    allowed.add(tid)
-                continue
-            for tid, text in index.get(rest[0], []):
-                if rest.startswith(text) or text.startswith(rest + '"'):
-                    allowed.add(tid)
-        return sorted(allowed) if allowed else all_ids
-    return fn
+# 2026-08-31：原本這裡有一份與 scripts/constrained_decode.py 逐行相同的副本，
+# 靠 tests/test_serve_parity.py 守著不漂移。改成直接 import 同一份實作——
+# 教授審查意見 4.3 要求「離線推論與服務端 import 同一份」。副本消失，
+# 漂移的可能性也跟著消失。
+#
+# ⚠️ 部署到 0821_bundle 時 constrained_decode.py **必須一起帶**，這是
+# serve_model 的第四個相依（前三個是 prompt_common、sign_candidates、comitative）。
+# 這裡刻意**不**做 try/except 兜底：約束解碼是「輸出 ID 一定在候選內」這條
+# 保證的來源，靜默停用會讓服務看起來正常、實際卻退回 v14 那種 4.22% 違反率。
+# 缺檔就讓服務起不來，比帶病上線好。
+try:
+    from constrained_decode import constrained_prefix_fn as _constrained_prefix_fn
+    from constrained_decode import MAX_RUN, MAX_SIGNS      # noqa: F401  供健康檢查回報
+except ImportError as e:                 # noqa: BLE001
+    raise SystemExit(
+        "[serve] ✗ 找不到 constrained_decode.py——約束解碼是輸出正確性的保證，"
+        "不允許靜默停用。請把 scripts/constrained_decode.py 一起部署到 "
+        "model_service/scripts/ 後再啟動。") from e
 
 def translate_script(text):
     """tsl-script-v1：跑候選檢索 → 模型從候選挑 sign_id → 對回 gloss 與影片。"""
@@ -341,7 +268,7 @@ def translate_script(text):
     dropped = [i for i in raw_ids if i not in sign_ids]
 
     p_nr = _needs_review_prob(tok, seq, out.scores)
-    model_nr = bool(obj.get("needs_review", False))
+    model_nr = script_schema.read_flag(obj)     # v1／v2 欄位名都收
     needs_review = (p_nr >= NEEDS_REVIEW_THRESHOLD) if p_nr is not None else model_nr
 
     toks = [STATE["id2gloss"][i] for i in sign_ids]
@@ -360,13 +287,20 @@ def translate_script(text):
         "chinese": text, "gloss": toks, "gloss_text": "/".join(toks), "glosses": toks,
         "sign_ids": sign_ids,
         "comitative_dual": dual_added,
+        # 2026-08-31 正名（審查意見 4.2）：這個旗標只反映「參考詞有沒有全部
+        # 進候選」＝檢索覆蓋率風險，偵測不到選錯詞、語序錯、重複遺失、語意
+        # 不自然。needs_review* 三個鍵**保留為相容別名**（前端在用），
+        # 新的取用端請改讀 candidate_coverage_risk*。
+        "candidate_coverage_risk": needs_review,
+        "candidate_coverage_risk_prob": round(p_nr, 6) if p_nr is not None else None,
+        "candidate_coverage_risk_model": model_nr,
         "needs_review": needs_review,
         "needs_review_prob": round(p_nr, 6) if p_nr is not None else None,
         "needs_review_model": model_nr,
         "oov_items": obj.get("oov_items") or [],
         "dropped_ids": dropped,
         "candidates_k": len(cands),
-        "schema_version": obj.get("schema_version", "tsl-script-v1"),
+        "schema_version": obj.get("schema_version", DEPLOYED_SCHEMA),
         "source": "gemma", "model": STATE["model_name"],
         "raw": gen.strip(), "seconds": secs,
     }

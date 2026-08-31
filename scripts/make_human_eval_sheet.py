@@ -45,6 +45,7 @@ OUT = BASE / "outputs"
 SPLITS = BASE / "data" / "splits"
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import script_schema  # noqa: E402
 
 
 def load_results(tag, split):
@@ -97,7 +98,7 @@ def load_results_script(tag, split):
             "id": r["id"], "chinese": m["chinese"], "pred": pred, "ref": ref,
             "sign_ids": pred_ids,
             "hallucinated_ids": [i for i in pred_ids if i not in id2gloss],
-            "needs_review": bool(obj.get("needs_review", False)),
+            "needs_review": script_schema.read_flag(obj),   # v1／v2 皆收
             "oov_items": obj.get("oov_items", []),
         })
     return out
@@ -160,7 +161,8 @@ def main():
                          "model": r["pred"], "ref": r["ref"],
                          **{k: r[k] for k in
                             ("id", "sign_ids", "hallucinated_ids",
-                             "needs_review", "oov_items") if k in r}})
+                             "needs_review", "candidate_coverage_risk",
+                             "oov_items") if k in r}})
 
     if not rows:
         print("沒有可評估的資料，請先產生模型結果檔。")
@@ -215,7 +217,8 @@ def main():
                          "模型輸出": r["model"], "語料庫參考": r["ref"], "類型": r["group"],
                          **{k: r[k] for k in
                             ("id", "sign_ids", "hallucinated_ids",
-                             "needs_review", "oov_items") if k in r}})
+                             "needs_review", "candidate_coverage_risk",
+                             "oov_items") if k in r}})
 
     first, last = hrow + 1, ws.max_row
     dv_score = DataValidation(type="list", formula1='"1,2,3,4,5"', allow_blank=True)

@@ -21,6 +21,13 @@ sys.path.insert(0, os.path.join(BASE, "scripts"))
 import eval_script_format as esf
 
 LEGACY_THRESHOLD = 0.095349
+# 舊鍵名 → 現行鍵名
+NEW_KEYS = ("ValidSignID%", "AssetAvailable%", "QualityPlayable%",
+            "QualityDetail", "CompositionSuccess%")
+LEGACY_KEYS = {
+    "NeedsReview": "CandidateCoverageRisk",
+    "NeedsReview_calibrated": "CandidateCoverageRisk_calibrated",
+}
 CASES = ["v17cd_test", "v17cd_test_corpus", "v17cd_test_textbook", "v17cd_dev"]
 
 
@@ -30,16 +37,36 @@ def load_rows(stem):
         return [json.loads(line) for line in fh if line.strip()]
 
 
+# v17／v17cd 是在 2026-08-31 修正切分**之前**評估的。三個測試集修正後位元
+# 完全相同，但 dev 變了（663→548），所以歷史 dev 數字只能對舊 dev 重算——
+# 那份凍結在 data/splits_v17/（見該目錄 README）。
+LEGACY_SPLIT_DIR = os.path.join(BASE, "data", "splits_v17")
+
+
 def compare(stem):
     rows = load_rows(stem)
     split = esf.guess_split(esf.Path(os.path.join(BASE, "results", f"{stem}.jsonl")))
     assert split and split.exists(), f"{stem}: 推斷不到 split（{split}）"
+    legacy = esf.Path(os.path.join(LEGACY_SPLIT_DIR, split.name))
+    if legacy.exists():
+        split = legacy
     got = esf.evaluate(rows, threshold=LEGACY_THRESHOLD,
                        full_ref=esf.load_full_reference(split))
 
     with open(os.path.join(BASE, "results", f"{stem}_scriptmetrics.json"),
               encoding="utf-8") as fh:
         want = json.load(fh)
+
+    # 2026-08-31 指標正名：NeedsReview → CandidateCoverageRisk（審查意見 4.2）。
+    # 既有的 *_scriptmetrics.json 是 VM 當時產出的原件，**刻意不重寫**——它們是
+    # provenance 錨點。改成比對時把舊鍵名對映到新鍵名，兩邊都不必動。
+    got = {LEGACY_KEYS.get(k, k): v for k, v in got.items()}
+    want = {LEGACY_KEYS.get(k, k): v for k, v in want.items()}
+
+    # 2026-08-31 Playable% 拆層（審查意見 4.1）：新增的鍵在既有檔案裡沒有，
+    # 不算「不符」。舊的 Playable% 仍保留且必須同值——那是回歸的重點。
+    for k in NEW_KEYS:
+        got.pop(k, None)
 
     diffs = []
     for key in sorted(set(want) | set(got)):
@@ -57,9 +84,31 @@ def compare(stem):
     return got, want, diffs
 
 
+def available(stem):
+    """乾淨 clone 缺料時要能說清楚缺什麼，而不是丟 FileNotFoundError。
+
+    教材集（test_textbook）的授權未查證，刻意不入庫（見 .gitignore），
+    所以那一案在公開 clone 上會缺料——這是設計上的取捨，不是壞掉。
+    """
+    for path in (os.path.join(BASE, "results", f"{stem}.jsonl"),
+                 os.path.join(BASE, "results", f"{stem}_scriptmetrics.json")):
+        if not os.path.exists(path):
+            return False, os.path.relpath(path, BASE)
+    split = esf.guess_split(esf.Path(os.path.join(BASE, "results", f"{stem}.jsonl")))
+    legacy = os.path.join(LEGACY_SPLIT_DIR, split.name) if split else None
+    if not ((split and split.exists()) or (legacy and os.path.exists(legacy))):
+        return False, os.path.relpath(str(legacy or split), BASE)
+    return True, None
+
+
 def main():
-    failed = 0
+    failed = skipped = 0
     for stem in CASES:
+        ok, missing = available(stem)
+        if not ok:
+            skipped += 1
+            print(f"− {stem:22} 略過：缺 {missing}")
+            continue
         got, want, diffs = compare(stem)
         n_fields = sum(1 + (len(v) if isinstance(v, dict) else 0)
                        for v in want.values())
@@ -76,7 +125,12 @@ def main():
     if failed:
         print(f"{failed}/{len(CASES)} 個資料集不符——評分管線與既有指標不一致")
         return 1
-    print(f"{len(CASES)}/{len(CASES)} 個資料集逐欄相同——評分管線已可從頭重現")
+    ran = len(CASES) - skipped
+    if not ran:
+        print("所有資料集都缺料，什麼都沒驗到——不能宣稱可重現")
+        return 1
+    tail = f"（另 {skipped} 個因缺料略過）" if skipped else ""
+    print(f"{ran}/{len(CASES)} 個資料集逐欄相同——評分管線已可從頭重現{tail}")
     return 0
 
 

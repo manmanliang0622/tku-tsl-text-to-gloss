@@ -151,18 +151,87 @@ def source_of(recording: str) -> str:
     return SOURCE_PREFIX.get(prefix, "other")
 
 
-def load_existing() -> dict[str, str]:
-    """讀回上一版的 gloss → sign_id，存成 legacy_sign_id 供追溯與換方案時對照。"""
+def load_existing(scheme: str) -> dict[str, str]:
+    """讀回 gloss → **原始**流水號 ID，存成 legacy_sign_id 供追溯與換方案時對照。
+
+    2026-08-31 修 bug：原本回傳的是 `row["sign_id"]`，也就是**現行**的語義 ID。
+    後果是每重建一次，legacy_sign_id 就被現行 ID 蓋掉一次——TSL_訪談_2 的
+    legacy 從 TSL_00001 變成 TSL_00001 以外的自己，v11 之前用流水號寫成的
+    訓練資料與下游腳本就再也對不回來。這個欄位存在的唯一目的就是追溯，
+    自我覆寫等於把它變成廢欄位。
+
+    正確作法：既有列已經記過 legacy_sign_id 就沿用那個值；沒記過的維持沒記過
+    （回傳 None），**除非 ID 方案真的換了**——那才是這個欄位設計上要接住的情境
+    （serial → semantic 時，舊的 TSL_01084 要留著才對得回舊資料）。
+    方案沒換卻把當下的 sign_id 抄成 legacy，只是把欄位填滿噪音。
+    這樣重建多少次都冪等。
+    """
     if not INVENTORY.exists():
         return {}
+    # 上一版用的 ID 方案。與這次要產生的方案不同時，舊 sign_id 本身就是 legacy。
+    prev_scheme = None
+    if STATS.exists():
+        prev_scheme = json.loads(STATS.read_text(encoding="utf-8")).get("id_scheme")
     mapping = {}
     with INVENTORY.open(encoding="utf-8") as f:
         for line in f:
             line = line.strip()
-            if line:
-                row = json.loads(line)
+            if not line:
+                continue
+            row = json.loads(line)
+            recorded = row.get("legacy_sign_id")
+            if recorded:
+                mapping[row["gloss"]] = recorded
+            elif prev_scheme and prev_scheme != scheme:
                 mapping[row["gloss"]] = row["sign_id"]
     return mapping
+
+
+# ── 影片品質分層（2026-08-31，教授審查意見 4.1）────────────────────────
+# 在此之前 asset_class 對全部 17,078 筆一律寫 natural_playable——一個常數，
+# 零資訊。本檔開頭那句「少了它，asset_class 只是一句空話」其實一直成立。
+# 實際的判定資料一直都在：~/0813/quality_scan/entries_final.csv（本地鏡像
+# data/video/entries_final.csv），以 (label, recording) 與 lexicon 逐筆對得上。
+# 實測分布：ok 43.7%／poor 16.4%／severe 39.8%／no_hands_raised 0.04%。
+# 也就是說動作庫裡有一半以上的片子演不好，而舊指標把它們全算成可播放。
+QUALITY_CSV = BASE / "data" / "video" / "entries_final.csv"
+
+# tier → asset_class。只有 ok 才算真的能播；poor 能播但品質差，severe 與
+# no_hands_raised 等於沒有動作，不該進候選（見 sign_candidates 的排除）。
+TIER_TO_CLASS = {
+    "ok": "natural_playable",
+    "poor": "degraded_playable",
+    "severe": "unusable_quality",
+    "no_hands_raised": "unusable_quality",
+}
+UNUSABLE_CLASSES = {"unusable_quality"}
+
+
+def load_quality(path: Path) -> dict[tuple[str, str], dict]:
+    """讀品質掃描表，回傳 (label, recording) → {tier, act_eff, usage}。
+
+    找不到就回空 dict：品質分層是**加分項**，缺檔時 asset_class 落回
+    unknown 並在報表裡誠實標示，不是靜默當成 ok。
+    """
+    if not path.exists():
+        return {}
+    import csv
+    out = {}
+    with path.open(encoding="utf-8") as fh:
+        for r in csv.DictReader(fh):
+            out[(r["label"], r["recording"])] = {
+                "tier": r.get("tier") or None,
+                "act_eff": _f(r.get("act_eff")),
+                "usage": _f(r.get("usage")),
+            }
+    return out
+
+
+def _f(v):
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
 
 
 def main() -> int:
@@ -172,6 +241,9 @@ def main() -> int:
                     help="sign_id 形式。semantic=TSL_<name_key>（2026-08-21 教授裁示，"
                          "預設）；serial=沿用舊流水號（僅供重現舊資料）")
     ap.add_argument("--check", action="store_true", help="只報告，不寫檔")
+    ap.add_argument("--quality", type=Path, default=QUALITY_CSV,
+                    help="影片品質掃描表（0813 quality_scan/entries_final.csv 的鏡像）。"
+                         "缺檔時 asset_class 落回 unknown，不會假裝成 playable")
     args = ap.parse_args()
 
     if not args.lexicon.exists():
@@ -181,7 +253,15 @@ def main() -> int:
         return 1
 
     lexicon: dict[str, dict] = json.loads(args.lexicon.read_text(encoding="utf-8"))
-    legacy = load_existing()          # gloss → 前一版 sign_id（含 2026-08-21 前的流水號）
+    quality = load_quality(args.quality)
+    if quality:
+        _tc = collections.Counter(q["tier"] for q in quality.values())
+        print(f"品質掃描 {len(quality)} 筆：" +
+              "／".join(f"{k} {v}" for k, v in _tc.most_common()))
+    else:
+        print(f"⚠ 找不到品質掃描表 {args.quality}——asset_class 全部落回 unknown。"
+              f"\n  抓取：scp tku-gpu:'~/0813/quality_scan/entries_final.csv' data/video/")
+    legacy = load_existing(args.id_scheme)   # gloss → 原始流水號（2026-08-21 前）
     print(f"動作庫 {len(lexicon)} 筆；既有 ID {len(legacy)} 筆；命名方案 {args.id_scheme}")
 
     rows = []
@@ -200,8 +280,13 @@ def main() -> int:
             "duration": (round(end - start, 3)
                          if isinstance(start, (int, float)) and isinstance(end, (int, float))
                          else None),
-            # 動作庫有這筆＝虛擬人演得出來。這是 asset_class 的唯一事實依據。
-            "asset_class": "natural_playable",
+            # 動作庫有這筆＝**資產存在**，但存在不等於演得好。品質分層見
+            # entries_final.csv 的 tier（審查意見 4.1）。缺品質資料時記
+            # unknown，絕不預設成可播放。
+            "asset_class": TIER_TO_CLASS.get(
+                (quality.get((gloss, recording)) or {}).get("tier"), "unknown"),
+            "quality_tier": (quality.get((gloss, recording)) or {}).get("tier"),
+            "act_eff": (quality.get((gloss, recording)) or {}).get("act_eff"),
             "legacy_sign_id": legacy.get(gloss),
         })
 
@@ -310,6 +395,19 @@ def main() -> int:
         for g, why in BOTH_UNUSABLE.items():
             if any(c["gloss_clean"] == g for c in collisions):
                 print(f"  ⚠ 「{g}」{why}——屬素材缺口，需換源重錄，不是選哪支的問題。")
+
+    # BOTH_UNUSABLE 是 2026-08-21 人工下的判定，掃描表則會隨動作庫更新重跑。
+    # 兩邊分歧就是硬編表過期了——這正是「把判定寫死在程式裡」的代價，要吵出來
+    # 而不是讓兩份事實靜靜地各說各話。
+    if quality:
+        for g in BOTH_UNUSABLE:
+            tiers = {r["recording"]: r.get("quality_tier")
+                     for r in rows if r["gloss_clean"] == g}
+            if tiers and any(t not in (None, "severe", "no_hands_raised")
+                             for t in tiers.values()):
+                print(f"\n⚠ BOTH_UNUSABLE 與品質掃描不一致：「{g}」硬編為兩支皆不堪用，"
+                      f"但掃描結果為 {tiers}。\n"
+                      f"  請人工複核後更新 BOTH_UNUSABLE，或確認掃描表版本。")
     if any(dirty.values()):
         print(f"\n動作庫 gloss 髒資料（gloss 欄保持原狀，清理值在 gloss_clean）："
               f"控制字元 {dirty['control_chars']}／前後空白 {dirty['outer_space']}"

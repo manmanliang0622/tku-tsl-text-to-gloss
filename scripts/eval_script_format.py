@@ -7,7 +7,8 @@
   1. **約束違反率** — 模型有沒有生出候選清單以外的 ID？這是新格式存在的理由，
      理想值 0%。舊格式的「詞彙表內率」在此功成身退：候選本來就只從
      有影片的手語裡挑，合法性由清單保證，不必再事後比對詞表。
-  2. **needs_review 的 precision/recall** — 該拒答有沒有拒、不該拒有沒有亂拒。
+  2. **candidate_coverage_risk 的 precision/recall** — 該標的有沒有標、
+     不該標有沒有亂標。⚠️ 這是檢索覆蓋率風險，不是翻譯品質預警。
      只看整體準確率會被多數類洗掉（拒答率可能高達五成），必須分開看。
   3. **可播放率** — 輸出的 ID 是否都對得到實際影片。理論上恆為 100%
      （ID 來自動作庫），但模型若幻覺出格式正確卻不存在的 ID 就會破功，
@@ -26,7 +27,7 @@ Gloss 層的 BLEU/ROUGE/EM 仍沿用 metrics.py，把 sign_id 序列轉回 gloss
     改用 data/splits/<split>.jsonl 的 gloss_text（完整、保留語序的參考），
     才是含檢索缺口的系統整體水準。兩個口徑差很多——2026-08-27 的診斷顯示
     corpus 有 30.2% 的參考詞從未進入候選，所以引用單一數字時務必標明口徑。
-  * **NeedsReview_calibrated** — 讀 p_needs_review 配門檻判定，而不是看模型
+  * **CandidateCoverageRisk_calibrated** — 讀 p_needs_review 配門檻判定，而不是看模型
     自己輸出的硬 true/false（後者 recall 只有 0.15–0.22，幾乎不拒答）。
     門檻選定見 scripts/nr_threshold.py。
 
@@ -51,6 +52,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import script_schema  # noqa: E402
 import metrics  # noqa: E402
 
 BASE = Path(__file__).resolve().parent.parent
@@ -87,6 +89,26 @@ def load_inventory() -> dict[str, str]:
                 r = json.loads(line)
                 out[r["sign_id"]] = r["gloss"]
     return out
+
+
+# 這些 asset_class 代表「片子在，但演不出動作」。判定來自 0813 的品質掃描
+# （entries_final.csv 的 tier），寫進總表見 build_sign_inventory.py。
+_UNUSABLE_CLASSES = {"unusable_quality"}
+_DEGRADED_CLASSES = {"degraded_playable"}
+
+
+def load_asset_class() -> dict[str, str]:
+    """sign_id → asset_class。總表沒有這欄（舊版）時回空 dict。"""
+    out = {}
+    with find_inventory().open(encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                r = json.loads(line)
+                cls = r.get("asset_class")
+                if cls:
+                    out[r["sign_id"]] = cls
+    # 舊版總表整欄都是常數 natural_playable，那等於沒有資訊——當成沒有。
+    return {} if len(set(out.values())) <= 1 else out
 
 
 def guess_split(pred: Path) -> Path | None:
@@ -131,16 +153,24 @@ def _prf(tp: int, fp: int, fn: int):
     return prec, rec, f1
 
 
+def _ref_flag(row: dict) -> bool:
+    """參考答案的候選覆蓋風險旗標。推論結果檔的鍵在 v2 之後改名，兩種都收。"""
+    for key in ("ref_candidate_coverage_risk", "ref_needs_review"):
+        if key in row:
+            return bool(row[key])
+    return False
+
+
 def calibrated_needs_review(rows: list[dict], threshold: float) -> dict:
     """讀 p_needs_review 配門檻；沒有機率的列落回模型自己的 true/false。"""
     tp = fp = tn = fn = 0
     with_prob = fallback = 0
     for r in rows:
-        ref_nr = bool(r.get("ref_needs_review", False))
+        ref_nr = _ref_flag(r)
         prob = r.get("p_needs_review")
         if prob is None:
             obj = parse_output(r.get("raw", ""))
-            pred_nr = bool(obj.get("needs_review", False)) if obj else False
+            pred_nr = script_schema.read_flag(obj)
             fallback += 1
         else:
             pred_nr = prob >= threshold
@@ -207,26 +237,30 @@ def full_reference_block(rows: list[dict], full_ref: dict[str, str],
 def evaluate(rows: list[dict], threshold: float | None = None,
              full_ref: dict[str, str] | None = None) -> dict:
     id2gloss = load_inventory()
+    asset_class = load_asset_class()
 
     valid = 0
     viol_rows = 0          # 至少違反一次的題數
     viol_tokens = 0        # 違反的 ID 個數
     total_pred_ids = 0
     unplayable = 0         # 格式像 ID 但總表查無此 ID
+    unusable_ids = 0       # ID 在總表，但影片品質判定為演不出動作
+    degraded_ids = 0       # ID 在總表，影片可播但品質差
+    quality_known = 0      # 有品質判定可查的 ID 個數（分母）
     ref_gloss, hyp_gloss = [], []
     groups = []
 
-    # needs_review 混淆矩陣（greedy：模型自己輸出的 true/false）
+    # 候選覆蓋風險的混淆矩陣（greedy：模型自己輸出的 true/false）
     tp = fp = tn = fn = 0
 
     for r in rows:
         obj = parse_output(r.get("raw", ""))
         cands = set(r.get("candidate_ids") or [])
         ref_ids = list(r.get("ref_sign_ids") or [])
-        ref_nr = bool(r.get("ref_needs_review", False))
+        ref_nr = _ref_flag(r)
 
         if obj is None:
-            # 無效輸出：Gloss 記空字串（計為全錯），needs_review 視為未預測
+            # 無效輸出：Gloss 記空字串（計為全錯），覆蓋風險旗標視為未預測
             ref_gloss.append("/".join(id2gloss.get(i, i) for i in ref_ids))
             hyp_gloss.append("")
             groups.append(r.get("id"))
@@ -238,13 +272,22 @@ def evaluate(rows: list[dict], threshold: float | None = None,
 
         valid += 1
         pred_ids = [str(x) for x in (obj.get("sign_ids") or [])]
-        pred_nr = bool(obj.get("needs_review", False))
+        pred_nr = script_schema.read_flag(obj)
 
         total_pred_ids += len(pred_ids)
         bad = [i for i in pred_ids if cands and i not in cands]
         viol_tokens += len(bad)
         viol_rows += bool(bad)
         unplayable += sum(1 for i in pred_ids if i not in id2gloss)
+        for i in pred_ids:
+            cls = asset_class.get(i)
+            if cls is None:
+                continue
+            quality_known += 1
+            if cls in _UNUSABLE_CLASSES:
+                unusable_ids += 1
+            elif cls in _DEGRADED_CLASSES:
+                degraded_ids += 1
 
         ref_gloss.append("/".join(id2gloss.get(i, i) for i in ref_ids))
         hyp_gloss.append("/".join(id2gloss.get(i, i) for i in pred_ids))
@@ -279,9 +322,49 @@ def evaluate(rows: list[dict], threshold: float | None = None,
         "ConstraintViolation%_ids": (round(100 * viol_tokens / total_pred_ids, 2)
                                      if total_pred_ids else None),
         "UnknownSignID": unplayable,
+        # 2026-08-31 拆層（教授審查意見 4.1）。舊的 Playable% 只檢查「ID 在不在
+        # 總表」，把「總表有這筆」當成「虛擬人演得出來」。實際上動作庫裡只有
+        # 43.7% 的片子品質判定為 ok，39.8% 是 severe（等於沒有動作）——舊指標
+        # 報 100% 可播放是名不副實的。
+        #
+        #   ValidSignID%      ID 存在於總表（＝舊的 Playable%，語意不變，只改名）
+        #   AssetAvailable%   ID 對得到實際影片資產（總表的每一筆都來自動作庫
+        #                     索引，所以目前與 ValidSignID% 同值；獨立列出是為了
+        #                     日後總表可能收錄「有 ID 但缺片」的項目時不必改口徑）
+        #   QualityPlayable%  影片通過品質檢查（tier=ok）。缺品質資料時為 null，
+        #                     **不會**退化成「假設可播放」。
+        #   CompositionSuccess%  多動作串接後能否正常播放——尚未實作，見下方註記。
+        "ValidSignID%": (round(100 * (total_pred_ids - unplayable) / total_pred_ids, 2)
+                         if total_pred_ids else None),
+        "AssetAvailable%": (round(100 * (total_pred_ids - unplayable) / total_pred_ids, 2)
+                            if total_pred_ids else None),
+        "QualityPlayable%": (round(100 * (quality_known - unusable_ids) / quality_known, 2)
+                             if quality_known else None),
+        "QualityDetail": ({
+            "ids_with_quality_data": quality_known,
+            "unusable": unusable_ids,          # severe / no_hands_raised
+            "degraded": degraded_ids,          # poor：能播但品質差
+            "ok": quality_known - unusable_ids - degraded_ids,
+            "source": "data/signs/sign_inventory.jsonl 的 asset_class"
+                      "（來自 0813 quality_scan/entries_final.csv 的 tier）",
+        } if quality_known else {
+            "ids_with_quality_data": 0,
+            "note": "總表沒有可用的 asset_class 分層——重建總表時附上 "
+                    "data/video/entries_final.csv 才有品質數字。",
+        }),
+        # CompositionSuccess% 需要實際把多支影片串起來播一次才能量，屬 0813
+        # 虛擬人端的工作，不在本 repo 的評估範圍內。先明列為未實作，避免被
+        # 誤讀成「已驗證串接沒問題」。
+        "CompositionSuccess%": None,
+        # 舊鍵名保留，值＝ValidSignID%。歷史報告與 *_scriptmetrics.json 都用它，
+        # 拔掉會讓既有數字對不上；但**不要**再引用它當「可播放率」。
         "Playable%": (round(100 * (total_pred_ids - unplayable) / total_pred_ids, 2)
                       if total_pred_ids else None),
-        "NeedsReview": {
+        # 2026-08-31 正名（教授審查意見 4.2）：這個指標量的是「參考詞有沒有
+        # 全部進候選」，也就是檢索覆蓋率風險，不是翻譯品質預警。舊名
+        # NeedsReview 會讓人誤以為模型能預警翻錯。歷史 *_scriptmetrics.json
+        # 仍是舊鍵名，回歸測試會做鍵名對映（見 tests/test_eval_script_format.py）。
+        "CandidateCoverageRisk": {
             "precision": round(prec, 4) if prec is not None else None,
             "recall": round(rec, 4) if rec is not None else None,
             "f1": round(f1, 4) if f1 is not None else None,
@@ -292,7 +375,7 @@ def evaluate(rows: list[dict], threshold: float | None = None,
     })
 
     if threshold is not None:
-        out["NeedsReview_calibrated"] = calibrated_needs_review(rows, threshold)
+        out["CandidateCoverageRisk_calibrated"] = calibrated_needs_review(rows, threshold)
 
     if full_ref:
         out["_ref_scope"] = REF_SCOPE_NOTE
@@ -307,7 +390,10 @@ def main() -> int:
                     help="逐句預測 jsonl（需含 candidate_ids / ref_sign_ids / raw）")
     ap.add_argument("--out", type=Path, default=None)
     ap.add_argument("--threshold", type=float, default=None,
-                    help="needs_review 門檻；給了才算 NeedsReview_calibrated")
+                    help="候選覆蓋風險門檻；給了才算 CandidateCoverageRisk_calibrated")
+    ap.add_argument("--overwrite", action="store_true",
+                    help="允許覆寫既有的 *_scriptmetrics.json（預設拒絕，"
+                         "那些檔是歷史對帳錨點）")
     ap.add_argument("--split", type=Path, default=None,
                     help="data/splits/<name>.jsonl，用來取完整參考；預設從檔名推斷")
     ap.add_argument("--no-full-reference", action="store_true",
@@ -331,6 +417,14 @@ def main() -> int:
     print(json.dumps(res, ensure_ascii=False, indent=2))
 
     out = args.out or args.pred.with_name(args.pred.stem + "_scriptmetrics.json")
+    # 2026-08-31：這裡原本無條件覆寫。*_scriptmetrics.json 是歷史數字的
+    # provenance 錨點（tests/test_eval_script_format.py 拿它們驗證管線忠實），
+    # 隨手跑一次評估就把錨點蓋掉，等於把「可重現」的證據自己銷毀——實際發生過。
+    # 預設改成拒絕覆寫既有檔；要更新請明確加 --overwrite。
+    if out.exists() and not args.overwrite:
+        print(f"\n⚠ {out} 已存在，未覆寫（它可能是歷史對帳錨點）。"
+              f"\n  要更新請加 --overwrite，或用 --out 指定別的檔名。", file=sys.stderr)
+        return 0
     out.write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\n寫出 {out}")
     return 0

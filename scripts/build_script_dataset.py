@@ -1,26 +1,30 @@
 #!/usr/bin/env python3
-"""把切分資料轉成教授指定的「手語腳本」訓練格式（tsl-script-v1）。
+"""把切分資料轉成教授指定的「手語腳本」訓練格式（tsl-script-v2）。
 
 教授 2026-08-20 指定的格式：模型不再自由生成 gloss，而是**從候選清單挑
-sign_id**；候選缺必要手語時輸出 needs_review=true。等於把下游的可播放性
-約束前移到訓練目標裡。
+sign_id**；候選缺必要手語時輸出旗標。等於把下游的可播放性約束前移到訓練
+目標裡。
 
     {"messages":[{"role":"system",...},
                  {"role":"user","content":"{\\"text\\":...,\\"candidates\\":[...]}"},
-                 {"role":"assistant","content":"{\\"schema_version\\":\\"tsl-script-v1\\",
+                 {"role":"assistant","content":"{\\"schema_version\\":\\"tsl-script-v2\\",
                    \\"sign_ids\\":[...],\\"clause_breaks\\":[...],
-                   \\"needs_review\\":false,\\"oov_items\\":[]}"}],
+                   \\"candidate_coverage_risk\\":false,\\"oov_items\\":[]}"}],
      "metadata":{...}}
+
+⚠️ **v2 把 needs_review 正名為 candidate_coverage_risk**（2026-08-31，教授
+審查意見 4.2）。要重建 v17（線上部署中）的訓練集請加
+`--schema-version tsl-script-v1`。
 
 三個設計決定（會影響結果解讀，寫在這裡免得日後誤讀）：
 
 1. **候選只從中文生成，絕不看正解**（見 sign_candidates.py）。
    拿正解回頭湊候選會讓訓練分布與上線分布不一致，模型學到的約束上線即失效。
 
-2. **needs_review 是自然產生的，不是人工抽掉候選製造的**。
+2. **旗標是自然產生的，不是人工抽掉候選製造的**。
    檢索撈不到正解裡的某個手語時，該句就真的無法用候選拼出來，
-   標 needs_review=true＋oov_items 列出缺的詞。這既是真實的失敗樣態，
-   也剛好提供教授 schema 需要的負例，不必造假。
+   標 candidate_coverage_risk=true＋oov_items 列出缺的詞。這既是真實的
+   失敗樣態，也剛好提供教授 schema 需要的負例，不必造假。
 
 3. **oov_items 記 gloss 文字不是 sign_id**。缺的東西本來就沒有可用 ID，
    記文字下游才能拿去排補片（對接 data/video/video_gap.json 的補片工作表）。
@@ -42,15 +46,18 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import script_schema  # noqa: E402
 from sign_candidates import CandidateRetriever  # noqa: E402
 
 BASE = Path(__file__).resolve().parent.parent
 SPLITS = BASE / "data" / "splits"
 OUT = BASE / "data" / "splits_script"
 
-SYSTEM = ("將繁體中文轉成可執行的臺灣手語腳本。只能使用候選清單中的 sign_id，"
-          "不得創造新 ID。缺少必要手語時，必須輸出 needs_review=true。只輸出 JSON。")
-SCHEMA_VERSION = "tsl-script-v1"
+# schema 常數與旗標欄位名的單一定義處在 script_schema.py（讀取端也 import 同一份）。
+SCHEMA_FIELD = script_schema.SCHEMA_FIELD
+SYSTEM_BY_SCHEMA = script_schema.SYSTEM_BY_SCHEMA
+SCHEMA_VERSION = script_schema.CURRENT
+SYSTEM = SYSTEM_BY_SCHEMA[SCHEMA_VERSION]
 
 
 def clause_breaks(gloss_tokens: list[str], raw: str) -> list[int]:
@@ -91,16 +98,27 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
     cand_ids = {c["sign_id"] for c in cands}
 
     sign_ids, oov = [], []
+    # 缺口分三類，各自對應不同的補救動作，混在一起看就分不出該做什麼：
+    #   not_in_library  動作庫根本沒有這個詞      → 要補片
+    #   unusable_asset  有 ID 但影片演不出動作    → 要換源重錄（2026-08-31 新增）
+    #   retrieval_miss  庫裡有、影片也好，沒撈到  → 要改進檢索
+    oov_reason = {}
     for tok in tokens:
         sid = retr.resolve(tok)
         if sid is None:
-            oov.append(tok)          # 動作庫根本沒有 → 要補片
+            oov.append(tok)
+            oov_reason[tok] = "not_in_library"
         elif sid not in cand_ids:
-            oov.append(tok)          # 庫裡有但檢索沒撈到 → 要改進檢索
+            oov.append(tok)
+            cls = (retr.by_id.get(sid) or {}).get("asset_class")
+            oov_reason[tok] = ("unusable_asset"
+                               if cls in retr.UNUSABLE_CLASSES else "retrieval_miss")
         else:
             sign_ids.append(sid)
 
-    needs_review = bool(oov)
+    # 旗標的定義：參考 Gloss 有沒有全部落進候選清單。這是候選覆蓋率風險，
+    # 不是翻譯品質預警——欄位名在 v2 已據此正名（見 SCHEMA_FIELD）。
+    coverage_risk = bool(oov)
     # compact：候選壓成字串陣列。語意與教授原格式相同，
     # 但 k=40 的 prompt 從 1,015 token 降到 654（實測 Gemma 4 tokenizer，
     # 省 36%）——原格式每個候選都要 {"sign_id":...,"gloss":...} 的引號與鍵名，
@@ -121,7 +139,7 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
         "schema_version": SCHEMA_VERSION,
         "sign_ids": sign_ids,
         "clause_breaks": clause_breaks(tokens, gloss_raw),
-        "needs_review": needs_review,
+        SCHEMA_FIELD[SCHEMA_VERSION]: coverage_risk,
         "oov_items": oov,
     }
     record = {
@@ -133,7 +151,7 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
         "metadata": {
             "id": row.get("id"),
             "source_units": [row["group"]] if row.get("group") else [],
-            "asset_class": "natural_playable" if not needs_review else "needs_asset",
+            "asset_class": "natural_playable" if not coverage_risk else "needs_asset",
             "review_status": row.get("review_status", "pending"),
             "split": split,
         },
@@ -142,14 +160,17 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
         "tokens": len(tokens),
         "covered": len(sign_ids),
         "oov": len(oov),
-        "needs_review": needs_review,
+        "coverage_risk": coverage_risk,
         "oov_items": oov,
-        "not_in_library": [t for t in oov if retr.resolve(t) is None],
+        "not_in_library": [t for t in oov if oov_reason.get(t) == "not_in_library"],
+        "unusable_asset": [t for t in oov if oov_reason.get(t) == "unusable_asset"],
+        "retrieval_miss": [t for t in oov if oov_reason.get(t) == "retrieval_miss"],
     }
     return record, stat
 
 
 def main() -> int:
+    global OUT, SCHEMA_VERSION, SYSTEM
     ap = argparse.ArgumentParser()
     ap.add_argument("--splits", nargs="*",
                     default=["train", "dev", "test", "test_corpus", "test_papers"])
@@ -175,13 +196,19 @@ def main() -> int:
                     help="高頻核心保底名額；實測淨負，見 sign_candidates.candidates 的 docstring")
     ap.add_argument("--out", type=Path, default=None,
                     help="輸出目錄，預設 data/splits_script（會覆蓋！建新版務必指定）")
+    ap.add_argument("--schema-version", choices=sorted(SCHEMA_FIELD),
+                    default=SCHEMA_VERSION,
+                    help="輸出 schema。v2 的旗標欄位是 candidate_coverage_risk，"
+                         "v1 是 needs_review（重建 v17 訓練集時用）")
     ap.add_argument("--dry-run", action="store_true", help="只算涵蓋率不寫檔")
     ap.add_argument("--limit", type=int, default=0, help="每個切分只處理前 N 句（除錯用）")
     args = ap.parse_args()
 
-    global OUT
     if args.out is not None:
         OUT = args.out
+    SCHEMA_VERSION = args.schema_version
+    SYSTEM = SYSTEM_BY_SCHEMA[SCHEMA_VERSION]
+    print(f"schema={SCHEMA_VERSION}（旗標欄位 {SCHEMA_FIELD[SCHEMA_VERSION]}）", flush=True)
     print("載入 sign 總表與檢索器…", flush=True)
     retr = CandidateRetriever()
     if args.n_sem > 0:
@@ -214,21 +241,27 @@ def main() -> int:
 
         tok_total = sum(s["tokens"] for s in stats)
         tok_cov = sum(s["covered"] for s in stats)
-        n_ok = sum(1 for s in stats if not s["needs_review"])
+        n_ok = sum(1 for s in stats if not s["coverage_risk"])
         miss = collections.Counter()
         miss_lib = collections.Counter()
+        miss_asset = collections.Counter()
         for s in stats:
             miss.update(s["oov_items"])
             miss_lib.update(s["not_in_library"])
+            miss_asset.update(s["unusable_asset"])
 
         summary = {
             "sentences": len(stats),
             "token_recall": round(tok_cov / tok_total, 4) if tok_total else None,
             "sentence_fully_covered": round(n_ok / len(stats), 4) if stats else None,
-            "needs_review_rate": round(1 - n_ok / len(stats), 4) if stats else None,
+            "candidate_coverage_risk_rate": (round(1 - n_ok / len(stats), 4)
+                                             if stats else None),
             "oov_tokens": tok_total - tok_cov,
             "oov_not_in_library": sum(miss_lib.values()),
-            "oov_retrieval_miss": sum(miss.values()) - sum(miss_lib.values()),
+            "oov_unusable_asset": sum(miss_asset.values()),
+            "oov_retrieval_miss": (sum(miss.values()) - sum(miss_lib.values())
+                                   - sum(miss_asset.values())),
+            "top_missing_unusable_asset": miss_asset.most_common(15),
             "top_missing": miss.most_common(15),
             "top_missing_not_in_library": miss_lib.most_common(15),
         }
@@ -236,9 +269,10 @@ def main() -> int:
         print(f"\n[{split}] {len(stats)} 句")
         print(f"  詞涵蓋率 {summary['token_recall']:.1%}"
               f"／整句可拼出 {summary['sentence_fully_covered']:.1%}"
-              f"／needs_review {summary['needs_review_rate']:.1%}")
+              f"／候選覆蓋風險 {summary['candidate_coverage_risk_rate']:.1%}")
         print(f"  缺口 {summary['oov_tokens']} token = "
               f"庫裡沒有 {summary['oov_not_in_library']}（要補片）"
+              f" + 影片不堪用 {summary['oov_unusable_asset']}（要重錄）"
               f" + 檢索沒撈到 {summary['oov_retrieval_miss']}（要改檢索）")
         print(f"  最常缺：{summary['top_missing'][:8]}")
 

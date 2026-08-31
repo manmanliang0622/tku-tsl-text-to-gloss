@@ -1,7 +1,7 @@
 {
-  "lexicon_entries": 17078,
-  "signs": 17078,
-  "distinct_signs": 17075,
+  "lexicon_entries": 17085,
+  "signs": 17085,
+  "distinct_signs": 17082,
   "duplicates": {
     "TSL_訪談_2": "TSL_訪談",
     "TSL_許久_2": "TSL_許久",
@@ -16,7 +16,7 @@
   "id_scheme": "semantic",
   "ids_changed_vs_previous": 16628,
   "new_signs_this_run": 450,
-  "index_keys": 17170,
+  "index_keys": 17177,
   "alias_keys_added": 53,
   "clean_keys_added": 39,
   "index_keys_repointed_from_duplicate": 7,
@@ -190,16 +190,16 @@
   ],
   "by_source": {
     "moe_signdict": 7663,
-    "other": 3808,
-    "moc_corpus": 3728,
+    "other": 3809,
+    "moc_corpus": 3734,
     "tsl_placenames": 846,
     "tsl_familynames": 565,
     "tasli": 468
   },
   "by_gloss_len": {
     "2": 9793,
-    "4": 3004,
-    "3": 2161,
+    "4": 3006,
+    "3": 2166,
     "1": 1009,
     "6": 560,
     "5": 551

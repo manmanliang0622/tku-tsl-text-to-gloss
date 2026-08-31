@@ -32,7 +32,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from eval_video_coverage import norm  # noqa: E402  複用既有 gloss 正規化
+from eval_video_coverage import fold, norm  # noqa: E402  複用既有 gloss 正規化
 
 BASE = Path(__file__).resolve().parent.parent
 INVENTORY = BASE / "data" / "signs" / "sign_inventory.jsonl"
@@ -50,8 +50,13 @@ def strip_punct(text: str) -> str:
 class CandidateRetriever:
     """從中文句子檢索候選手語。載入一次重複使用（線上服務常駐）。"""
 
+    # 影片品質判定為「演不出動作」的 asset_class。判定來源見
+    # build_sign_inventory.TIER_TO_CLASS（0813 quality_scan 的 tier）。
+    UNUSABLE_CLASSES = {"unusable_quality"}
+
     def __init__(self, inventory: Path = INVENTORY, index: Path = INDEX,
-                 use_examples: bool = True, synonyms: Path = SYNONYMS):
+                 use_examples: bool = True, synonyms: Path = SYNONYMS,
+                 exclude_unusable: bool = True):
         all_rows = [json.loads(l) for l in
                     inventory.read_text(encoding="utf-8").splitlines() if l.strip()]
         # 已驗證的重複收錄（build_sign_inventory.DUPLICATE_OF）不進候選：
@@ -60,9 +65,37 @@ class CandidateRetriever:
         # superseded_by＝同詞有更準確的另一支影片（品質實測後選定），同樣不進候選
         self.rows = [r for r in all_rows
                      if "duplicate_of" not in r and "superseded_by" not in r]
+
+        # 2026-08-31（教授審查意見 4.1）：品質判定為 severe／no_hands_raised 的
+        # 影片不進候選。「總表有這個 ID」不等於「虛擬人演得出這個手語」——
+        # 動作庫 17,085 支裡有 39.8% 是 severe（幾乎整段偵測不到舉手動作），
+        # 讓它們留在候選等於允許模型輸出一個播出來沒有動作的腳本。
+        #
+        # 實測代價（train，2026-08-31）：參考 token 只有 2.35% 落在這類資產上，
+        # 但 11.5% 的句子至少含一個——那些句子的 candidate_coverage_risk 會
+        # 轉成 true。這不是變差，是本來就該標出來的缺口，之前被品質常數蓋掉了。
+        # ⚠️ 開關預設為 True 會改變候選分布＝改變訓練資料，**必須重訓才生效**。
+        # 要重建 v17 的候選請傳 exclude_unusable=False。
+        self.exclude_unusable = exclude_unusable
+        self.excluded_unusable = 0
+        if exclude_unusable:
+            before = len(self.rows)
+            self.rows = [r for r in self.rows
+                         if r.get("asset_class") not in self.UNUSABLE_CLASSES]
+            self.excluded_unusable = before - len(self.rows)
         self.by_gloss = {r["gloss"]: r for r in self.rows}
         self.index: dict[str, str] = json.loads(index.read_text(encoding="utf-8"))
         self.by_id = {r["sign_id"]: r for r in all_rows}
+        # 折疊後詞形 → sign_id：外語詞的大小寫與內部空白不是詞的一部分。
+        # 語料寫 `BB call`／`QR code`，總表的鍵是 `BBCall`／`QR Code`，
+        # 不折疊就會把庫裡明明有影片的詞判成 OOV，訓練標的被寫成
+        # needs_review=true（實測 splits_script 有 8 句受害）。
+        # 只折含 ASCII 字母的鍵；中文鍵去空白會併掉帶空白的重複收錄。
+        self._folded: dict[str, str] = {}
+        for gloss, sid in sorted(self.index.items()):
+            f = fold(gloss)
+            if f and re.search(r"[a-z]", f):
+                self._folded.setdefault(f, sid)
         self.max_len = max(len(g) for g in self.by_gloss)
         # 字元 → 含該字元的 gloss，供干擾項檢索
         self.by_char: dict[str, list[str]] = {}
@@ -208,6 +241,11 @@ class CandidateRetriever:
         for form in (g, strip_punct(g), norm(g)):
             if form and form in self.index:
                 return self.index[form]
+        for form in (g, norm(g)):                 # 外語：折大小寫與內部空白
+            if form and re.search(r"[A-Za-z]", form):
+                sid = self._folded.get(fold(form))
+                if sid:
+                    return sid
         return None
 
     def _literal(self, text: str) -> list[str]:

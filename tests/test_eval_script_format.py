@@ -23,7 +23,7 @@ import eval_script_format as esf
 LEGACY_THRESHOLD = 0.095349
 # 舊鍵名 → 現行鍵名
 NEW_KEYS = ("ValidSignID%", "AssetAvailable%", "QualityPlayable%",
-            "QualityDetail", "CompositionSuccess%")
+            "QualityDetail", "CompositionSuccess%", "StructureFields")
 LEGACY_KEYS = {
     "NeedsReview": "CandidateCoverageRisk",
     "NeedsReview_calibrated": "CandidateCoverageRisk_calibrated",

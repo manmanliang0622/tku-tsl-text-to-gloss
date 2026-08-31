@@ -23,13 +23,28 @@
 
 V1 = "tsl-script-v1"
 V2 = "tsl-script-v2"
+V3 = "tsl-script-v3"
 
 # schema 版本 → 旗標欄位名
 SCHEMA_FIELD = {
     V1: "needs_review",
     V2: "candidate_coverage_risk",
+    V3: "candidate_coverage_risk",
 }
-CURRENT = V2
+CURRENT = V3
+
+# v3 額外的兩個欄位（2026-08-31，教授審查意見 3.1）。都是 sign_ids 的**索引**，
+# 不是巢狀物件——刻意這樣設計，好讓約束解碼完全不必改：它只管
+# `"sign_ids": [...]` 陣列內的字串常值，陣列一關閉就整步放行。
+#
+#   compounds     [[0,1], ...]  這幾個 sign 在語料裡是一個複合單位（X+Y）
+#   reduplicated  [2, ...]      這些 sign 帶重複貌（X++）
+#
+# **為什麼不是 repeat 整數**：`++` 依語料庫標記慣例是「重複貌」而非次數
+# （見 scrape_tslcorpus_full.clean_token）。實測 345 個 `++`、1 個 `+++`，
+# 沒有任何資訊指出要重複幾次。寫 repeat=2 等於替標註者宣稱他沒寫的事，
+# 要播幾次是虛擬人端的決定。
+V3_FIELDS = ("compounds", "reduplicated")
 
 # 讀取時兩種都認。順序無所謂——同一份輸出不會兩個都有。
 FLAG_KEYS = tuple(SCHEMA_FIELD[v] for v in (V2, V1))
@@ -41,6 +56,12 @@ SYSTEM_BY_SCHEMA = {
     V2: ("將繁體中文轉成可執行的臺灣手語腳本。只能使用候選清單中的 sign_id，"
          "不得創造新 ID。候選清單缺少必要手語時，必須輸出 "
          "candidate_coverage_risk=true。只輸出 JSON。"),
+    # v3 多兩個欄位，prompt 要講清楚它們是 sign_ids 的索引而不是別的東西
+    V3: ("將繁體中文轉成可執行的臺灣手語腳本。只能使用候選清單中的 sign_id，"
+         "不得創造新 ID。候選清單缺少必要手語時，必須輸出 "
+         "candidate_coverage_risk=true。compounds 標出屬於同一個複合單位的 "
+         "sign_ids 索引群組，reduplicated 標出帶重複貌的 sign_ids 索引。"
+         "只輸出 JSON。"),
 }
 
 

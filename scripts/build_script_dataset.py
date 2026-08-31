@@ -47,6 +47,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import script_schema  # noqa: E402
+from eval_video_coverage import parse_token  # noqa: E402
 from sign_candidates import CandidateRetriever  # noqa: E402
 
 BASE = Path(__file__).resolve().parent.parent
@@ -61,7 +62,7 @@ SYSTEM = SYSTEM_BY_SCHEMA[SCHEMA_VERSION]
 
 
 def clause_breaks(clauses, gloss_tokens: list[str],
-                  kept_positions: list[int]) -> tuple[list[int], str]:
+                  contrib: list[int]) -> tuple[list[int], str]:
     """子句邊界，表示成 **sign_ids 陣列裡的索引**。
 
     回傳 (breaks, reason)。reason 供統計用：ok／no_annotation／unaligned／collapsed。
@@ -85,10 +86,12 @@ def clause_breaks(clauses, gloss_tokens: list[str],
     唯一那筆同時多子句又 stale 的（TWS0086）改的是錯字 `這倆個→這兩個`，
     token 數沒變，計數對齊照樣正確。
 
-    **索引空間是 sign_ids 不是 gloss token**：OOV 的詞不會進 sign_ids，
-    所以要用 kept_positions（第 i 個 gloss token 對應 sign_ids 的哪個位置，
-    被丟掉的是 None）把邊界搬過去。整個子句都被丟掉時兩個邊界會疊在一起，
-    去重；落在頭尾的邊界沒有意義（切不出兩段），丟掉。
+    **索引空間是 sign_ids 不是 gloss token**：一個 gloss token 可能貢獻 0 個
+    （OOV）或 2–3 個（複合詞 X+Y 攤平）sign_id，兩邊的索引對不起來。
+    所以用 contrib[i]＝第 i 個 gloss token 產出幾個 sign_id 來換算：邊界落在
+    gloss 索引 c，對應的 sign_ids 位置就是 sum(contrib[:c])。
+    整個子句都被丟掉時兩個邊界會疊在一起，去重；落在頭尾的邊界沒有意義
+    （切不出兩段），丟掉。
     """
     if not clauses or len(clauses) < 2:
         return [], "no_annotation"
@@ -105,10 +108,10 @@ def clause_breaks(clauses, gloss_tokens: list[str],
         cuts.append(acc)
 
     out = []
-    n_signs = sum(1 for p in kept_positions if p is not None)
+    n_signs = sum(contrib)
     for c in cuts:
-        # 該邊界之前有幾個 token 進了 sign_ids
-        pos = sum(1 for p in kept_positions[:c] if p is not None)
+        # 該邊界之前總共產出了幾個 sign_id
+        pos = sum(contrib[:c])
         if 0 < pos < n_signs and pos not in out:
             out.append(pos)
     if not out:
@@ -152,24 +155,42 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
     #   unusable_asset  有 ID 但影片演不出動作    → 要換源重錄（2026-08-31 新增）
     #   retrieval_miss  庫裡有、影片也好，沒撈到  → 要改進檢索
     oov_reason = {}
-    # 第 i 個 gloss token 落在 sign_ids 的哪個位置；被丟掉的記 None。
-    # clause_breaks 要靠它把邊界從 gloss token 索引搬到 sign_ids 索引。
-    kept_positions: list[int | None] = []
+    # 第 i 個 gloss token 產出幾個 sign_id。0＝整個掉了（OOV），
+    # 2–3＝複合詞攤平。clause_breaks 靠它換算索引空間。
+    contrib: list[int] = []
+    compounds: list[list[int]] = []     # 同一個複合單位的 sign_ids 索引群組
+    reduplicated: list[int] = []        # 帶重複貌的 sign_ids 索引
     for tok in tokens:
-        sid = retr.resolve(tok)
-        if sid is None:
-            oov.append(tok)
-            oov_reason[tok] = "not_in_library"
-            kept_positions.append(None)
-        elif sid not in cand_ids:
-            oov.append(tok)
-            cls = (retr.by_id.get(sid) or {}).get("asset_class")
-            oov_reason[tok] = ("unusable_asset"
-                               if cls in retr.UNUSABLE_CLASSES else "retrieval_miss")
-            kept_positions.append(None)
-        else:
-            kept_positions.append(len(sign_ids))
-            sign_ids.append(sid)
+        # 2026-08-31（審查意見 3.1）：一個 token 可能是複合（X+Y）與／或帶
+        # 重複貌（X++）。以前這裡直接 resolve(tok)，而 resolve 內部的 norm()
+        # 只留第一段——`樹+見` 的「見」就這樣人間蒸發，train 共蒸發 664 次。
+        segs, redup = parse_token(tok)
+        if not segs:
+            contrib.append(0)
+            continue
+        produced = []
+        for seg in segs:
+            sid = retr.resolve(seg)
+            if sid is None:
+                oov.append(seg)
+                oov_reason[seg] = "not_in_library"
+            elif sid not in cand_ids:
+                oov.append(seg)
+                cls = (retr.by_id.get(sid) or {}).get("asset_class")
+                oov_reason[seg] = ("unusable_asset"
+                                   if cls in retr.UNUSABLE_CLASSES else "retrieval_miss")
+            else:
+                produced.append(len(sign_ids))
+                sign_ids.append(sid)
+        contrib.append(len(produced))
+        # 複合單位只在**兩段都留下來**時才記——只剩一段就不是複合了
+        if len(produced) >= 2:
+            compounds.append(produced)
+        # 重複貌掛在該 token 產出的**最後一個** sign 上。
+        # `樹+開花++` 這種複合＋重複並存的只有 8 個，語料沒說 ++ 作用在
+        # 整個複合還是最後一段，取最後一段是保守解讀，已知有歧義。
+        if redup and produced:
+            reduplicated.append(produced[-1])
 
     # 旗標的定義：參考 Gloss 有沒有全部落進候選清單。這是候選覆蓋率風險，
     # 不是翻譯品質預警——欄位名在 v2 已據此正名（見 SCHEMA_FIELD）。
@@ -189,16 +210,21 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
         candidates = [f"{c['sign_id']}={c['gloss']}" for c in cands]
     else:
         candidates = cands
-    breaks, breaks_reason = clause_breaks(row.get("clauses"), tokens, kept_positions)
+    breaks, breaks_reason = clause_breaks(row.get("clauses"), tokens, contrib)
 
     user = {"text": text, "candidates": candidates}
     assistant = {
         "schema_version": SCHEMA_VERSION,
         "sign_ids": sign_ids,
         "clause_breaks": breaks,
-        SCHEMA_FIELD[SCHEMA_VERSION]: coverage_risk,
-        "oov_items": oov,
     }
+    if SCHEMA_VERSION == script_schema.V3:
+        # 索引陣列而非巢狀物件：約束解碼只管 sign_ids 陣列內的字串常值，
+        # 陣列一關閉就整步放行，所以這兩個欄位完全不影響它。
+        assistant["compounds"] = compounds
+        assistant["reduplicated"] = reduplicated
+    assistant[SCHEMA_FIELD[SCHEMA_VERSION]] = coverage_risk
+    assistant["oov_items"] = oov
     record = {
         "messages": [
             {"role": "system", "content": SYSTEM},
@@ -220,6 +246,8 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
         "coverage_risk": coverage_risk,
         "clause_breaks": breaks,
         "clause_breaks_reason": breaks_reason,
+        "compounds": compounds,
+        "reduplicated": reduplicated,
         "oov_items": oov,
         "not_in_library": [t for t in oov if oov_reason.get(t) == "not_in_library"],
         "unusable_asset": [t for t in oov if oov_reason.get(t) == "unusable_asset"],
@@ -301,6 +329,10 @@ def main() -> int:
         tok_total = sum(s["tokens"] for s in stats)
         tok_cov = sum(s["covered"] for s in stats)
         n_ok = sum(1 for s in stats if not s["coverage_risk"])
+        n_comp = sum(len(st["compounds"]) for st in stats)
+        n_redup = sum(len(st["reduplicated"]) for st in stats)
+        rows_comp = sum(1 for st in stats if st["compounds"])
+        rows_redup = sum(1 for st in stats if st["reduplicated"])
         cb_reason = collections.Counter(st["clause_breaks_reason"] for st in stats)
         cb_rows = sum(1 for st in stats if st["clause_breaks"])
         miss = collections.Counter()
@@ -326,6 +358,10 @@ def main() -> int:
             # 子句邊界的產出情形（2026-08-31）。**覆蓋率極低是事實不是 bug**：
             # 只有中正辭典例句有 clauses 欄位，且 504/544 是單子句，
             # 全資料集真正有邊界的只有 40 筆。引用時務必連同這個數字一起講。
+            "compound_units": n_comp,
+            "compound_rows": rows_comp,
+            "reduplicated_signs": n_redup,
+            "reduplicated_rows": rows_redup,
             "clause_breaks": {
                 "rows_with_breaks": cb_rows,
                 "rows_with_breaks_pct": (round(100 * cb_rows / len(stats), 2)
@@ -347,6 +383,8 @@ def main() -> int:
         print(f"  最常缺：{summary['top_missing'][:8]}")
         print(f"  子句邊界 {cb_rows} 列有（{summary['clause_breaks']['rows_with_breaks_pct']}%）"
               f"／{dict(cb_reason)}")
+        print(f"  複合單位 {n_comp} 個（{rows_comp} 列）"
+              f"／重複貌 {n_redup} 個（{rows_redup} 列）")
 
         if not args.dry_run:
             OUT.mkdir(parents=True, exist_ok=True)

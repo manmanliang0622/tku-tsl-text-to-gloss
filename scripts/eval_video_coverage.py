@@ -76,6 +76,44 @@ def norm(gloss: str) -> str:
     return gloss.strip().strip(_PUNCT)
 
 
+def parse_token(gloss: str) -> tuple[list[str], bool]:
+    """把一個 Gloss token 拆成 (可查詢的詞段, 是否重複貌)。
+
+    2026-08-31 新增（教授審查意見 3.1）。`norm()` 只回傳「第一段」，因為它的
+    用途是「這個詞查不查得到影片」。但建訓練資料時那樣做等於**把資訊刪掉**：
+
+      買++    →  norm 給 買          重複貌不見了
+      樹+見   →  norm 給 樹          「見」整個消失
+
+    實測 train 有 478 列帶 `++`、447 列帶複合 `+`，第二段被直接刪除 664 次，
+    刪掉的多是 手機(58)／這(51)／杯子(26)／腳(20) 這類分類詞或指涉對象。
+
+    複合到底是一個手語還是兩個？查過了：384 個複合 token 裡，**整串本身是
+    動作庫鍵的有 0 個**，而拆開後每段都查得到的有 275 個（71.6%）。所以
+    `X+Y` 在播放層面就是**兩個連續的手語**，不是一個複合詞。攤平是對的，
+    刪掉第二段是錯的。（複合這個語言學單位本身仍值得記錄，由呼叫端存成
+    compounds 索引群組，不在這裡處理。）
+
+    `++` 依語料庫標記慣例是**重複貌**（見 scrape_tslcorpus_full.py 的
+    `clean_token`），是體貌標記而不是次數。實測 345 個 `++` 與 1 個 `+++`，
+    沒有任何資訊指出要重複幾次，所以這裡只回布林，**不編造 repeat=2 這種
+    數字**——那等於替標註者宣稱他沒寫的事。要播幾次由虛擬人端決定。
+
+    解析順序很重要：括號註記要先處理再拆 `+`，否則 `(包+包)交換` 會被拆錯。
+    """
+    g = str(gloss).strip()
+    inner = re.fullmatch(r"\((.+)\)", g)
+    if inner:                                   # (手勢) → 手勢，別整串刪掉
+        g = inner.group(1)
+    g = g.strip().strip(_PUNCT)
+    g = re.sub(r"\([^)]*\)", "", g)             # 告訴(他) → 告訴；(包+包)交換 → 交換
+    redup = bool(re.search(r"\++$", g))
+    g = re.sub(r"\++$", "", g)
+    segs = [x.strip().strip(_PUNCT) for x in g.split("+")]
+    segs = [x for x in segs if x]
+    return segs, redup
+
+
 class Library:
     """影片庫 + 各層別名，回答「這個 gloss 演不演得出來」。"""
 

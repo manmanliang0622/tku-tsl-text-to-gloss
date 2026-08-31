@@ -232,6 +232,11 @@ def run_split(split, args, model, tok, pad_id):
                 "ref_sign_ids": ref.get("sign_ids") or [],
                 # 2026-08-31 正名（審查意見 4.2）。讀取端（eval_script_format._ref_flag、
                 # nr_threshold）新舊鍵名都收，所以歷史結果檔不受影響。
+                # 結構欄位的參考值。沒有這些，eval 的 StructureFields 就沒東西可比，
+                # 而「沒有指標在看」正是 clause_breaks 死了很久沒人發現的原因。
+                "ref_clause_breaks": ref.get("clause_breaks") or [],
+                "ref_compounds": ref.get("compounds") or [],
+                "ref_reduplicated": ref.get("reduplicated") or [],
                 "ref_candidate_coverage_risk": script_schema.read_flag(ref),
                 # 旗標那個位置的機率，供事後調門檻。鍵名維持 p_needs_review：
                 # 它是純機率的管線鍵，results/ 既有檔與 nr_threshold 都靠它，

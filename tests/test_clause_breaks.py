@@ -31,11 +31,11 @@ def test_professor_cases():
     """審查意見裡點名的兩個實測案例。"""
     # 我/好//你/好 —— 上游 clauses 已切好，邊界應落在第 2 個 sign
     breaks, reason = clause_breaks(["我/好", "你/好"], ["我", "好", "你", "好"],
-                                   [0, 1, 2, 3])
+                                   [1, 1, 1, 1])
     assert (breaks, reason) == ([2], "ok"), f"得到 {breaks} / {reason}"
 
     # 我/買++/東西 —— ++ 是重複記號，不是子句邊界；語料庫也沒有 clauses
-    breaks, reason = clause_breaks(None, ["我", "買++", "東西"], [0, 1, 2])
+    breaks, reason = clause_breaks(None, ["我", "買++", "東西"], [1, 1, 1])
     assert (breaks, reason) == ([], "no_annotation"), f"得到 {breaks} / {reason}"
     print("✓ 審查意見的兩個案例都正確")
 
@@ -43,14 +43,14 @@ def test_professor_cases():
 def test_plus_plus_is_never_a_boundary():
     """就算 ++ 出現在有 clauses 的句子裡，也只由 clauses 決定邊界。"""
     breaks, _ = clause_breaks(["我/買++", "東西/好"], ["我", "買++", "東西", "好"],
-                              [0, 1, 2, 3])
+                              [1, 1, 1, 1])
     assert breaks == [2], f"++ 不該自己製造邊界，得到 {breaks}"
     print("✓ ++ 不會被當成子句邊界")
 
 
 def test_single_clause_has_no_break():
     for clauses in (None, [], ["我/好/你"]):
-        breaks, reason = clause_breaks(clauses, ["我", "好", "你"], [0, 1, 2])
+        breaks, reason = clause_breaks(clauses, ["我", "好", "你"], [1, 1, 1])
         assert breaks == [], f"{clauses!r} 不該有邊界，得到 {breaks}"
         assert reason == "no_annotation"
     print("✓ 單子句與無標註都回空陣列")
@@ -62,10 +62,11 @@ def test_index_space_is_sign_ids_not_gloss_tokens():
     gloss: 我 / 缺詞 / 好 // 你 / 好      （4 個進 sign_ids，第 2 個是 OOV）
     sign_ids:  [我, 好, 你, 好]
     邊界在 gloss 索引 3，但 sign_ids 索引應該是 2。
+    contrib 是「第 i 個 gloss token 產出幾個 sign_id」——OOV 是 0。
     """
     breaks, reason = clause_breaks(["我/缺詞/好", "你/好"],
                                    ["我", "缺詞", "好", "你", "好"],
-                                   [0, None, 1, 2, 3])
+                                   [1, 0, 1, 1, 1])
     assert (breaks, reason) == ([2], "ok"), f"得到 {breaks} / {reason}"
     print("✓ 邊界索引在 sign_ids 空間，OOV 已扣掉")
 
@@ -78,7 +79,7 @@ def test_unaligned_falls_back_to_empty():
     """
     breaks, reason = clause_breaks(["那/蟑螂媽媽", "那/怕"],
                                    ["那", "蟑螂", "媽媽", "那", "怕"],
-                                   [0, 1, 2, 3, 4])
+                                   [1, 1, 1, 1, 1])
     assert (breaks, reason) == ([], "unaligned"), f"得到 {breaks} / {reason}"
     print("✓ token 數對不上時退回空陣列並標 unaligned")
 
@@ -88,12 +89,12 @@ def test_boundary_at_edges_is_dropped():
     # 第一個子句全部 OOV → 邊界落在 0
     breaks, reason = clause_breaks(["缺一/缺二", "你/好"],
                                    ["缺一", "缺二", "你", "好"],
-                                   [None, None, 0, 1])
+                                   [0, 0, 1, 1])
     assert (breaks, reason) == ([], "collapsed"), f"得到 {breaks} / {reason}"
     # 第二個子句全部 OOV → 邊界落在尾端
     breaks, reason = clause_breaks(["我/好", "缺一/缺二"],
                                    ["我", "好", "缺一", "缺二"],
-                                   [0, 1, None, None])
+                                   [1, 1, 0, 0])
     assert (breaks, reason) == ([], "collapsed"), f"得到 {breaks} / {reason}"
     print("✓ 落在頭尾的邊界會被丟掉並標 collapsed")
 
@@ -101,20 +102,34 @@ def test_boundary_at_edges_is_dropped():
 def test_three_clauses_and_dedupe():
     breaks, reason = clause_breaks(["我/好", "你/好", "他/好"],
                                    ["我", "好", "你", "好", "他", "好"],
-                                   [0, 1, 2, 3, 4, 5])
+                                   [1, 1, 1, 1, 1, 1])
     assert (breaks, reason) == ([2, 4], "ok"), f"得到 {breaks} / {reason}"
     # 中間子句整段掉光 → 兩個邊界疊在同一個位置，去重後剩一個
     breaks, reason = clause_breaks(["我/好", "缺一/缺二", "他/好"],
                                    ["我", "好", "缺一", "缺二", "他", "好"],
-                                   [0, 1, None, None, 2, 3])
+                                   [1, 1, 0, 0, 1, 1])
     assert (breaks, reason) == ([2], "ok"), f"得到 {breaks} / {reason}"
     print("✓ 三子句正確，且疊在一起的邊界會去重")
+
+
+def test_compound_expansion_shifts_boundary():
+    """複合詞攤平會讓一個 gloss token 產出 2 個 sign_id，邊界要往後挪。
+
+    gloss: 我 / 樹+見 // 你 / 好
+    sign_ids: [我, 樹, 見, 你, 好]  ← 第 2 個 token 貢獻 2 個
+    邊界在 gloss 索引 2，對應 sign_ids 索引 1+2 = 3。
+    """
+    breaks, reason = clause_breaks(["我/樹+見", "你/好"],
+                                   ["我", "樹+見", "你", "好"],
+                                   [1, 2, 1, 1])
+    assert (breaks, reason) == ([3], "ok"), f"得到 {breaks} / {reason}"
+    print("✓ 複合詞攤平後邊界正確往後挪")
 
 
 def test_breaks_are_valid_slice_points():
     """產出的邊界必須能真的把 sign_ids 切成非空的幾段。"""
     n = 6
-    breaks, _ = clause_breaks(["a/b", "c/d", "e/f"], list("abcdef"), list(range(n)))
+    breaks, _ = clause_breaks(["a/b", "c/d", "e/f"], list("abcdef"), [1] * n)
     prev, segs = 0, []
     for b in breaks + [n]:
         segs.append((prev, b))
@@ -132,6 +147,7 @@ def main():
     test_unaligned_falls_back_to_empty()
     test_boundary_at_edges_is_dropped()
     test_three_clauses_and_dedupe()
+    test_compound_expansion_shifts_boundary()
     test_breaks_are_valid_slice_points()
     print("\n子句邊界檢查全過")
 

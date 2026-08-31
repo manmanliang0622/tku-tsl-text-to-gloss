@@ -13,6 +13,7 @@
   test_comitative           伴隨句雙數收攏規則（重點在不該補的一個都沒補）
   test_bundle_deps          serve_model 的部署相依宣告與程式碼一致
   test_clause_breaks        子句邊界的定義、對齊與失敗退路
+  test_gloss_notation       重複貌 ++ 與複合 + 的解析
 """
 import os
 import subprocess
@@ -31,6 +32,7 @@ SCRIPT_TESTS = [
     "test_comitative.py",
     "test_bundle_deps.py",
     "test_clause_breaks.py",
+    "test_gloss_notation.py",
 ]
 # unittest 形式的
 UNITTEST_MODULES = ["test_metrics"]

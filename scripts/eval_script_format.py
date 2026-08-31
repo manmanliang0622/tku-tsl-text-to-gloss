@@ -234,6 +234,67 @@ def full_reference_block(rows: list[dict], full_ref: dict[str, str],
     }
 
 
+def _norm_groups(v):
+    """compounds 正規化成可比較的形式：內部排序 + 整體排序。"""
+    out = []
+    for g in (v or []):
+        if isinstance(g, (list, tuple)):
+            out.append(tuple(sorted(int(x) for x in g if isinstance(x, (int, float)))))
+    return sorted(out)
+
+
+def _norm_idx(v):
+    return sorted({int(x) for x in (v or []) if isinstance(x, (int, float))})
+
+
+def structure_fields(rows: list[dict]) -> dict:
+    """clause_breaks／compounds／reduplicated 三個結構欄位的產出情形。
+
+    **為什麼需要這塊**：clause_breaks 曾經在 8,915 列訓練資料裡全部是空陣列、
+    模型固定輸出 []，而沒有任何指標在看它，所以壞了很久沒人發現
+    （教授審查意見 3.2）。新加的 compounds／reduplicated 若不一起量，
+    會重蹈覆轍。這裡不追求精緻，只要讓「欄位是死的」無所遁形：
+    參考有幾列非空、模型輸出幾列非空、兩者完全一致的比率。
+
+    ⚠️ 這三個欄位在資料裡都很稀疏（clause_breaks train 1.1%、複合 1.8%、
+    重複貌 3.2%），全部輸出空陣列就能拿到很高的 match%。**看 match% 之前
+    先看 ref_nonempty**，否則會把「什麼都沒學到」讀成「表現很好」。
+    """
+    fields = {
+        "clause_breaks": (_norm_idx, "ref_clause_breaks"),
+        "compounds": (_norm_groups, "ref_compounds"),
+        "reduplicated": (_norm_idx, "ref_reduplicated"),
+    }
+    out = {}
+    for name, (norm_fn, ref_key) in fields.items():
+        n = ref_ne = hyp_ne = match = both_ne_match = 0
+        for r in rows:
+            if ref_key not in r:
+                continue                    # 舊結果檔沒有這個欄位，不計入
+            n += 1
+            ref = norm_fn(r.get(ref_key))
+            obj = parse_output(r.get("raw", ""))
+            hyp = norm_fn(obj.get(name)) if obj else []
+            ref_ne += bool(ref)
+            hyp_ne += bool(hyp)
+            if ref == hyp:
+                match += 1
+                if ref:
+                    both_ne_match += 1
+        if not n:
+            continue
+        out[name] = {
+            "n": n,
+            "ref_nonempty": ref_ne,
+            "hyp_nonempty": hyp_ne,
+            "exact_match%": round(100 * match / n, 2),
+            # 只看參考非空的那些列——這才是真正有東西要學的部分
+            "exact_match_on_nonempty%": (round(100 * both_ne_match / ref_ne, 2)
+                                         if ref_ne else None),
+        }
+    return out or {"note": "結果檔沒有 ref_* 結構欄位（v2 以前的推論產出）"}
+
+
 def evaluate(rows: list[dict], threshold: float | None = None,
              full_ref: dict[str, str] | None = None) -> dict:
     id2gloss = load_inventory()
@@ -376,6 +437,7 @@ def evaluate(rows: list[dict], threshold: float | None = None,
 
     if threshold is not None:
         out["CandidateCoverageRisk_calibrated"] = calibrated_needs_review(rows, threshold)
+    out["StructureFields"] = structure_fields(rows)
 
     if full_ref:
         out["_ref_scope"] = REF_SCOPE_NOTE

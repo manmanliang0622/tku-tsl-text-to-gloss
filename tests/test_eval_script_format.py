@@ -43,13 +43,29 @@ def load_rows(stem):
 LEGACY_SPLIT_DIR = os.path.join(BASE, "data", "splits_v17")
 
 
+def resolve_split(stem):
+    """找這個結果檔對應的 split 檔，優先用凍結的 v17 那份。
+
+    不能只靠 esf.guess_split()：它是列舉 data/splits/*.jsonl 來比對名字的，
+    而那些檔在 .gitignore 裡（可由 split_data.py 再生），所以乾淨 clone 上
+    整個目錄沒有 jsonl，guess_split 一律回 None——四個案例會全部誤判成缺料。
+    這裡改成直接用已知的 split 名字比對 stem，兩個目錄都找。
+    """
+    for d in (LEGACY_SPLIT_DIR, os.path.join(BASE, "data", "splits")):
+        if not os.path.isdir(d):
+            continue
+        names = sorted((n[:-6] for n in os.listdir(d) if n.endswith(".jsonl")),
+                       key=len, reverse=True)     # test_corpus 要贏 test
+        for name in names:
+            if stem == name or stem.endswith("_" + name):
+                return esf.Path(os.path.join(d, f"{name}.jsonl"))
+    return None
+
+
 def compare(stem):
     rows = load_rows(stem)
-    split = esf.guess_split(esf.Path(os.path.join(BASE, "results", f"{stem}.jsonl")))
+    split = resolve_split(stem)
     assert split and split.exists(), f"{stem}: 推斷不到 split（{split}）"
-    legacy = esf.Path(os.path.join(LEGACY_SPLIT_DIR, split.name))
-    if legacy.exists():
-        split = legacy
     got = esf.evaluate(rows, threshold=LEGACY_THRESHOLD,
                        full_ref=esf.load_full_reference(split))
 
@@ -94,10 +110,11 @@ def available(stem):
                  os.path.join(BASE, "results", f"{stem}_scriptmetrics.json")):
         if not os.path.exists(path):
             return False, os.path.relpath(path, BASE)
-    split = esf.guess_split(esf.Path(os.path.join(BASE, "results", f"{stem}.jsonl")))
-    legacy = os.path.join(LEGACY_SPLIT_DIR, split.name) if split else None
-    if not ((split and split.exists()) or (legacy and os.path.exists(legacy))):
-        return False, os.path.relpath(str(legacy or split), BASE)
+    split = resolve_split(stem)
+    if not (split and split.exists()):
+        # 說得出缺的是哪個檔，不要只說「缺 None」。
+        name = stem.split("_", 1)[-1] if "_" in stem else stem
+        return False, f"data/splits_v17/{name}.jsonl（或 data/splits/）"
     return True, None
 
 

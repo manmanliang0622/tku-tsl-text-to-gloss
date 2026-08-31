@@ -143,22 +143,47 @@ python3 scripts/eval_script_format.py --pred results/v17cd_test_textbook.jsonl \
 
 ### 輸出紀律：約束解碼把缺陷歸零
 
-推論時把 `sign_ids` 鎖在該句候選清單上（`scripts/constrained_decode.py`，
-服務端為內嵌副本，`tests/test_serve_parity.py` 防漂移）。
+推論時把 `sign_ids` 鎖在該句候選清單上（`scripts/constrained_decode.py`）。
+2026-08-31 起服務端與離線推論都 **import 同一份實作**，不再各留一份副本；
+`tests/test_serve_parity.py` 改為守「不得再內嵌」。
 
 | 指標 | v17 | v17＋約束 |
 |---|---:|---:|
 | 詞彙違規率（列）corpus／textbook | 5.42% ／ 5.67% | **0.0% ／ 0.0%** |
 | 未知 sign_id（corpus／textbook） | 8 ／ 29 | **0 ／ 0** |
-| 可播放率（corpus／textbook） | 99.18% ／ 98.37% | **100% ／ 100%** |
+| ValidSignID%（corpus／textbook） | 99.18% ／ 98.37% | **100% ／ 100%** |
 | 有效 JSON（全集合） | 100% | 100% |
 
 品質代價為零（±0.2 BLEU 屬雜訊）。另加退化守衛：同一 `sign_id` 最多連續 6 次、
 陣列最多 18 個元素（取自 10,200 句參考實測極值）。
 
-### needs_review 校準（品質預警）
+> **2026-08-31 更正：上表的「可播放率 100%」是名不副實的，已改名為
+> `ValidSignID%`。** 它只檢查「預測的 ID 存不存在於總表」，沒有檢查影片能不能
+> 正常播、動作完不完整。實際比對 0813 的影片品質掃描後，動作庫 17,085 支裡
+> 只有 43.7% 的品質判定為 ok，39.8% 是 severe（幾乎整段偵測不到舉手動作）。
+> 指標已拆成四層（`scripts/eval_script_format.py`），v17cd 的真實數字是：
+>
+> | 資料集 | ValidSignID% | QualityPlayable% | ok／品質差／不堪用 |
+> |---|---:|---:|---|
+> | 核心 33 | 100.0 | **92.31** | 60／0／5 |
+> | test_corpus | 100.0 | **96.93** | 913／34／30 |
+> | test_textbook | 100.0 | **94.11** | 1621／73／106 |
+> | dev | 100.0 | **96.35** | 2283／66／89 |
+>
+> `CompositionSuccess%`（多動作串接後能否正常播）尚未實作——那要在 0813
+> 虛擬人端實際串起來播一次才量得到，不在本 repo 範圍。目前一律回報 `null`，
+> **不可**解讀為「串接已驗證沒問題」。
 
-模型對每句輸出 needs_review 機率，供前端提示「這句建議人工確認」。門檻只在 dev 上選，
+### candidate_coverage_risk 校準（候選覆蓋風險）
+
+> **2026-08-31 正名：原名 `needs_review`。** 這個旗標的正解是「參考 Gloss 有沒有
+> 全部落進候選清單」，純粹是檢索覆蓋率訊號。它**偵測不到**候選完整但選錯詞、
+> 語序錯、重複／複合遺失、整句語意不自然、NMS 或影片品質問題。舊名會讓人
+> 以為模型具備翻譯品質預警能力，實際上沒有。schema v2 起欄位名為
+> `candidate_coverage_risk`（`scripts/script_schema.py`）；線上 API 兩個鍵都回，
+> `needs_review*` 僅為相容別名。
+
+模型對每句輸出覆蓋風險機率，供前端提示「這句建議人工確認」。門檻只在 dev 上選，
 不看測試集調。**線上採用 0.039707**（2026-08-27 改以最大化 F1 選定）：
 
 | 門檻 | dev F1 | corpus F1 | textbook F1 | dev 漏放行 |
@@ -182,6 +207,23 @@ python3 scripts/eval_script_format.py --pred results/v17cd_test_textbook.jsonl \
 
 ## 已知限制
 
+- **切分曾有表面形式洩漏（2026-08-31 已修）**：`split_data.py` 原本只比對
+  原始中文字串，核心 33 句有 3 句（`我住在台北。`／`我知道`／`我不知道`）
+  去標點後就在 train，dev 與 train 更有 6 句原字串完全相同。**上表的 v14–v17
+  數字都是在那份舊切分上量的。** 三個測試集（核心 33、test_corpus、
+  test_textbook）修正後位元完全相同，所以測試集數字仍可比；但 dev 變了
+  （663→548），依 dev 選出的 checkpoint 與門檻 0.095349／0.039707 都應在
+  新 dev 上重驗。舊切分凍結於 `data/splits_v17/`。
+- **測試集已被當成 validation 使用**：v14／v17／k40／k60／語義通道／pin_core
+  等方案反覆參考 corpus、textbook 與核心 33 的結果，最後依教材集表現決定部署
+  v17（見 `results/v17cd_deploy_note.md`）。這三個集合實際上已是開發集，
+  **不應再宣稱為 unbiased final test**。真正的 final holdout 尚未建立。
+- **重複、複合與方位資訊在建 `gloss_text` 時就流失**：twtsl 來源的
+  `gloss_raw` 有 758 個方位標記（`_A`／`_B`／`_S`／`_N`），`gloss_text` 只剩 8 個；
+  子句邊界 `//` 同樣消失（`clauses` 欄位其實已存有正確切分，只是沒被使用）。
+  train 另有 478 列含重複記號 `++`、447 列含複合 `+`，正規化時第二段被直接
+  刪除 664 次。`clause_breaks` 因此在 8,915 列訓練資料中**全部是空陣列**。
+  這些都尚未修復，需重新設計輸出 schema。
 - **長句泛化是主要弱點**：`test_corpus` 完全正確率 0.60%，錯誤以選詞為大宗。
 - **訓練與上線的候選清單組成不同**：訓練與評估的候選含語義向量名額，
   **線上服務未載入向量模型**（`0821_bundle` 的 `sign_candidates.py` 連 `n_sem`
@@ -190,6 +232,13 @@ python3 scripts/eval_script_format.py --pred results/v17cd_test_textbook.jsonl \
   約 5% 的句子少撈到至少一個參考詞。**上表數字是在訓練側候選分布下量得，
   線上實際表現可能略低。**
 - **NMS 不在評估範圍**：本模型不輸出表情、搖頭、揚眉、手形與地區變體。
+  原始計畫（`臺灣手語翻譯語言模型_微調訓練計畫.md` §1）要求 Gloss 與 NMS
+  雙輸出，目前實作只做候選排序，等於偏離了原題目。**而且補不回來**：
+  2026-08-31 清點三份訓練來源，NMS 標註只存在於合成句（967 筆中 589 筆，
+  且只有 3 種模板字串），tslcorpus 5,272 筆與 twtsl 544 筆**完全沒有 NMS 欄位**。
+  拿合成句的 NMS 訓練只會學回產生它的那三條規則。要真正做 NMS，必須對
+  5,816 筆真實語料重新人工標註，需要具臺灣手語能力的標註者——這是資源決定，
+  不是程式問題。
 - **母語者人工評估無有效結果**：2026-08-22 曾以 v14 輸出回收一輪盲測（100 題），
   評分不符量表設計，**結果不採用、不引用**。
 - **訓練資料未經母語者抽查**：抽查表已產出（`outputs/訓練資料抽查表_train.xlsx`）

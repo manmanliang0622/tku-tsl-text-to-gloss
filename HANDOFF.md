@@ -35,6 +35,52 @@
 
 ## 3. 教師審核資料與切分
 
+> ⚠️ **2026-08-27 訂正：現行切分指令（取代本節以下所有切分指令）**
+>
+> 本節底下兩條指令都**不再重現現行切分**，照著跑會換掉整個資料集——實測
+> `--use-all` 那條產出 train 4,645／dev 410／test_corpus 586，與現行的
+> 8,915／663／166 完全不同。現行 `data/splits/` 由這條產生，已用 id 多重集
+> 逐份比對確認可重現：
+>
+> ```bash
+> python3 scripts/split_data.py --use-all --length-balance --no-papers \
+>   --textbook-as-test --corpus-test-ratio 0.12 --corpus-test-min-len 6 --seed 42
+> ```
+>
+> | split | 2026-08-31 修正前 | **修正後（現行）** |
+> |---|---:|---:|
+> | train | 8,915（相異句對 5,321） | **9,064**（相異句對 5,400） |
+> | dev | 663 | **548** |
+> | 核心 test | 33 | 33（位元完全相同） |
+> | `test_corpus` | 166 | 166（位元完全相同） |
+> | `test_textbook` | 423 | 423（位元完全相同） |
+>
+> **2026-08-31 修正（教授審查意見 2.4）**：去洩漏與去重改用表面形式正規化
+> （NFKC＋去標點＋臺/台等異體字），並把「同一句中文的所有列」合併成不可分割
+> 的 cluster。抓到的實際洩漏：核心 33 句有 3 句去標點後在 train
+> （`我住在台北。`／`我知道`／`我不知道`），dev 與 train 有 6 句**原字串完全
+> 相同**（去重鍵是 `(chinese, gloss_text)`，同句中文配不同 Gloss 就兩邊都留）。
+> 三個測試集位元不變，**只有 train／dev 改變**。舊切分凍結在
+> `data/splits_v17/`（歷史數字對帳用，不要更新它）。
+> 驗證：`python3 tests/test_split_normalization.py`。
+>
+> - **`--no-papers` 是關鍵**：現行切分**不含**中正論文例句（manifest 的
+>   `counts.test_papers` 為 0、`train_composition` 無 `paper` 來源）。
+>   `data/splits/test_papers.jsonl`（143 句）是更早一輪的殘檔，這輪沒有重產——
+>   拿它做評估前先確認你要的是哪一版。
+> - `--textbook-as-test`：2026-08-22 起以臺灣手語教材 423 句作第三個測試集，
+>   取代論文例句。需先跑 `scripts/build_textbook_testset.py`。
+> - 下游要跟著重跑，且 `--splits` 必須列出 `test_textbook`，否則那份會留舊檔：
+>   `build_json_targets.py`、`build_script_dataset.py`（含
+>   `--out data/splits_script_k40sem --k 40 --n-sem 8`，v17 上線用的那份）。
+> - ⚠️ **`data/splits_script*/` 目前全部是舊切分產生的，已過期。** 重建前先讀
+>   `scripts/build_script_dataset.py` 的 schema 說明：預設已改為 **v2**
+>   （旗標欄位 `needs_review` → `candidate_coverage_risk`），且候選池預設
+>   **排除品質判定為 severe 的影片**。兩者都改變訓練分布，**必須重訓才生效**。
+>   要重建 v17 那份完全一樣的資料：
+>   `--schema-version tsl-script-v1`，並在 `CandidateRetriever` 傳
+>   `exclude_unusable=False`。
+
 > ⚠️ **2026-08-05 政策變更（使用者決策，取代本節與 §5 的審核界線）**
 >
 > 使用者指示：**移除所有人工審核閘門**；辭典、語料庫、論文例句直接使用，不需另外審核

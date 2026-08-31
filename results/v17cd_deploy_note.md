@@ -12,11 +12,20 @@
 | textbook BLEU／RL／EM | 22.99／60.88／14.89% | **24.47／61.16／15.60%** |
 | test33 BLEU／EM | **77.8／69.7%** | 72.7／66.7% |
 | 約束違反（corpus 列/ID） | 4.22%／0.70% | **0%／0%** |
-| 可播放率（corpus／textbook） | 99.5／99.15% | **100／100%** |
+| ValidSignID%（corpus／textbook） | 99.5／99.15% | **100／100%** |
 | needs_review 校準 F1（corpus） | 0.825 | 0.827 |
 
 約束解碼相對 v17 的品質代價只有 −0.2 BLEU（雜訊級），違反率歸零、
-可播放率 100%——新格式的核心價值指標全滿。corpus EM −1.8pp（3 句）與
+ValidSignID 100%。
+
+> **2026-08-31 更正**：當時寫的「可播放率 100%」只是「ID 存在於總表」，
+> 不代表影片播得出動作。接上 0813 品質掃描後的真實 `QualityPlayable%` 是
+> corpus 96.93%／textbook 94.11%／核心 33 92.31%。指標已拆為
+> ValidSignID／AssetAvailable／QualityPlayable／CompositionSuccess 四層，
+> 見 MODEL_CARD 與 `scripts/eval_script_format.py`。
+>
+> 另：本文「教材集全面領先定勝負」正是教授審查意見 2.3 指出的問題——
+> 用測試集決定部署版本，該集合因此已成為 validation，不再是 unbiased test。corpus EM −1.8pp（3 句）與
 test33 −1 句是已知代價（v17 報告的「字面精確解被擠出首選」信號）。
 教材集（最大、最接近展示情境）全面領先定勝負。
 

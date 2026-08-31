@@ -1,0 +1,21 @@
+# 候選語義通道（scripts/semantic_channel.py）專用環境。
+#
+# 建立方式：
+#   python3.12 -m venv .venv-emb
+#   .venv-emb/bin/pip install -r requirements-emb.txt
+#
+# ⚠️ **不要裝進主環境**：這裡的 torch 2.2.2 與訓練用的 unsloth 環境不相容。
+# 這套只在 Mac 上建資料時用（--n-sem > 0），線上服務不載入向量模型。
+#
+# 以下版本由 2026-08-31 的 .venv-emb 實際內容匯出，是已驗證可跑的組合。
+numpy==1.26.4
+torch==2.2.2
+transformers==4.44.2
+tokenizers==0.19.1
+sentence-transformers==6.0.0
+safetensors==0.8.0
+huggingface-hub==0.36.2
+scikit-learn==1.9.0
+scipy==1.18.1
+regex==2026.7.19
+tqdm==4.70.0

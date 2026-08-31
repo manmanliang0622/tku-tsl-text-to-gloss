@@ -1,0 +1,37 @@
+name: tests
+
+# 教授審查意見 5.2：「最基本的 CI 自動測試」。
+# 這裡跑的全是零相依的檢查——資料處理、候選檢索、約束解碼與評分管線都只用
+# 標準庫（見 requirements.txt 說明），所以 CI 不需要 GPU，也不必裝 torch。
+#
+# ⚠️ CI **不涵蓋**訓練與模型推論：那需要 GPU 與 unsloth 環境，且權重不在 repo。
+# 也不涵蓋教材集的評分回歸（授權未查證，資料不入庫，該案會自動略過並印出原因）。
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: 編譯全部腳本（抓語法錯誤）
+        run: python -m compileall -q scripts tests
+
+      - name: 跑測試套件
+        run: python tests/run_all.py
+
+      - name: 資料 preflight（缺料時據實回報，不當成通過）
+        run: python scripts/data_preflight.py

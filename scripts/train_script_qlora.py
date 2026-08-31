@@ -46,6 +46,7 @@ GPU：v17 實測 peak 11.8GB。本機 RTX 4060 Ti 16GB 另有線上服務佔用�
 """
 import argparse
 import json
+import sys
 import time
 from pathlib import Path
 
@@ -117,6 +118,9 @@ def main():
     ap.add_argument("--max-steps", type=int, default=-1, help=">0 用於冒煙測試")
     ap.add_argument("--verify-v17", action="store_true",
                     help="用 v17 的原始設定重訓，驗證這支重建版是否忠實")
+    ap.add_argument("--skip-preflight", action="store_true",
+                    help="跳過資料 preflight。⚠️ 只在明知來源狀態時使用——"
+                         "preflight 擋的是「拿沒審完／被改過的資料開訓」")
     args = ap.parse_args()
 
     if args.verify_v17:
@@ -134,6 +138,21 @@ def main():
 
     log(json.dumps({k: v for k, v in vars(args).items()
                     if k not in ("verify_v17", "max_steps")}, ensure_ascii=False))
+
+    # 2026-08-31（教授審查意見 5.1）：訓練前驗證來源 hash、審核狀態與筆數。
+    # 在此之前這支只是 load_split() 讀檔就開訓，來源被改過、有句子還沒審完、
+    # 切分是舊版程式產生的——全都看不出來，等訓練跑完幾小時才發現。
+    # 任何阻斷性問題一律 fail closed，不是印個警告就繼續。
+    if not args.skip_preflight:
+        import subprocess
+        log("跑資料 preflight…")
+        rc = subprocess.run([sys.executable, str(REPO / "scripts" / "data_preflight.py")],
+                            cwd=str(REPO)).returncode
+        if rc != 0:
+            raise SystemExit(
+                "資料 preflight 未通過（見上方輸出），中止訓練。\n"
+                "確認每一項都是預期狀態後，再重跑；真的要無視請加 --skip-preflight。")
+        log("preflight 通過")
 
     # unsloth 必須在 transformers 之前 import（它會 patch）
     from unsloth import FastModel

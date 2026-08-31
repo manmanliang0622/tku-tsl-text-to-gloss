@@ -1,0 +1,29 @@
+# tku-tsl-text-to-gloss — 依環境分層的相依清單
+#
+# 這個專案跑在三個彼此獨立的環境，硬湊成一份 requirements.txt 只會互相衝突
+# （unsloth 那套的 torch 與 .venv-emb 的 torch 2.2.2 不相容）。故分成三份：
+#
+#   requirements.txt          ← 本檔。資料處理與離線評估，**純標準庫，零安裝**
+#   requirements-emb.txt      候選語義通道（semantic_channel.py）
+#   requirements-train.txt    QLoRA 訓練與模型推論（學校 GPU 主機）
+#
+# ── 本層（資料 + 評估）需要什麼 ──────────────────────────────────────
+# 什麼都不用裝。以下腳本與全部單元測試只用 Python 標準庫：
+#
+#   scripts/split_data.py            切分與去洩漏
+#   scripts/build_sign_inventory.py  sign_id 總表（含影片品質分層）
+#   scripts/build_script_dataset.py  訓練資料格式轉換
+#   scripts/sign_candidates.py       候選檢索
+#   scripts/constrained_decode.py    約束解碼狀態機
+#   scripts/script_schema.py         schema 常數
+#   scripts/eval_script_format.py    評分
+#   scripts/metrics.py               BLEU / ROUGE-L / EM
+#   scripts/nr_threshold.py          門檻選定
+#   tests/                           全部 4 支
+#
+# 需求：Python >= 3.10（用到 `X | None` 型別語法與 match-free 的新標準庫行為）
+# 已驗證可跑的版本：3.12、3.14
+#
+# ── 產生 Excel 工作表的腳本另外需要 ──────────────────────────────────
+# （make_*_sheet.py、apply_*_review.py 這類人工校訂流程用的工具）
+openpyxl>=3.1

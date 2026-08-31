@@ -10,6 +10,7 @@
   test_eval_script_format   評分管線能重現既有的 *_scriptmetrics.json
   test_split_normalization  切分的表面形式正規化與去洩漏
   test_inventory_legacy_id  legacy_sign_id 不被重建覆寫（追溯欄位的冪等性）
+  test_comitative           伴隨句雙數收攏規則（重點在不該補的一個都沒補）
 """
 import os
 import subprocess
@@ -25,6 +26,7 @@ SCRIPT_TESTS = [
     "test_eval_script_format.py",
     "test_split_normalization.py",
     "test_inventory_legacy_id.py",
+    "test_comitative.py",
 ]
 # unittest 形式的
 UNITTEST_MODULES = ["test_metrics"]

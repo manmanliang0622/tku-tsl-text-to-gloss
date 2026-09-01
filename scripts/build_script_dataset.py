@@ -180,7 +180,7 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
     #   not_in_library  動作庫根本沒有這個詞      → 要補片
     #   unusable_asset  有 ID 但影片演不出動作    → 要換源重錄（2026-08-31 新增）
     #   retrieval_miss  庫裡有、影片也好，沒撈到  → 要改進檢索
-    oov_reason = {}
+    oov_reasons: list[str] = []      # 與 oov 逐項對應（同一個詞可能出現多次）
     # 第 i 個 gloss token 產出幾個 sign_id。0＝整個掉了（OOV），
     # 2–3＝複合詞攤平。clause_breaks 靠它換算索引空間。
     contrib: list[int] = []
@@ -199,11 +199,11 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
             sid = retr.resolve(seg)
             if sid is None:
                 oov.append(seg)
-                oov_reason[seg] = "not_in_library"
+                oov_reasons.append("not_in_library")
             elif sid not in cand_ids:
                 oov.append(seg)
                 cls = (retr.by_id.get(sid) or {}).get("asset_class")
-                oov_reason[seg] = ("unusable_asset"
+                oov_reasons.append("unusable_asset"
                                    if cls in retr.UNUSABLE_CLASSES else "retrieval_miss")
             else:
                 produced.append(len(sign_ids))
@@ -266,7 +266,11 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
         },
     }
     stat = {
-        "tokens": len(tokens),
+        # **數攤平後的詞段，不是 gloss token**：複合 X+Y 是 1 個 token 但 2 個
+        # 詞段，用 token 數當分母會讓「涵蓋 + 缺口 = 總數」對不起來
+        # （實測 dev 差 45）。covered 與 oov 都是詞段層級，分母要一致。
+        "tokens": len(sign_ids) + len(oov),
+        "gloss_tokens": len(tokens),
         "covered": len(sign_ids),
         "oov": len(oov),
         "coverage_risk": coverage_risk,
@@ -275,9 +279,9 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
         "compounds": compounds,
         "reduplicated": reduplicated,
         "oov_items": oov,
-        "not_in_library": [t for t in oov if oov_reason.get(t) == "not_in_library"],
-        "unusable_asset": [t for t in oov if oov_reason.get(t) == "unusable_asset"],
-        "retrieval_miss": [t for t in oov if oov_reason.get(t) == "retrieval_miss"],
+        "not_in_library": [t for t, r in zip(oov, oov_reasons) if r == "not_in_library"],
+        "unusable_asset": [t for t, r in zip(oov, oov_reasons) if r == "unusable_asset"],
+        "retrieval_miss": [t for t, r in zip(oov, oov_reasons) if r == "retrieval_miss"],
     }
     return record, stat
 

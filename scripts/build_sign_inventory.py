@@ -196,8 +196,8 @@ def load_existing(scheme: str) -> dict[str, str]:
 # 也就是說動作庫裡有一半以上的片子演不好，而舊指標把它們全算成可播放。
 QUALITY_CSV = BASE / "data" / "video" / "entries_final.csv"
 
-# tier → asset_class。只有 ok 才算真的能播；poor 能播但品質差，severe 與
-# no_hands_raised 等於沒有動作，不該進候選（見 sign_candidates 的排除）。
+# tier → asset_class 的初步對應。**但 tier 本身不足以判定「能不能播」**，
+# 見下方 classify()。
 TIER_TO_CLASS = {
     "ok": "natural_playable",
     "poor": "degraded_playable",
@@ -205,6 +205,63 @@ TIER_TO_CLASS = {
     "no_hands_raised": "unusable_quality",
 }
 UNUSABLE_CLASSES = {"unusable_quality"}
+
+# 動作時長門檻（秒）。低於此值才算「真的沒有動作」。
+MIN_MOTION_SEC = 0.3
+
+
+def motion_seconds(q: dict | None) -> float | None:
+    """實際有動作的秒數 ＝ act_max × dur。缺任一欄回 None（不當成 0）。
+
+    CSV 的數值欄可能是空字串，_f() 會回 None；用 dict.get(key, 0) 兜不住
+    「鍵存在但值是 None」，必須顯式檢查。
+    """
+    if not q:
+        return None
+    a, d = q.get("act_max"), q.get("dur")
+    if a is None or d is None:
+        return None
+    return round(a * d, 3)
+
+
+def classify(q: dict | None) -> str:
+    """由掃描指標判定 asset_class。
+
+    2026-08-31 修正（同日稍早的錯誤）：原本直接把 tier=severe 對到
+    unusable_quality，結果排掉 6,811 個 sign，其中 **83%（5,650 個）是
+    教育部辭典**。查下去發現那批不是壞片：
+
+      - severe 的 moe 影片有 72% 的幀是舉手狀態，**沒有任何一支是零**
+      - act_rate 量的是「有沒有在動」不是「有沒有舉手」。moe 是辭典影片
+        （中位 3.10 秒：舉手→停頓→比劃→停頓→放下），大量靜止幀把比例壓低；
+        moc 是從連續語料剪出的片段（中位 0.93 秒），每一幀都在動作中，
+        所以 act 接近 1.0
+      - 實際動作時長（act_max × dur）中位數：moe severe 0.77 秒，
+        moc ok 0.93 秒——**同一個量級**
+
+    也就是說 moe 影片是好的，只是**沒有修剪**。用 tier 當「能不能播」的判準
+    會把一大批可用素材誤判成缺口，讓人去重錄根本不缺的詞。
+
+    改用動作時長：低於 MIN_MOTION_SEC 才算沒有動作。這樣排除的從 6,811 降到
+    約 2,032 支。
+
+    ⚠️ 這個門檻是我依上述分布挑的，**尚未經影片端負責人確認**。真正該做的是
+    給 moe 那批加一道修剪（找出動作區間再切），修剪後它們的 act_rate 會回升，
+    這個門檻也就不再是主要判準。在那之前，寧可少排除也不要把可用的詞當成缺口。
+    """
+    if not q:
+        return "unknown"
+    tier = q.get("tier")
+    motion = motion_seconds(q)
+    if motion is None:
+        # 沒有動作資料就不下「不能播」的判斷，交給 tier
+        return TIER_TO_CLASS.get(q.get("tier"), "unknown")
+    if motion < MIN_MOTION_SEC:
+        return "unusable_quality"          # 動作短到不可能是一個手語
+    if tier == "ok":
+        return "natural_playable"
+    # 有足夠動作但 tier 不是 ok：多半是未修剪的辭典影片，可播但需要修剪
+    return "degraded_playable"
 
 
 def load_quality(path: Path) -> dict[tuple[str, str], dict]:
@@ -222,6 +279,8 @@ def load_quality(path: Path) -> dict[tuple[str, str], dict]:
             out[(r["label"], r["recording"])] = {
                 "tier": r.get("tier") or None,
                 "act_eff": _f(r.get("act_eff")),
+                "act_max": _f(r.get("act_max")),
+                "dur": _f(r.get("dur")),
                 "usage": _f(r.get("usage")),
             }
     return out
@@ -283,10 +342,11 @@ def main() -> int:
             # 動作庫有這筆＝**資產存在**，但存在不等於演得好。品質分層見
             # entries_final.csv 的 tier（審查意見 4.1）。缺品質資料時記
             # unknown，絕不預設成可播放。
-            "asset_class": TIER_TO_CLASS.get(
-                (quality.get((gloss, recording)) or {}).get("tier"), "unknown"),
+            "asset_class": classify(quality.get((gloss, recording))),
             "quality_tier": (quality.get((gloss, recording)) or {}).get("tier"),
             "act_eff": (quality.get((gloss, recording)) or {}).get("act_eff"),
+            # 實際動作時長（秒）。判定「有沒有動作」用這個，不用 tier——見 classify()。
+            "motion_sec": motion_seconds(quality.get((gloss, recording))),
             "legacy_sign_id": legacy.get(gloss),
         })
 

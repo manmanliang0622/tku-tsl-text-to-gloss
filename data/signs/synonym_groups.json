@@ -1,16 +1,18 @@
 {
  "stats": {
-  "library_signs": 17071,
-  "distinct_clips": 15735,
-  "groups_total": 1773,
+  "library_signs": 17078,
+  "distinct_clips": 15742,
+  "groups_total": 2000,
   "groups_by_source": {
    "same_clip": 1052,
    "dict_alias": 712,
-   "moe_alias": 9
+   "moe_alias": 9,
+   "manual": 227
   },
-  "library_signs_with_synonym": 3493,
-  "library_signs_with_synonym_pct": 20.5,
-  "index_keys": 3507
+  "library_signs_with_synonym": 3746,
+  "library_signs_with_synonym_pct": 21.9,
+  "index_keys": 3880,
+  "manual_skipped": 2
  },
  "groups": [
   {
@@ -30559,6 +30561,4487 @@
     "dataset": "moe_vocab_clean.jsonl",
     "headword": "檢討"
    }
+  },
+  {
+   "id": "SYN_H00001",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "不敢",
+    "不好意思",
+    "不敢當",
+    "膽小",
+    "我怕"
+   ],
+   "in_library": [
+    "不敢",
+    "不好意思"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "不敢",
+    "note": "等於「不好意思」、「不敢當」、「膽小」、「我怕」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00002",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "丟",
+    "扔掉",
+    "丟掉"
+   ],
+   "in_library": [
+    "丟",
+    "扔掉",
+    "丟掉"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "丟",
+    "note": "等於「扔掉」、「丟掉」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00003",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "交",
+    "交來",
+    "提供"
+   ],
+   "in_library": [
+    "提供"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "交",
+    "note": "等於「交來」、「提供」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00004",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "交換",
+    "對調",
+    "輪調",
+    "輪班",
+    "換",
+    "同理心"
+   ],
+   "in_library": [
+    "輪班",
+    "換"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "交換",
+    "note": "等於「對調」、「輪調」、「輪班」、「換」、「同理心」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00005",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "仍然",
+    "照舊",
+    "依樣畫葫蘆",
+    "複製"
+   ],
+   "in_library": [
+    "仍然",
+    "照舊",
+    "複製"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "仍然",
+    "note": "等於「照舊」、「依樣畫葫蘆」、「複製」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00006",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "付錢",
+    "付帳",
+    "繳費"
+   ],
+   "in_library": [
+    "付錢",
+    "付帳",
+    "繳費"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "付錢",
+    "note": "等於「付帳」、「繳費」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00007",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "代替",
+    "代",
+    "替"
+   ],
+   "in_library": [
+    "代替",
+    "替"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "代替",
+    "note": "等於「代」、「替」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00008",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "以外",
+    "除了…以外",
+    "放在一邊"
+   ],
+   "in_library": [
+    "以外"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "以外",
+    "note": "等於「除了…以外」、「放在一邊」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00009",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "依靠",
+    "互相"
+   ],
+   "in_library": [
+    "依靠",
+    "互相"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "依靠",
+    "note": "等於「互相」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00010",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "便宜",
+    "廉價"
+   ],
+   "in_library": [
+    "便宜",
+    "廉價"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "便宜",
+    "note": "等於「廉價」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00011",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "保齡球",
+    "打保齡球"
+   ],
+   "in_library": [
+    "保齡球"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "保齡球",
+    "note": "等於「打保齡球」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00012",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "做不成",
+    "做不到",
+    "未遂"
+   ],
+   "in_library": [
+    "做不成",
+    "做不到",
+    "未遂"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "做不成",
+    "note": "等於「做不到」、「未遂」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00013",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "偷",
+    "偷竊",
+    "竊盜"
+   ],
+   "in_library": [
+    "偷",
+    "偷竊",
+    "竊盜"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "偷",
+    "note": "等於「偷竊」、「竊盜」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00014",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "偷偷",
+    "偷偷的",
+    "私下的",
+    "悄悄的"
+   ],
+   "in_library": [
+    "偷偷"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "偷偷",
+    "note": "等於「偷偷的」、「私下的」、「悄悄的」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00015",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "價格高低",
+    "物價波動"
+   ],
+   "in_library": [
+    "價格高低"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "價格高低",
+    "note": "等於「物價波動」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00016",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "全",
+    "全部",
+    "整個",
+    "都",
+    "完全",
+    "所有的",
+    "全都",
+    "一整天"
+   ],
+   "in_library": [
+    "全",
+    "全部",
+    "都",
+    "完全",
+    "一整天"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "全",
+    "note": "等於「全部」、「整個」、「都」、「完全」、「所有的」、「全都」、「一整天」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00017",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "兼差",
+    "兼",
+    "腳踏兩條船"
+   ],
+   "in_library": [
+    "兼差",
+    "兼"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "兼差",
+    "note": "等於「兼」、「腳踏兩條船」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00018",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "出去",
+    "出門"
+   ],
+   "in_library": [
+    "出去",
+    "出門"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "出去",
+    "note": "等於「出門」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00019",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "分發",
+    "分配"
+   ],
+   "in_library": [
+    "分發",
+    "分配"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "分發",
+    "note": "等於「分配」、「分發」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00020",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "分配",
+    "分發"
+   ],
+   "in_library": [
+    "分配",
+    "分發"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "分配",
+    "note": "等於「分配」、「分發」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00021",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "刑警",
+    "便衣",
+    "刑"
+   ],
+   "in_library": [
+    "刑警",
+    "刑"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "刑警",
+    "note": "等於「便衣」、「刑」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00022",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "划算",
+    "額外"
+   ],
+   "in_library": [
+    "划算"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "划算",
+    "note": "等於「額外」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00023",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "到底",
+    "終於",
+    "結果",
+    "究竟",
+    "結束",
+    "完成",
+    "終點"
+   ],
+   "in_library": [
+    "到底",
+    "終於",
+    "結果",
+    "究竟",
+    "結束",
+    "完成",
+    "終點"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "到底",
+    "note": "等於「終於」、「結果」、「究竟」、「結束」、「完成」、「終點」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00024",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "刻苦耐勞",
+    "任勞任怨",
+    "很吃力"
+   ],
+   "in_library": [
+    "刻苦耐勞"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "刻苦耐勞",
+    "note": "等於「任勞任怨」、「很吃力」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00025",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "加油",
+    "努力"
+   ],
+   "in_library": [
+    "加油",
+    "努力"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "加油",
+    "note": "等於「努力」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00026",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "印章",
+    "圖章",
+    "蓋章"
+   ],
+   "in_library": [
+    "印章",
+    "蓋章"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "印章",
+    "note": "等於「圖章」、「蓋章」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00027",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "及格",
+    "考上",
+    "勝利",
+    "贏",
+    "獲得",
+    "...到了"
+   ],
+   "in_library": [
+    "及格",
+    "勝利",
+    "贏",
+    "獲得"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "及格",
+    "note": "等於「考上」、「勝利」、「贏」、「獲得」、「...到了」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00028",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "受傷",
+    "傷"
+   ],
+   "in_library": [
+    "受傷",
+    "傷"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "受傷",
+    "note": "等於「傷」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00029",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "可怕",
+    "恐怖",
+    "嚇",
+    "驚嚇",
+    "驚訝"
+   ],
+   "in_library": [
+    "可怕",
+    "恐怖",
+    "嚇",
+    "驚嚇",
+    "驚訝"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "可怕",
+    "note": "等於「恐怖」、「嚇」、「驚嚇」、「驚訝」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00030",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "可憐",
+    "憐憫",
+    "同情"
+   ],
+   "in_library": [
+    "可憐",
+    "憐憫",
+    "同情"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "可憐",
+    "note": "等於「憐憫」、「同情」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00031",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "可是",
+    "但是"
+   ],
+   "in_library": [
+    "可是",
+    "但是"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "可是",
+    "note": "等於「但是」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00032",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "啤酒",
+    "Beer"
+   ],
+   "in_library": [
+    "啤酒"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "啤酒",
+    "note": "等於「Beer」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00033",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "喘",
+    "喘氣",
+    "很累",
+    "累死了",
+    "非常辛苦"
+   ],
+   "in_library": [
+    "喘",
+    "喘氣"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "喘",
+    "note": "等於「喘氣」、「很累」、「累死了」、「非常辛苦」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00034",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "嘔吐",
+    "噁心",
+    "反胃",
+    "吐"
+   ],
+   "in_library": [
+    "嘔吐",
+    "噁心",
+    "反胃",
+    "吐"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "嘔吐",
+    "note": "等於「噁心」、「反胃」、「吐」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00035",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "嚴格",
+    "嚴"
+   ],
+   "in_library": [
+    "嚴格",
+    "嚴"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "嚴格",
+    "note": "等於「嚴」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00036",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "培養",
+    "栽培",
+    "培育",
+    "養育",
+    "陶治"
+   ],
+   "in_library": [
+    "培養",
+    "栽培",
+    "培育",
+    "養育"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "培養",
+    "note": "等於「栽培」、「培育」、「養育」、「陶治」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00037",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "多少",
+    "幾個"
+   ],
+   "in_library": [
+    "多少",
+    "幾個"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "多少",
+    "note": "等於「幾個」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00038",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "好幾次",
+    "屢次"
+   ],
+   "in_library": [
+    "好幾次",
+    "屢次"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "好幾次",
+    "note": "等於「屢次」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00039",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "嫌少",
+    "嫌小",
+    "好少",
+    "一點點",
+    "好小"
+   ],
+   "in_library": [
+    "嫌少",
+    "一點點"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "嫌少",
+    "note": "等於「嫌小」、「好少」、「一點點」、「好小」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00040",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "嬰兒",
+    "寶寶"
+   ],
+   "in_library": [
+    "嬰兒",
+    "寶寶"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "嬰兒",
+    "note": "等於「寶寶」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00041",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "守舊",
+    "保守",
+    "古老",
+    "舊"
+   ],
+   "in_library": [
+    "守舊",
+    "保守",
+    "古老",
+    "舊"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "守舊",
+    "note": "等於「保守」、「古老」、「舊」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00042",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "寬",
+    "寬敞"
+   ],
+   "in_library": [
+    "寬",
+    "寬敞"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "寬",
+    "note": "等於「寬敞」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00043",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "居住",
+    "住",
+    "住宿"
+   ],
+   "in_library": [
+    "居住",
+    "住",
+    "住宿"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "居住",
+    "note": "等於「住」、「住宿」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00044",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "幾小時",
+    "多少小時"
+   ],
+   "in_library": [
+    "幾小時"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "幾小時",
+    "note": "等於「多少小時」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00045",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "延後",
+    "延期",
+    "延",
+    "拖延",
+    "順延"
+   ],
+   "in_library": [
+    "延後",
+    "延期",
+    "拖延",
+    "順延"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "延後",
+    "note": "等於「延期」、「延」、「拖延」、「順延」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00046",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "建築",
+    "大樓",
+    "大廈",
+    "大飯店"
+   ],
+   "in_library": [
+    "建築",
+    "大樓",
+    "大廈"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "建築",
+    "note": "等於「大樓」、「大廈」、「大飯店」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00047",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "彩色",
+    "顏色"
+   ],
+   "in_library": [
+    "彩色",
+    "顏色"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "彩色",
+    "note": "等於「顏色」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00048",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "恐怖",
+    "嚇一跳",
+    "嚇",
+    "驚嚇",
+    "驚訝"
+   ],
+   "in_library": [
+    "恐怖",
+    "嚇一跳",
+    "嚇",
+    "驚嚇",
+    "驚訝"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "恐怖",
+    "note": "等於「嚇一跳」、「嚇」、「驚嚇」、「驚訝」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00049",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "懊惱",
+    "遺憾",
+    "哎呀"
+   ],
+   "in_library": [
+    "懊惱",
+    "遺憾",
+    "哎呀"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "懊惱",
+    "note": "等於「遺憾」、「哎呀」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00050",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "或者",
+    "或",
+    "或是"
+   ],
+   "in_library": [
+    "或者",
+    "或"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "或者",
+    "note": "等於「或」、「或是」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00051",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "打敗",
+    "擊敗"
+   ],
+   "in_library": [
+    "打敗",
+    "擊敗"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "打敗",
+    "note": "等於「擊敗」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00052",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "抱歉",
+    "對不起"
+   ],
+   "in_library": [
+    "抱歉",
+    "對不起"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "抱歉",
+    "note": "等於「對不起」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00053",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "拜訪",
+    "訪視",
+    "探視"
+   ],
+   "in_library": [
+    "拜訪",
+    "探視"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "拜訪",
+    "note": "等於「訪視」、「探視」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00054",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "掛",
+    "掛鉤"
+   ],
+   "in_library": [
+    "掛",
+    "掛鉤"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "掛",
+    "note": "等於「掛鉤」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00055",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "握手",
+    "建交"
+   ],
+   "in_library": [
+    "握手",
+    "建交"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "握手",
+    "note": "等於「建交」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00056",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "擊敗",
+    "打敗"
+   ],
+   "in_library": [
+    "擊敗",
+    "打敗"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "擊敗",
+    "note": "等於「打敗」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00057",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "擋",
+    "拒絕",
+    "防",
+    "防備",
+    "阻擋",
+    "防止"
+   ],
+   "in_library": [
+    "擋",
+    "拒絕",
+    "防",
+    "阻擋",
+    "防止"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "擋",
+    "note": "等於「拒絕」、「防」、「防備」、「阻擋」、「防止」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00058",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "收錄",
+    "記"
+   ],
+   "in_library": [
+    "記"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "收錄",
+    "note": "找「紀錄」，等於「記」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00059",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "文件",
+    "資料"
+   ],
+   "in_library": [
+    "資料"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "文件",
+    "note": "「文件」的手語是「資料」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00060",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "斷",
+    "中斷",
+    "折"
+   ],
+   "in_library": [
+    "中斷"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "斷",
+    "note": "等於「中斷」、「折」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00061",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "是的",
+    "是"
+   ],
+   "in_library": [
+    "是"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "是的",
+    "note": "等於「是」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00062",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "暗",
+    "黑暗"
+   ],
+   "in_library": [
+    "黑暗"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "暗",
+    "note": "等於「黑暗」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00063",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "更",
+    "愈",
+    "越"
+   ],
+   "in_library": [
+    "更",
+    "愈",
+    "越"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "更",
+    "note": "等於「愈」、「越」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00064",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "書法",
+    "寫毛筆字"
+   ],
+   "in_library": [
+    "書法"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "書法",
+    "note": "等於「寫毛筆字」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00065",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "桌球",
+    "打乒乓球",
+    "乒乓球",
+    "打桌球"
+   ],
+   "in_library": [
+    "桌球",
+    "乒乓球",
+    "打桌球"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "桌球",
+    "note": "等於「打乒乓球」、「乒乓球」、「打桌球」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00066",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "梅",
+    "酸梅"
+   ],
+   "in_library": [
+    "梅"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "梅",
+    "note": "等於「酸梅」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00067",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "模仿",
+    "學習",
+    "按照",
+    "按",
+    "照"
+   ],
+   "in_library": [
+    "模仿",
+    "學習",
+    "按照",
+    "按",
+    "照"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "模仿",
+    "note": "等於「學習」、「按照」、「按」、「照」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00068",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "殘障",
+    "身心障礙"
+   ],
+   "in_library": [
+    "殘障",
+    "身心障礙"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "殘障",
+    "note": "等於「身心障礙」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00069",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "殺",
+    "殺頭"
+   ],
+   "in_library": [
+    "殺"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "殺",
+    "note": "等於「殺頭」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00070",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "決定",
+    "定案"
+   ],
+   "in_library": [
+    "決定"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "決定",
+    "note": "等於「定案」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00071",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "沒有用",
+    "廢話",
+    "廢棄",
+    "不用",
+    "不需要"
+   ],
+   "in_library": [
+    "沒有用",
+    "廢話",
+    "廢棄",
+    "不用",
+    "不需要"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "沒有用",
+    "note": "等於「廢話」、「廢棄」、「不用」、「不需要」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00072",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "沙",
+    "砂",
+    "沙子",
+    "土",
+    "土地"
+   ],
+   "in_library": [
+    "沙",
+    "土",
+    "土地"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "沙",
+    "note": "等於「砂」、「沙子」、「土」、「土地」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00073",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "活",
+    "活著",
+    "健在"
+   ],
+   "in_library": [],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "活",
+    "note": "等於「活著」、「健在」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00074",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "涼快",
+    "春",
+    "吹"
+   ],
+   "in_library": [
+    "涼快",
+    "春",
+    "吹"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "涼快",
+    "note": "等於「春」、「吹」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00075",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "減",
+    "剩下",
+    "扣",
+    "扣除"
+   ],
+   "in_library": [
+    "減",
+    "剩下",
+    "扣",
+    "扣除"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "減",
+    "note": "等於「剩下」、「扣」、「扣除」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00076",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "滑",
+    "順"
+   ],
+   "in_library": [
+    "滑",
+    "順"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "滑",
+    "note": "等於「順」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00077",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "滑倒",
+    "跌倒",
+    "摔跤",
+    "摔倒"
+   ],
+   "in_library": [
+    "滑倒",
+    "跌倒",
+    "摔倒"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "滑倒",
+    "note": "等於「跌倒」、「摔跤」、「摔倒」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00078",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "火",
+    "著火"
+   ],
+   "in_library": [
+    "火",
+    "著火"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "火",
+    "note": "等於「著火」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00079",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "炫耀",
+    "引人注目"
+   ],
+   "in_library": [
+    "炫耀"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "炫耀",
+    "note": "等於「引人注目」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00080",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "留",
+    "保留",
+    "保存",
+    "存"
+   ],
+   "in_library": [
+    "留",
+    "保留",
+    "保存"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "留",
+    "note": "等於「保留」、「保存」、「存」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00081",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "盒子",
+    "便當",
+    "蓋"
+   ],
+   "in_library": [
+    "盒子",
+    "便當",
+    "蓋"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "盒子",
+    "note": "等於「便當」、「蓋」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00082",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "看醫生",
+    "看病"
+   ],
+   "in_library": [
+    "看醫生",
+    "看病"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "看醫生",
+    "note": "等於「看病」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00083",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "祈禱",
+    "禱告",
+    "祈求"
+   ],
+   "in_library": [
+    "祈禱",
+    "禱告",
+    "祈求"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "祈禱",
+    "note": "等於「禱告」、「祈求」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00084",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "禮貌",
+    "禮節",
+    "禮"
+   ],
+   "in_library": [
+    "禮貌",
+    "禮節"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "禮貌",
+    "note": "等於「禮節」、「禮」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00085",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "窄",
+    "狹窄",
+    "狹"
+   ],
+   "in_library": [
+    "窄",
+    "狹窄"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "窄",
+    "note": "等於「狹窄」、「狹」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00086",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "站",
+    "站立",
+    "立"
+   ],
+   "in_library": [
+    "站",
+    "站立"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "站",
+    "note": "等於「站立」、「立」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00087",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "競爭",
+    "較勁"
+   ],
+   "in_library": [
+    "競爭"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "競爭",
+    "note": "等於「較勁」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00088",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "管子",
+    "棍子"
+   ],
+   "in_library": [
+    "管子"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "管子",
+    "note": "等於「棍子」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00089",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "簽約",
+    "合約",
+    "約定"
+   ],
+   "in_library": [
+    "簽約",
+    "合約",
+    "約定"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "簽約",
+    "note": "等於「合約」、「約定」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00090",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "紅",
+    "紅色",
+    "丹",
+    "朱",
+    "赤"
+   ],
+   "in_library": [
+    "紅",
+    "紅色",
+    "朱"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "紅",
+    "note": "等於「紅色」、「丹」、「朱」、「赤」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00091",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "紅色",
+    "丹",
+    "紅",
+    "朱",
+    "赤"
+   ],
+   "in_library": [
+    "紅色",
+    "紅",
+    "朱"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "紅色",
+    "note": "等於「丹」、「紅」、「朱」、「赤」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00092",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "經濟",
+    "貿易",
+    "生意",
+    "濟"
+   ],
+   "in_library": [
+    "經濟",
+    "生意"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "經濟",
+    "note": "等於「貿易」、「生意」、「濟」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00093",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "網",
+    "網子"
+   ],
+   "in_library": [
+    "網"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "網",
+    "note": "等於「網子」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00094",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "緊",
+    "束縛",
+    "拘束"
+   ],
+   "in_library": [
+    "緊",
+    "束縛",
+    "拘束"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "緊",
+    "note": "等於「束縛」、「拘束」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00095",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "線",
+    "絲",
+    "細"
+   ],
+   "in_library": [
+    "線",
+    "絲",
+    "細"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "線",
+    "note": "等於「絲」、「細」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00096",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "總共",
+    "統一"
+   ],
+   "in_library": [
+    "總共",
+    "統一"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "總共",
+    "note": "等於「統一」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00097",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "膩",
+    "灰心",
+    "乏味",
+    "討厭",
+    "氣餒",
+    "沒興趣",
+    "沒意思",
+    "不耐煩"
+   ],
+   "in_library": [
+    "膩",
+    "灰心",
+    "乏味",
+    "討厭",
+    "氣餒",
+    "不耐煩"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "膩",
+    "note": "等於「灰心」、「乏味」、「討厭」、「氣餒」、「沒興趣」、「沒意思」、「不耐煩」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00098",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "膩了",
+    "膩",
+    "灰心",
+    "乏味",
+    "討厭",
+    "氣餒",
+    "沒興趣",
+    "沒意思",
+    "不耐煩"
+   ],
+   "in_library": [
+    "膩了",
+    "膩",
+    "灰心",
+    "乏味",
+    "討厭",
+    "氣餒",
+    "不耐煩"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "膩了",
+    "note": "等於「膩」、「灰心」、「乏味」、「討厭」、「氣餒」、「沒興趣」、「沒意思」、「不耐煩」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00099",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "英國",
+    "英"
+   ],
+   "in_library": [
+    "英國"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "英國",
+    "note": "等於「英」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00100",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "襪子",
+    "襪"
+   ],
+   "in_library": [
+    "襪子"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "襪子",
+    "note": "等於「襪」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00101",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "解散",
+    "散了"
+   ],
+   "in_library": [
+    "解散"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "解散",
+    "note": "等於「散了」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00102",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "解決",
+    "消除",
+    "消滅"
+   ],
+   "in_library": [
+    "解決",
+    "消除",
+    "消滅"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "解決",
+    "note": "等於「消除」、「消滅」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00103",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "討厭",
+    "厭惡"
+   ],
+   "in_library": [
+    "討厭",
+    "厭惡"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "討厭",
+    "note": "等於「厭惡」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00104",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "詳細",
+    "仔細",
+    "細節",
+    "線"
+   ],
+   "in_library": [
+    "詳細",
+    "仔細",
+    "細節",
+    "線"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "詳細",
+    "note": "等於「仔細」、「細節」、「線」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00105",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "誘惑",
+    "利用",
+    "逗",
+    "誘導"
+   ],
+   "in_library": [
+    "誘惑",
+    "利用"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "誘惑",
+    "note": "等於「利用」、「逗」、「誘導」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00106",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "變",
+    "變成",
+    "變化",
+    "轉變"
+   ],
+   "in_library": [
+    "變",
+    "變成",
+    "變化",
+    "轉變"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "變",
+    "note": "等於「變成」、「變化」、「轉變」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00107",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "變成",
+    "變",
+    "變化",
+    "轉變"
+   ],
+   "in_library": [
+    "變成",
+    "變",
+    "變化",
+    "轉變"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "變成",
+    "note": "等於「變」、「變化」、「轉變」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00108",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "貪心",
+    "貪",
+    "佔有",
+    "貪小便宜"
+   ],
+   "in_library": [
+    "貪心"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "貪心",
+    "note": "等於「貪」、「佔有」、「貪小便宜」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00109",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "貪污",
+    "舞弊"
+   ],
+   "in_library": [
+    "貪污",
+    "舞弊"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "貪污",
+    "note": "等於「舞弊」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00110",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "貼",
+    "貼上",
+    "黏"
+   ],
+   "in_library": [
+    "貼",
+    "貼上",
+    "黏"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "貼",
+    "note": "等於「貼上」、「黏」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00111",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "跑步",
+    "跑"
+   ],
+   "in_library": [
+    "跑步",
+    "跑"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "跑步",
+    "note": "等於「跑」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00112",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "輪替",
+    "輪班",
+    "輪值"
+   ],
+   "in_library": [
+    "輪替",
+    "輪班"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "輪替",
+    "note": "等於「輪班」、「輪值」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00113",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "進貨",
+    "輸入",
+    "進口"
+   ],
+   "in_library": [
+    "進貨",
+    "輸入"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "進貨",
+    "note": "等於「輸入」、「進口」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00114",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "遵從",
+    "服從",
+    "遵照",
+    "遵命",
+    "遵守"
+   ],
+   "in_library": [
+    "遵從",
+    "服從",
+    "遵照",
+    "遵守"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "遵從",
+    "note": "等於「服從」、「遵照」、「遵命」、「遵守」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00115",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "部分",
+    "團體",
+    "小組",
+    "團",
+    "組",
+    "部"
+   ],
+   "in_library": [
+    "部分",
+    "團體",
+    "小組",
+    "組"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "部分",
+    "note": "等於「團體」、「小組」、「團」、「組」、「部」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00116",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "陰天",
+    "雲"
+   ],
+   "in_library": [
+    "陰天",
+    "雲"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "陰天",
+    "note": "等於「雲」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00117",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "雕刻",
+    "刻"
+   ],
+   "in_library": [
+    "雕刻"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "雕刻",
+    "note": "等於「刻」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00118",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "難過",
+    "憂傷"
+   ],
+   "in_library": [
+    "難過",
+    "憂傷"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "難過",
+    "note": "等於「憂傷」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00119",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "雲",
+    "陰天",
+    "雲彩"
+   ],
+   "in_library": [
+    "雲",
+    "陰天"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "雲",
+    "note": "等於「陰天」、「雲彩」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00120",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "頂",
+    "高明",
+    "高手",
+    "很棒",
+    "很會",
+    "頂尖人物",
+    "頂尖"
+   ],
+   "in_library": [
+    "頂",
+    "高明",
+    "高手",
+    "很棒",
+    "很會",
+    "頂尖"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "頂",
+    "note": "等於「高明」、「高手」、「很棒」、「很會」、「頂尖人物」、「頂尖」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00121",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "風",
+    "秋天",
+    "秋",
+    "涼快"
+   ],
+   "in_library": [
+    "風",
+    "秋天",
+    "秋",
+    "涼快"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "風",
+    "note": "等於「秋天」、「秋」、「涼快」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00122",
+   "source": "manual",
+   "relation": "equals",
+   "members": [
+    "駱駝",
+    "駱"
+   ],
+   "in_library": [
+    "駱駝",
+    "駱"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "駱駝",
+    "note": "等於「駱」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00123",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "一周",
+    "一個星期"
+   ],
+   "in_library": [
+    "一周",
+    "一個星期"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "一周",
+    "note": "找「一個星期」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00124",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "一天內",
+    "一整天"
+   ],
+   "in_library": [
+    "一整天"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "一天內",
+    "note": "找「一整天」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00125",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "下周",
+    "下星期"
+   ],
+   "in_library": [
+    "下周",
+    "下星期"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "下周",
+    "note": "找「下星期」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00126",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "事情",
+    "事"
+   ],
+   "in_library": [
+    "事情",
+    "事"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "事情",
+    "note": "找「事」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00127",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "交付",
+    "給"
+   ],
+   "in_library": [
+    "交付",
+    "給"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "交付",
+    "note": "找「給」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00128",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "修",
+    "修理"
+   ],
+   "in_library": [
+    "修理"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "修",
+    "note": "找「修理」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00129",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "催",
+    "快一點"
+   ],
+   "in_library": [],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "催",
+    "note": "找「快一點」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00130",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "傾聽",
+    "聽"
+   ],
+   "in_library": [
+    "傾聽",
+    "聽"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "傾聽",
+    "note": "找「聽」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00131",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "價格",
+    "價錢"
+   ],
+   "in_library": [
+    "價格",
+    "價錢"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "價格",
+    "note": "找「價錢」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00132",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "兒童",
+    "孩子"
+   ],
+   "in_library": [
+    "兒童",
+    "孩子"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "兒童",
+    "note": "找「孩子」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00133",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "判",
+    "裁判"
+   ],
+   "in_library": [
+    "裁判"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "判",
+    "note": "找「裁判」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00134",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "刷",
+    "刷子"
+   ],
+   "in_library": [
+    "刷子"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "刷",
+    "note": "找「刷子」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00135",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "剩",
+    "剩下"
+   ],
+   "in_library": [
+    "剩",
+    "剩下"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "剩",
+    "note": "找「剩下」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00136",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "包裝打開",
+    "封條打開"
+   ],
+   "in_library": [
+    "包裝打開"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "包裝打開",
+    "note": "找「封條打開」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00137",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "古代",
+    "古時候"
+   ],
+   "in_library": [
+    "古代",
+    "古時候"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "古代",
+    "note": "找「古時候」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00138",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "古老",
+    "古"
+   ],
+   "in_library": [
+    "古老",
+    "古"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "古老",
+    "note": "找「古」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00139",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "各不相同",
+    "不一樣"
+   ],
+   "in_library": [
+    "各不相同",
+    "不一樣"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "各不相同",
+    "note": "找「不一樣」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00140",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "向",
+    "相對"
+   ],
+   "in_library": [
+    "向",
+    "相對"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "向",
+    "note": "找「相對」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00141",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "咖啡廳",
+    "咖啡店"
+   ],
+   "in_library": [
+    "咖啡廳",
+    "咖啡店"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "咖啡廳",
+    "note": "找「咖啡店」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00142",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "圖",
+    "圖片"
+   ],
+   "in_library": [
+    "圖片"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "圖",
+    "note": "找「圖片」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00143",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "埋怨",
+    "抱怨"
+   ],
+   "in_library": [
+    "埋怨",
+    "抱怨"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "埋怨",
+    "note": "找「抱怨」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00144",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "堆積如山",
+    "大量"
+   ],
+   "in_library": [
+    "堆積如山",
+    "大量"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "堆積如山",
+    "note": "找「大量」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00145",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "夏",
+    "夏天"
+   ],
+   "in_library": [
+    "夏",
+    "夏天"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "夏",
+    "note": "找「夏天」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00146",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "大雨",
+    "雨"
+   ],
+   "in_library": [
+    "大雨",
+    "雨"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "大雨",
+    "note": "找「雨」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00147",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "奔跑",
+    "跑"
+   ],
+   "in_library": [
+    "奔跑",
+    "跑"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "奔跑",
+    "note": "找「跑」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00148",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "女生",
+    "女"
+   ],
+   "in_library": [
+    "女生",
+    "女"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "女生",
+    "note": "找「女」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00149",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "好心",
+    "善良"
+   ],
+   "in_library": [
+    "好心",
+    "善良"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "好心",
+    "note": "找「善良」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00150",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "導師",
+    "老師"
+   ],
+   "in_library": [
+    "導師",
+    "老師"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "導師",
+    "note": "找「老師」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00151",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "屋子",
+    "房子"
+   ],
+   "in_library": [
+    "屋子",
+    "房子"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "屋子",
+    "note": "找「房子」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00152",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "島",
+    "島嶼"
+   ],
+   "in_library": [
+    "島",
+    "島嶼"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "島",
+    "note": "找「島嶼」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00153",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "差勁",
+    "差"
+   ],
+   "in_library": [
+    "差勁",
+    "差"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "差勁",
+    "note": "找「差」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00154",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "差異",
+    "不一樣"
+   ],
+   "in_library": [
+    "差異",
+    "不一樣"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "差異",
+    "note": "找「不一樣」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00155",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "年老",
+    "老"
+   ],
+   "in_library": [
+    "年老",
+    "老"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "年老",
+    "note": "找「老」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00156",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "很會",
+    "擅長"
+   ],
+   "in_library": [
+    "很會",
+    "擅長"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "很會",
+    "note": "找「擅長」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00157",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "情況",
+    "情形"
+   ],
+   "in_library": [
+    "情況",
+    "情形"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "情況",
+    "note": "找「情形」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00158",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "想念",
+    "想"
+   ],
+   "in_library": [
+    "想念",
+    "想"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "想念",
+    "note": "找「想」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00159",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "懷念",
+    "懷"
+   ],
+   "in_library": [
+    "懷念",
+    "懷"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "懷念",
+    "note": "找「懷」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00160",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "拖延",
+    "拖拖拉拉"
+   ],
+   "in_library": [
+    "拖延",
+    "拖拖拉拉"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "拖延",
+    "note": "找「拖拖拉拉」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00161",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "招過來",
+    "招來"
+   ],
+   "in_library": [
+    "招過來",
+    "招來"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "招過來",
+    "note": "找「招來」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00162",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "拿出",
+    "拿出來"
+   ],
+   "in_library": [
+    "拿出",
+    "拿出來"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "拿出",
+    "note": "找「拿出來」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00163",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "拿起來",
+    "拿"
+   ],
+   "in_library": [
+    "拿起來",
+    "拿"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "拿起來",
+    "note": "找「拿」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00164",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "按件計酬",
+    "論件計酬"
+   ],
+   "in_library": [
+    "按件計酬",
+    "論件計酬"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "按件計酬",
+    "note": "找「論件計酬」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00165",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "掃",
+    "掃地"
+   ],
+   "in_library": [
+    "掃地"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "掃",
+    "note": "找「掃地」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00166",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "提前",
+    "提早"
+   ],
+   "in_library": [
+    "提前",
+    "提早"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "提前",
+    "note": "找「提早」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00167",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "提著",
+    "提"
+   ],
+   "in_library": [
+    "提著",
+    "提"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "提著",
+    "note": "找「提」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00168",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "提議",
+    "建議"
+   ],
+   "in_library": [
+    "提議",
+    "建議"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "提議",
+    "note": "找「建議」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00169",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "插",
+    "插頭"
+   ],
+   "in_library": [
+    "插頭"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "插",
+    "note": "找「插頭」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00170",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "搶",
+    "搶劫"
+   ],
+   "in_library": [
+    "搶",
+    "搶劫"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "搶",
+    "note": "找「搶劫」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00171",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "收錄",
+    "紀錄"
+   ],
+   "in_library": [
+    "紀錄"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "收錄",
+    "note": "找「紀錄」，等於「記」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00172",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "收集",
+    "蒐集"
+   ],
+   "in_library": [
+    "收集",
+    "蒐集"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "收集",
+    "note": "找「蒐集」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00173",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "放著",
+    "放"
+   ],
+   "in_library": [
+    "放著",
+    "放"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "放著",
+    "note": "找「放」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00174",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "敵人",
+    "敵對"
+   ],
+   "in_library": [
+    "敵人",
+    "敵對"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "敵人",
+    "note": "找「敵對」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00175",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "新冠",
+    "新冠狀病毒"
+   ],
+   "in_library": [
+    "新冠",
+    "新冠狀病毒"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "新冠",
+    "note": "找「新冠狀病毒」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00176",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "晴朗",
+    "晴天"
+   ],
+   "in_library": [
+    "晴朗",
+    "晴天"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "晴朗",
+    "note": "找「晴天」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00177",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "暖和",
+    "溫暖"
+   ],
+   "in_library": [
+    "暖和",
+    "溫暖"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "暖和",
+    "note": "找「溫暖」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00178",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "月薪",
+    "收入"
+   ],
+   "in_library": [
+    "月薪",
+    "收入"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "月薪",
+    "note": "找「收入」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00179",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "殘忍",
+    "慘不忍睹"
+   ],
+   "in_library": [
+    "殘忍",
+    "慘不忍睹"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "殘忍",
+    "note": "找「慘不忍睹」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00180",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "洞",
+    "山洞"
+   ],
+   "in_library": [
+    "山洞"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "洞",
+    "note": "找「山洞」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00181",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "消除",
+    "除掉"
+   ],
+   "in_library": [
+    "消除"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "消除",
+    "note": "找「除掉」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00182",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "混亂",
+    "亂"
+   ],
+   "in_library": [
+    "混亂",
+    "亂"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "混亂",
+    "note": "找「亂」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00183",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "炎熱",
+    "熱"
+   ],
+   "in_library": [
+    "炎熱",
+    "熱"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "炎熱",
+    "note": "找「熱」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00184",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "牌",
+    "撲克牌"
+   ],
+   "in_library": [
+    "撲克牌"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "牌",
+    "note": "找「撲克牌」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00185",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "狀況",
+    "情形"
+   ],
+   "in_library": [
+    "狀況",
+    "情形"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "狀況",
+    "note": "找「情形」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00186",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "睜眼",
+    "睜開眼"
+   ],
+   "in_library": [
+    "睜眼"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "睜眼",
+    "note": "找「睜開眼」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00187",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "破產",
+    "倒閉"
+   ],
+   "in_library": [
+    "破產",
+    "倒閉"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "破產",
+    "note": "找「倒閉」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00188",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "租借",
+    "借"
+   ],
+   "in_library": [
+    "租借",
+    "借"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "租借",
+    "note": "找「借」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00189",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "稀少",
+    "少"
+   ],
+   "in_library": [
+    "稀少",
+    "少"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "稀少",
+    "note": "找「少」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00190",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "站立",
+    "站"
+   ],
+   "in_library": [
+    "站立",
+    "站"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "站立",
+    "note": "找「站」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00191",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "竹",
+    "竹子"
+   ],
+   "in_library": [
+    "竹子"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "竹",
+    "note": "找「竹子」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00192",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "等等",
+    "等一下"
+   ],
+   "in_library": [
+    "等等",
+    "等一下"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "等等",
+    "note": "找「等一下」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00193",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "紅茶",
+    "茶"
+   ],
+   "in_library": [
+    "紅茶",
+    "茶"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "紅茶",
+    "note": "找「茶」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00194",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "絕望",
+    "失望"
+   ],
+   "in_library": [
+    "絕望",
+    "失望"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "絕望",
+    "note": "找「失望」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00195",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "經過",
+    "通過"
+   ],
+   "in_library": [
+    "經過",
+    "通過"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "經過",
+    "note": "找「通過」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00196",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "羽毛球",
+    "羽球"
+   ],
+   "in_library": [
+    "羽毛球",
+    "羽球"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "羽毛球",
+    "note": "找「羽球」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00197",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "聞到",
+    "嗅"
+   ],
+   "in_library": [
+    "聞到"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "聞到",
+    "note": "找「嗅」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00198",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "育",
+    "培養"
+   ],
+   "in_library": [
+    "育",
+    "培養"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "育",
+    "note": "找「培養」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00199",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "背",
+    "後背"
+   ],
+   "in_library": [],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "背",
+    "note": "找「後背」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00200",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "腫",
+    "腫起來"
+   ],
+   "in_library": [],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "腫",
+    "note": "找「腫起來」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00201",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "臉部",
+    "臉"
+   ],
+   "in_library": [
+    "臉部",
+    "臉"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "臉部",
+    "note": "找「臉」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00202",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "臨時",
+    "暫時"
+   ],
+   "in_library": [
+    "臨時",
+    "暫時"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "臨時",
+    "note": "找「暫時」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00203",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "自",
+    "自己"
+   ],
+   "in_library": [
+    "自己"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "自",
+    "note": "找「自己」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00204",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "花費",
+    "消費"
+   ],
+   "in_library": [
+    "花費",
+    "消費"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "花費",
+    "note": "找「消費」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00205",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "苦",
+    "苦苦的"
+   ],
+   "in_library": [
+    "苦"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "苦",
+    "note": "找「苦苦的」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00206",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "裝修",
+    "裝潢"
+   ],
+   "in_library": [
+    "裝修",
+    "裝潢"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "裝修",
+    "note": "找「裝潢」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00207",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "託付",
+    "責任交給我"
+   ],
+   "in_library": [
+    "託付"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "託付",
+    "note": "找「責任交給我」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00208",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "訪問",
+    "持麥克風訪問"
+   ],
+   "in_library": [
+    "訪問"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "訪問",
+    "note": "找「持麥克風訪問」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00209",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "設置",
+    "設立"
+   ],
+   "in_library": [
+    "設置",
+    "設立"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "設置",
+    "note": "找「設立」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00210",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "調味料",
+    "調味"
+   ],
+   "in_library": [
+    "調味料",
+    "調味"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "調味料",
+    "note": "找「調味」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00211",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "證據",
+    "證明"
+   ],
+   "in_library": [
+    "證據",
+    "證明"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "證據",
+    "note": "找「證明」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00212",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "賠錢",
+    "賠償"
+   ],
+   "in_library": [
+    "賠錢",
+    "賠償"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "賠錢",
+    "note": "找「賠償」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00213",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "趴著",
+    "趴"
+   ],
+   "in_library": [
+    "趴著"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "趴著",
+    "note": "找「趴」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00214",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "轉變",
+    "變化"
+   ],
+   "in_library": [
+    "轉變",
+    "變化"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "轉變",
+    "note": "找「變化」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00215",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "追蹤",
+    "追隨"
+   ],
+   "in_library": [
+    "追蹤",
+    "追隨"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "追蹤",
+    "note": "找「追隨」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00216",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "逃生",
+    "逃"
+   ],
+   "in_library": [
+    "逃生",
+    "逃"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "逃生",
+    "note": "找「逃」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00217",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "週一",
+    "星期一"
+   ],
+   "in_library": [
+    "週一",
+    "星期一"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "週一",
+    "note": "找「星期一」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00218",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "遺失",
+    "不見了"
+   ],
+   "in_library": [
+    "遺失"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "遺失",
+    "note": "找「不見了」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00219",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "還是",
+    "或是"
+   ],
+   "in_library": [
+    "還是"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "還是",
+    "note": "找「或是」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00220",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "閃爍型警示燈",
+    "閃光燈"
+   ],
+   "in_library": [
+    "閃爍型警示燈"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "閃爍型警示燈",
+    "note": "找「閃光燈」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00221",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "開堆高機",
+    "堆高機"
+   ],
+   "in_library": [
+    "開堆高機",
+    "堆高機"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "開堆高機",
+    "note": "找「堆高機」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00222",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "雞蛋",
+    "蛋"
+   ],
+   "in_library": [
+    "雞蛋",
+    "蛋"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "雞蛋",
+    "note": "找「蛋」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00223",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "領取",
+    "領"
+   ],
+   "in_library": [
+    "領取"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "領取",
+    "note": "找「領」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00224",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "題",
+    "題目"
+   ],
+   "in_library": [
+    "題目"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "題",
+    "note": "找「題目」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00225",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "黴菌",
+    "病菌"
+   ],
+   "in_library": [
+    "黴菌"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "黴菌",
+    "note": "找「病菌」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00226",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "鼓掌",
+    "拍手"
+   ],
+   "in_library": [
+    "鼓掌",
+    "拍手"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "鼓掌",
+    "note": "找「拍手」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
+  },
+  {
+   "id": "SYN_H00227",
+   "source": "manual",
+   "relation": "same_sign",
+   "members": [
+    "齊全",
+    "十全十美"
+   ],
+   "in_library": [
+    "齊全",
+    "十全十美"
+   ],
+   "evidence": {
+    "dataset": "synonym_manual.jsonl",
+    "headword": "齊全",
+    "note": "找「十全十美」",
+    "origin": "影片待辦清單＿1.xlsx"
+   }
   }
  ],
  "index": {
@@ -30736,14 +35219,16 @@
   ],
   "大廈": [
    "SYN_C00023",
-   "SYN_D00024"
+   "SYN_D00024",
+   "SYN_H00046"
   ],
   "大廈_A": [
    "SYN_C00023"
   ],
   "大樓": [
    "SYN_C00023",
-   "SYN_D00024"
+   "SYN_D00024",
+   "SYN_H00046"
   ],
   "大樓_A": [
    "SYN_C00023"
@@ -31078,11 +35563,13 @@
   ],
   "做不成": [
    "SYN_C00065",
-   "SYN_D00069"
+   "SYN_D00069",
+   "SYN_H00012"
   ],
   "未遂": [
    "SYN_C00065",
-   "SYN_D00069"
+   "SYN_D00069",
+   "SYN_H00012"
   ],
   "券": [
    "SYN_C00066",
@@ -31210,11 +35697,13 @@
   ],
   "守舊": [
    "SYN_C00083",
-   "SYN_D00096"
+   "SYN_D00096",
+   "SYN_H00041"
   ],
   "保守": [
    "SYN_C00084",
-   "SYN_D00096"
+   "SYN_D00096",
+   "SYN_H00041"
   ],
   "保守_B": [
    "SYN_C00084"
@@ -31225,7 +35714,8 @@
   ],
   "緊": [
    "SYN_C00085",
-   "SYN_D00097"
+   "SYN_D00097",
+   "SYN_H00094"
   ],
   "出爾反爾_A": [
    "SYN_C00086"
@@ -31340,7 +35830,9 @@
   ],
   "分發": [
    "SYN_C00103",
-   "SYN_D00126"
+   "SYN_D00126",
+   "SYN_H00019",
+   "SYN_H00020"
   ],
   "發牌": [
    "SYN_C00103",
@@ -31577,15 +36069,18 @@
   ],
   "愈": [
    "SYN_C00133",
-   "SYN_D00149"
+   "SYN_D00149",
+   "SYN_H00063"
   ],
   "更": [
    "SYN_C00133",
-   "SYN_D00149"
+   "SYN_D00149",
+   "SYN_H00063"
   ],
   "越": [
    "SYN_C00133",
-   "SYN_D00149"
+   "SYN_D00149",
+   "SYN_H00063"
   ],
   "夜晚": [
    "SYN_C00134",
@@ -31656,7 +36151,8 @@
   ],
   "摔倒": [
    "SYN_C00142",
-   "SYN_D00157"
+   "SYN_D00157",
+   "SYN_H00077"
   ],
   "摔倒_A": [
    "SYN_C00142"
@@ -31978,7 +36474,8 @@
   ],
   "替": [
    "SYN_C00182",
-   "SYN_D00212"
+   "SYN_D00212",
+   "SYN_H00007"
   ],
   "幫_S": [
    "SYN_C00183"
@@ -32036,7 +36533,8 @@
   ],
   "屋子": [
    "SYN_C00189",
-   "SYN_D00221"
+   "SYN_D00221",
+   "SYN_H00151"
   ],
   "戶": [
    "SYN_C00190"
@@ -32192,7 +36690,8 @@
   ],
   "土": [
    "SYN_C00206",
-   "SYN_D00252"
+   "SYN_D00252",
+   "SYN_H00072"
   ],
   "粉": [
    "SYN_C00206",
@@ -32536,7 +37035,8 @@
   ],
   "下星期": [
    "SYN_C00248",
-   "SYN_D00307"
+   "SYN_D00307",
+   "SYN_H00125"
   ],
   "下禮拜": [
    "SYN_C00248",
@@ -32705,14 +37205,16 @@
    "SYN_C00267"
   ],
   "舊": [
-   "SYN_C00268"
+   "SYN_C00268",
+   "SYN_H00041"
   ],
   "舊_B": [
    "SYN_C00268"
   ],
   "年老": [
    "SYN_C00269",
-   "SYN_D00332"
+   "SYN_D00332",
+   "SYN_H00155"
   ],
   "年長": [
    "SYN_C00269",
@@ -32790,7 +37292,8 @@
   ],
   "一個星期": [
    "SYN_C00279",
-   "SYN_D00339"
+   "SYN_D00339",
+   "SYN_H00123"
   ],
   "一個禮拜": [
    "SYN_C00279",
@@ -32918,7 +37421,8 @@
   ],
   "撲克牌": [
    "SYN_C00296",
-   "SYN_D00369"
+   "SYN_D00369",
+   "SYN_H00184"
   ],
   "撲克牌_B": [
    "SYN_C00296"
@@ -32997,7 +37501,8 @@
   ],
   "擋": [
    "SYN_C00308",
-   "SYN_D00390"
+   "SYN_D00390",
+   "SYN_H00057"
   ],
   "防禦": [
    "SYN_C00308",
@@ -33029,7 +37534,8 @@
    "SYN_C00312"
   ],
   "搶": [
-   "SYN_C00313"
+   "SYN_C00313",
+   "SYN_H00170"
   ],
   "搶_A": [
    "SYN_C00313"
@@ -33167,7 +37673,8 @@
   ],
   "事": [
    "SYN_C00331",
-   "SYN_D00006"
+   "SYN_D00006",
+   "SYN_H00126"
   ],
   "事_B": [
    "SYN_C00331"
@@ -33201,15 +37708,19 @@
   ],
   "細": [
    "SYN_C00336",
-   "SYN_D00427"
+   "SYN_D00427",
+   "SYN_H00095"
   ],
   "絲": [
    "SYN_C00336",
-   "SYN_D00427"
+   "SYN_D00427",
+   "SYN_H00095"
   ],
   "線": [
    "SYN_C00336",
-   "SYN_D00427"
+   "SYN_D00427",
+   "SYN_H00095",
+   "SYN_H00104"
   ],
   "兼職_A": [
    "SYN_C00337"
@@ -33262,7 +37773,8 @@
   ],
   "滑": [
    "SYN_C00343",
-   "SYN_D00435"
+   "SYN_D00435",
+   "SYN_H00076"
   ],
   "慢": [
    "SYN_C00344"
@@ -33431,7 +37943,9 @@
   "驚訝": [
    "SYN_C00365",
    "SYN_D00448",
-   "SYN_D00449"
+   "SYN_D00449",
+   "SYN_H00029",
+   "SYN_H00048"
   ],
   "驚訝_A": [
    "SYN_C00365"
@@ -33596,7 +38110,8 @@
    "SYN_C00380"
   ],
   "晴天": [
-   "SYN_C00381"
+   "SYN_C00381",
+   "SYN_H00176"
   ],
   "晴天_A": [
    "SYN_C00381"
@@ -33721,7 +38236,8 @@
    "SYN_C00396"
   ],
   "茶": [
-   "SYN_C00397"
+   "SYN_C00397",
+   "SYN_H00193"
   ],
   "茶_A": [
    "SYN_C00397"
@@ -33884,11 +38400,13 @@
   ],
   "頂": [
    "SYN_C00417",
-   "SYN_D00507"
+   "SYN_D00507",
+   "SYN_H00120"
   ],
   "頂尖": [
    "SYN_C00417",
-   "SYN_D00507"
+   "SYN_D00507",
+   "SYN_H00120"
   ],
   "訓練": [
    "SYN_C00418"
@@ -34114,7 +38632,8 @@
   "秋": [
    "SYN_C00445",
    "SYN_D00542",
-   "SYN_D00663"
+   "SYN_D00663",
+   "SYN_H00121"
   ],
   "秋_A": [
    "SYN_C00445"
@@ -35450,7 +39969,8 @@
   ],
   "春": [
    "SYN_C00600",
-   "SYN_D00661"
+   "SYN_D00661",
+   "SYN_H00074"
   ],
   "春_A": [
    "SYN_C00600"
@@ -36188,7 +40708,9 @@
    "SYN_C00706"
   ],
   "朱": [
-   "SYN_C00707"
+   "SYN_C00707",
+   "SYN_H00090",
+   "SYN_H00091"
   ],
   "朱(姓)": [
    "SYN_C00707"
@@ -37196,7 +41718,8 @@
    "SYN_C00874"
   ],
   "駱": [
-   "SYN_C00875"
+   "SYN_C00875",
+   "SYN_H00122"
   ],
   "駱(姓)": [
    "SYN_C00875"
@@ -37280,13 +41803,15 @@
    "SYN_C00888"
   ],
   "懷": [
-   "SYN_C00889"
+   "SYN_C00889",
+   "SYN_H00159"
   ],
   "懷(姓)": [
    "SYN_C00889"
   ],
   "嚴": [
-   "SYN_C00890"
+   "SYN_C00890",
+   "SYN_H00035"
   ],
   "嚴(姓)": [
    "SYN_C00890"
@@ -37550,7 +42075,8 @@
    "SYN_C00933"
   ],
   "嬰兒": [
-   "SYN_C00933"
+   "SYN_C00933",
+   "SYN_H00040"
   ],
   "大伯": [
    "SYN_C00934"
@@ -38289,7 +42815,8 @@
    "SYN_D00002"
   ],
   "完成": [
-   "SYN_D00002"
+   "SYN_D00002",
+   "SYN_H00023"
   ],
   "成功": [
    "SYN_D00002"
@@ -38313,7 +42840,8 @@
    "SYN_D00005"
   ],
   "事情": [
-   "SYN_D00006"
+   "SYN_D00006",
+   "SYN_H00126"
   ],
   "業務": [
    "SYN_D00006"
@@ -38322,13 +42850,16 @@
    "SYN_D00007"
   ],
   "到底": [
-   "SYN_D00009"
+   "SYN_D00009",
+   "SYN_H00023"
   ],
   "終於": [
-   "SYN_D00009"
+   "SYN_D00009",
+   "SYN_H00023"
   ],
   "結果": [
-   "SYN_D00009"
+   "SYN_D00009",
+   "SYN_H00023"
   ],
   "再": [
    "SYN_D00010",
@@ -38350,16 +42881,19 @@
    "SYN_D00013"
   ],
   "完全": [
-   "SYN_D00014"
+   "SYN_D00014",
+   "SYN_H00016"
   ],
   "全": [
-   "SYN_D00014"
+   "SYN_D00014",
+   "SYN_H00016"
   ],
   "所有": [
    "SYN_D00014"
   ],
   "都": [
-   "SYN_D00014"
+   "SYN_D00014",
+   "SYN_H00016"
   ],
   "從早到晚": [
    "SYN_D00015"
@@ -38385,13 +42919,17 @@
    "SYN_D00019"
   ],
   "古": [
-   "SYN_D00020"
+   "SYN_D00020",
+   "SYN_H00138"
   ],
   "古時候": [
-   "SYN_D00020"
+   "SYN_D00020",
+   "SYN_H00137"
   ],
   "古老": [
-   "SYN_D00020"
+   "SYN_D00020",
+   "SYN_H00041",
+   "SYN_H00138"
   ],
   "憤怒": [
    "SYN_D00021"
@@ -38415,14 +42953,16 @@
    "SYN_D00023"
   ],
   "建築": [
-   "SYN_D00024"
+   "SYN_D00024",
+   "SYN_H00046"
   ],
   "約": [
    "SYN_D00025",
    "SYN_D00368"
   ],
   "約定": [
-   "SYN_D00025"
+   "SYN_D00025",
+   "SYN_H00089"
   ],
   "約會": [
    "SYN_D00025"
@@ -38447,7 +42987,8 @@
    "SYN_D00028"
   ],
   "訪問": [
-   "SYN_D00028"
+   "SYN_D00028",
+   "SYN_H00208"
   ],
   "詢問": [
    "SYN_D00028"
@@ -38459,7 +43000,9 @@
    "SYN_D00029"
   ],
   "分配": [
-   "SYN_D00030"
+   "SYN_D00030",
+   "SYN_H00019",
+   "SYN_H00020"
   ],
   "分類": [
    "SYN_D00030"
@@ -38495,13 +43038,16 @@
    "SYN_D00035"
   ],
   "竹子": [
-   "SYN_D00036"
+   "SYN_D00036",
+   "SYN_H00191"
   ],
   "倒閉": [
-   "SYN_D00037"
+   "SYN_D00037",
+   "SYN_H00187"
   ],
   "破產": [
-   "SYN_D00037"
+   "SYN_D00037",
+   "SYN_H00187"
   ],
   "根本": [
    "SYN_D00038"
@@ -38589,7 +43135,8 @@
    "SYN_D00057"
   ],
   "生意": [
-   "SYN_D00058"
+   "SYN_D00058",
+   "SYN_H00092"
   ],
   "交易": [
    "SYN_D00058"
@@ -38610,10 +43157,12 @@
    "SYN_D00060"
   ],
   "但是": [
-   "SYN_D00060"
+   "SYN_D00060",
+   "SYN_H00031"
   ],
   "可是": [
-   "SYN_D00060"
+   "SYN_D00060",
+   "SYN_H00031"
   ],
   "買": [
    "SYN_D00061"
@@ -38701,16 +43250,26 @@
    "SYN_D00077"
   ],
   "變成": [
-   "SYN_D00078"
+   "SYN_D00078",
+   "SYN_H00106",
+   "SYN_H00107"
   ],
   "變": [
-   "SYN_D00078"
+   "SYN_D00078",
+   "SYN_H00106",
+   "SYN_H00107"
   ],
   "變化": [
-   "SYN_D00078"
+   "SYN_D00078",
+   "SYN_H00106",
+   "SYN_H00107",
+   "SYN_H00214"
   ],
   "轉變": [
-   "SYN_D00078"
+   "SYN_D00078",
+   "SYN_H00106",
+   "SYN_H00107",
+   "SYN_H00214"
   ],
   "表格": [
    "SYN_D00079"
@@ -38722,10 +43281,12 @@
    "SYN_D00080"
   ],
   "兒童": [
-   "SYN_D00080"
+   "SYN_D00080",
+   "SYN_H00132"
   ],
   "孩子": [
-   "SYN_D00080"
+   "SYN_D00080",
+   "SYN_H00132"
   ],
   "水餃": [
    "SYN_D00081"
@@ -38780,7 +43341,8 @@
    "SYN_D00088"
   ],
   "顏色": [
-   "SYN_D00089"
+   "SYN_D00089",
+   "SYN_H00047"
   ],
   "命令": [
    "SYN_D00090"
@@ -38795,10 +43357,12 @@
    "SYN_D00091"
   ],
   "賠錢": [
-   "SYN_D00092"
+   "SYN_D00092",
+   "SYN_H00212"
   ],
   "賠償": [
-   "SYN_D00092"
+   "SYN_D00092",
+   "SYN_H00212"
   ],
   "比賽": [
    "SYN_D00093"
@@ -38822,10 +43386,12 @@
    "SYN_D00095"
   ],
   "束縛": [
-   "SYN_D00097"
+   "SYN_D00097",
+   "SYN_H00094"
   ],
   "拘束": [
-   "SYN_D00097"
+   "SYN_D00097",
+   "SYN_H00094"
   ],
   "散播": [
    "SYN_D00098"
@@ -38849,10 +43415,12 @@
    "SYN_D00101"
   ],
   "貪污": [
-   "SYN_D00102"
+   "SYN_D00102",
+   "SYN_H00109"
   ],
   "舞弊": [
-   "SYN_D00102"
+   "SYN_D00102",
+   "SYN_H00109"
   ],
   "國": [
    "SYN_D00103"
@@ -38870,7 +43438,8 @@
    "SYN_D00105"
   ],
   "經過": [
-   "SYN_D00105"
+   "SYN_D00105",
+   "SYN_H00195"
   ],
   "越過": [
    "SYN_D00105"
@@ -38885,13 +43454,17 @@
    "SYN_D00106"
   ],
   "栽培": [
-   "SYN_D00107"
+   "SYN_D00107",
+   "SYN_H00036"
   ],
   "培養": [
-   "SYN_D00107"
+   "SYN_D00107",
+   "SYN_H00036",
+   "SYN_H00198"
   ],
   "育": [
-   "SYN_D00107"
+   "SYN_D00107",
+   "SYN_H00198"
   ],
   "缺席": [
    "SYN_D00108"
@@ -38918,7 +43491,8 @@
    "SYN_D00112"
   ],
   "決定": [
-   "SYN_D00112"
+   "SYN_D00112",
+   "SYN_H00070"
   ],
   "確定": [
    "SYN_D00112"
@@ -38936,13 +43510,16 @@
    "SYN_D00114"
   ],
   "仔細": [
-   "SYN_D00115"
+   "SYN_D00115",
+   "SYN_H00104"
   ],
   "細節": [
-   "SYN_D00115"
+   "SYN_D00115",
+   "SYN_H00104"
   ],
   "詳細": [
-   "SYN_D00115"
+   "SYN_D00115",
+   "SYN_H00104"
   ],
   "字典": [
    "SYN_D00116"
@@ -38951,7 +43528,9 @@
    "SYN_D00116"
   ],
   "不一樣": [
-   "SYN_D00117"
+   "SYN_D00117",
+   "SYN_H00139",
+   "SYN_H00154"
   ],
   "不同": [
    "SYN_D00117"
@@ -38972,10 +43551,13 @@
    "SYN_D00120"
   ],
   "灰心": [
-   "SYN_D00121"
+   "SYN_D00121",
+   "SYN_H00097",
+   "SYN_H00098"
   ],
   "難過": [
-   "SYN_D00121"
+   "SYN_D00121",
+   "SYN_H00118"
   ],
   "看到": [
    "SYN_D00122"
@@ -39052,7 +43634,9 @@
   "乏味": [
    "SYN_D00137",
    "SYN_D00174",
-   "SYN_D00503"
+   "SYN_D00503",
+   "SYN_H00097",
+   "SYN_H00098"
   ],
   "呆板": [
    "SYN_D00137"
@@ -39067,10 +43651,12 @@
    "SYN_D00138"
   ],
   "努力": [
-   "SYN_D00139"
+   "SYN_D00139",
+   "SYN_H00025"
   ],
   "蛋": [
-   "SYN_D00140"
+   "SYN_D00140",
+   "SYN_H00222"
   ],
   "神氣": [
    "SYN_D00141"
@@ -39106,7 +43692,8 @@
    "SYN_D00147"
   ],
   "設立": [
-   "SYN_D00147"
+   "SYN_D00147",
+   "SYN_H00209"
   ],
   "平分秋色": [
    "SYN_D00148"
@@ -39115,7 +43702,8 @@
    "SYN_D00151"
   ],
   "換": [
-   "SYN_D00152"
+   "SYN_D00152",
+   "SYN_H00004"
   ],
   "表": [
    "SYN_D00153"
@@ -39127,7 +43715,8 @@
    "SYN_D00154"
   ],
   "臉": [
-   "SYN_D00154"
+   "SYN_D00154",
+   "SYN_H00201"
   ],
   "不及格": [
    "SYN_D00155"
@@ -39137,7 +43726,8 @@
    "SYN_D00156"
   ],
   "跌倒": [
-   "SYN_D00157"
+   "SYN_D00157",
+   "SYN_H00077"
   ],
   "假": [
    "SYN_D00158"
@@ -39173,7 +43763,8 @@
    "SYN_D00162"
   ],
   "女生": [
-   "SYN_D00163"
+   "SYN_D00163",
+   "SYN_H00148"
   ],
   "女性": [
    "SYN_D00163"
@@ -39185,7 +43776,8 @@
    "SYN_D00164"
   ],
   "少": [
-   "SYN_D00164"
+   "SYN_D00164",
+   "SYN_H00189"
   ],
   "稍微": [
    "SYN_D00164"
@@ -39215,7 +43807,8 @@
    "SYN_D00168"
   ],
   "結束": [
-   "SYN_D00168"
+   "SYN_D00168",
+   "SYN_H00023"
   ],
   "開除": [
    "SYN_D00169",
@@ -39259,7 +43852,8 @@
    "SYN_D00177"
   ],
   "追隨": [
-   "SYN_D00178"
+   "SYN_D00178",
+   "SYN_H00215"
   ],
   "跟": [
    "SYN_D00178"
@@ -39504,14 +44098,17 @@
   ],
   "夏": [
    "SYN_D00219",
-   "SYN_D00662"
+   "SYN_D00662",
+   "SYN_H00145"
   ],
   "夏天": [
    "SYN_D00219",
-   "SYN_D00662"
+   "SYN_D00662",
+   "SYN_H00145"
   ],
   "熱": [
-   "SYN_D00219"
+   "SYN_D00219",
+   "SYN_H00183"
   ],
   "家": [
    "SYN_D00221"
@@ -39520,7 +44117,8 @@
    "SYN_D00221"
   ],
   "多少": [
-   "SYN_D00222"
+   "SYN_D00222",
+   "SYN_H00037"
   ],
   "幾": [
    "SYN_D00222",
@@ -39577,10 +44175,12 @@
    "SYN_D00232"
   ],
   "模仿": [
-   "SYN_D00233"
+   "SYN_D00233",
+   "SYN_H00067"
   ],
   "學習": [
-   "SYN_D00233"
+   "SYN_D00233",
+   "SYN_H00067"
   ],
   "不久": [
    "SYN_D00234"
@@ -39691,7 +44291,8 @@
    "SYN_D00248"
   ],
   "資料": [
-   "SYN_D00248"
+   "SYN_D00248",
+   "SYN_H00059"
   ],
   "缺": [
    "SYN_D00249",
@@ -39707,7 +44308,8 @@
    "SYN_D00252"
   ],
   "沙": [
-   "SYN_D00252"
+   "SYN_D00252",
+   "SYN_H00072"
   ],
   "陸地": [
    "SYN_D00252"
@@ -39740,7 +44342,8 @@
    "SYN_D00257"
   ],
   "依靠": [
-   "SYN_D00258"
+   "SYN_D00258",
+   "SYN_H00009"
   ],
   "依賴": [
    "SYN_D00258"
@@ -39785,7 +44388,8 @@
    "SYN_D00265"
   ],
   "遺失": [
-   "SYN_D00265"
+   "SYN_D00265",
+   "SYN_H00218"
   ],
   "愛": [
    "SYN_D00266"
@@ -39819,10 +44423,12 @@
   ],
   "屢次": [
    "SYN_D00271",
-   "SYN_D00272"
+   "SYN_D00272",
+   "SYN_H00038"
   ],
   "亂": [
-   "SYN_D00273"
+   "SYN_D00273",
+   "SYN_H00182"
   ],
   "亂七八糟": [
    "SYN_D00273"
@@ -39892,10 +44498,12 @@
    "SYN_D00284"
   ],
   "星期一": [
-   "SYN_D00286"
+   "SYN_D00286",
+   "SYN_H00217"
   ],
   "週一": [
-   "SYN_D00286"
+   "SYN_D00286",
+   "SYN_H00217"
   ],
   "金錢": [
    "SYN_D00287"
@@ -39972,16 +44580,19 @@
    "SYN_D00299"
   ],
   "互相": [
-   "SYN_D00300"
+   "SYN_D00300",
+   "SYN_H00009"
   ],
   "協助": [
    "SYN_D00300"
   ],
   "狹窄": [
-   "SYN_D00301"
+   "SYN_D00301",
+   "SYN_H00085"
   ],
   "窄": [
-   "SYN_D00301"
+   "SYN_D00301",
+   "SYN_H00085"
   ],
   "天然": [
    "SYN_D00302"
@@ -40018,7 +44629,8 @@
    "SYN_D00311"
   ],
   "廢話": [
-   "SYN_D00312"
+   "SYN_D00312",
+   "SYN_H00071"
   ],
   "麵": [
    "SYN_D00313"
@@ -40042,7 +44654,8 @@
    "SYN_D00315"
   ],
   "差勁": [
-   "SYN_D00316"
+   "SYN_D00316",
+   "SYN_H00153"
   ],
   "不好": [
    "SYN_D00316"
@@ -40073,16 +44686,20 @@
    "SYN_D00322"
   ],
   "服從": [
-   "SYN_D00323"
+   "SYN_D00323",
+   "SYN_H00114"
   ],
   "遵守": [
-   "SYN_D00323"
+   "SYN_D00323",
+   "SYN_H00114"
   ],
   "遵從": [
-   "SYN_D00323"
+   "SYN_D00323",
+   "SYN_H00114"
   ],
   "遵照": [
-   "SYN_D00323"
+   "SYN_D00323",
+   "SYN_H00114"
   ],
   "障礙": [
    "SYN_D00324",
@@ -40130,7 +44747,8 @@
    "SYN_D00331"
   ],
   "老": [
-   "SYN_D00332"
+   "SYN_D00332",
+   "SYN_H00155"
   ],
   "兄": [
    "SYN_D00333"
@@ -40219,25 +44837,32 @@
    "SYN_D00350"
   ],
   "小組": [
-   "SYN_D00351"
+   "SYN_D00351",
+   "SYN_H00115"
   ],
   "團體": [
-   "SYN_D00351"
+   "SYN_D00351",
+   "SYN_H00115"
   ],
   "組": [
-   "SYN_D00351"
+   "SYN_D00351",
+   "SYN_H00115"
   ],
   "部分": [
-   "SYN_D00351"
+   "SYN_D00351",
+   "SYN_H00115"
   ],
   "及格": [
-   "SYN_D00352"
+   "SYN_D00352",
+   "SYN_H00027"
   ],
   "獲得": [
-   "SYN_D00352"
+   "SYN_D00352",
+   "SYN_H00027"
   ],
   "通過": [
-   "SYN_D00352"
+   "SYN_D00352",
+   "SYN_H00195"
   ],
   "以前": [
    "SYN_D00353"
@@ -40255,13 +44880,16 @@
    "SYN_D00354"
   ],
   "付帳": [
-   "SYN_D00355"
+   "SYN_D00355",
+   "SYN_H00006"
   ],
   "付錢": [
-   "SYN_D00355"
+   "SYN_D00355",
+   "SYN_H00006"
   ],
   "繳費": [
-   "SYN_D00355"
+   "SYN_D00355",
+   "SYN_H00006"
   ],
   "削水果": [
    "SYN_D00356"
@@ -40282,7 +44910,8 @@
    "SYN_D00360"
   ],
   "十全十美": [
-   "SYN_D00360"
+   "SYN_D00360",
+   "SYN_H00227"
   ],
   "標準": [
    "SYN_D00360"
@@ -40312,10 +44941,12 @@
    "SYN_D00365"
   ],
   "乒乓球": [
-   "SYN_D00366"
+   "SYN_D00366",
+   "SYN_H00065"
   ],
   "桌球": [
-   "SYN_D00366"
+   "SYN_D00366",
+   "SYN_H00065"
   ],
   "地方": [
    "SYN_D00367"
@@ -40330,7 +44961,8 @@
    "SYN_D00370"
   ],
   "插頭": [
-   "SYN_D00370"
+   "SYN_D00370",
+   "SYN_H00169"
   ],
   "中毒": [
    "SYN_D00371"
@@ -40351,13 +44983,17 @@
    "SYN_D00373"
   ],
   "延期": [
-   "SYN_D00374"
+   "SYN_D00374",
+   "SYN_H00045"
   ],
   "拖延": [
-   "SYN_D00374"
+   "SYN_D00374",
+   "SYN_H00045",
+   "SYN_H00160"
   ],
   "順延": [
-   "SYN_D00374"
+   "SYN_D00374",
+   "SYN_H00045"
   ],
   "倒": [
    "SYN_D00375"
@@ -40366,10 +45002,12 @@
    "SYN_D00375"
   ],
   "祈禱": [
-   "SYN_D00376"
+   "SYN_D00376",
+   "SYN_H00083"
   ],
   "禱告": [
-   "SYN_D00376"
+   "SYN_D00376",
+   "SYN_H00083"
   ],
   "準備": [
    "SYN_D00377"
@@ -40402,7 +45040,8 @@
    "SYN_D00383"
   ],
   "證明": [
-   "SYN_D00383"
+   "SYN_D00383",
+   "SYN_H00211"
   ],
   "吵架": [
    "SYN_D00384"
@@ -40432,7 +45071,8 @@
    "SYN_D00387"
   ],
   "雨": [
-   "SYN_D00387"
+   "SYN_D00387",
+   "SYN_H00146"
   ],
   "收到": [
    "SYN_D00388"
@@ -40444,13 +45084,15 @@
    "SYN_D00388"
   ],
   "紀錄": [
-   "SYN_D00389"
+   "SYN_D00389",
+   "SYN_H00171"
   ],
   "記錄": [
    "SYN_D00389"
   ],
   "拒絕": [
-   "SYN_D00390"
+   "SYN_D00390",
+   "SYN_H00057"
   ],
   "報名": [
    "SYN_D00391"
@@ -40468,13 +45110,16 @@
    "SYN_D00392"
   ],
   "保存": [
-   "SYN_D00393"
+   "SYN_D00393",
+   "SYN_H00080"
   ],
   "保留": [
-   "SYN_D00393"
+   "SYN_D00393",
+   "SYN_H00080"
   ],
   "留": [
-   "SYN_D00393"
+   "SYN_D00393",
+   "SYN_H00080"
   ],
   "背誦": [
    "SYN_D00394"
@@ -40556,10 +45201,13 @@
    "SYN_D00405"
   ],
   "跑": [
-   "SYN_D00406"
+   "SYN_D00406",
+   "SYN_H00111",
+   "SYN_H00147"
   ],
   "跑步": [
-   "SYN_D00406"
+   "SYN_D00406",
+   "SYN_H00111"
   ],
   "鹹": [
    "SYN_D00408"
@@ -40670,7 +45318,9 @@
    "SYN_D00430"
   ],
   "情形": [
-   "SYN_D00431"
+   "SYN_D00431",
+   "SYN_H00157",
+   "SYN_H00185"
   ],
   "樣子": [
    "SYN_D00431"
@@ -40694,13 +45344,15 @@
    "SYN_D00438"
   ],
   "寬": [
-   "SYN_D00439"
+   "SYN_D00439",
+   "SYN_H00042"
   ],
   "寬大": [
    "SYN_D00439"
   ],
   "寬敞": [
-   "SYN_D00439"
+   "SYN_D00439",
+   "SYN_H00042"
   ],
   "說話": [
    "SYN_D00440"
@@ -40747,19 +45399,23 @@
   ],
   "嚇一跳": [
    "SYN_D00448",
-   "SYN_D00449"
+   "SYN_D00449",
+   "SYN_H00048"
   ],
   "小偷": [
    "SYN_D00451"
   ],
   "偷": [
-   "SYN_D00451"
+   "SYN_D00451",
+   "SYN_H00013"
   ],
   "偷竊": [
-   "SYN_D00451"
+   "SYN_D00451",
+   "SYN_H00013"
   ],
   "竊盜": [
-   "SYN_D00451"
+   "SYN_D00451",
+   "SYN_H00013"
   ],
   "依然": [
    "SYN_D00452"
@@ -40831,13 +45487,16 @@
    "SYN_D00462"
   ],
   "剩": [
-   "SYN_D00463"
+   "SYN_D00463",
+   "SYN_H00135"
   ],
   "扣": [
-   "SYN_D00463"
+   "SYN_D00463",
+   "SYN_H00075"
   ],
   "減": [
-   "SYN_D00463"
+   "SYN_D00463",
+   "SYN_H00075"
   ],
   "出乎意料": [
    "SYN_D00464"
@@ -40872,16 +45531,19 @@
    "SYN_D00469"
   ],
   "建議": [
-   "SYN_D00470"
+   "SYN_D00470",
+   "SYN_H00168"
   ],
   "提議": [
-   "SYN_D00470"
+   "SYN_D00470",
+   "SYN_H00168"
   ],
   "太陽": [
    "SYN_D00471"
   ],
   "照": [
-   "SYN_D00471"
+   "SYN_D00471",
+   "SYN_H00067"
   ],
   "孫(姓)": [
    "SYN_D00472"
@@ -40917,10 +45579,12 @@
   ],
   "提供": [
    "SYN_D00476",
-   "SYN_D00477"
+   "SYN_D00477",
+   "SYN_H00003"
   ],
   "給": [
-   "SYN_D00476"
+   "SYN_D00476",
+   "SYN_H00127"
   ],
   "給予": [
    "SYN_D00476"
@@ -40962,7 +45626,8 @@
    "SYN_D00484"
   ],
   "拿": [
-   "SYN_D00484"
+   "SYN_D00484",
+   "SYN_H00163"
   ],
   "長舌": [
    "SYN_D00485"
@@ -41031,10 +45696,12 @@
    "SYN_D00498"
   ],
   "扔掉": [
-   "SYN_D00499"
+   "SYN_D00499",
+   "SYN_H00002"
   ],
   "丟": [
-   "SYN_D00499"
+   "SYN_D00499",
+   "SYN_H00002"
   ],
   "星期四": [
    "SYN_D00500"
@@ -41049,13 +45716,16 @@
    "SYN_D00502"
   ],
   "膩": [
-   "SYN_D00503"
+   "SYN_D00503",
+   "SYN_H00097",
+   "SYN_H00098"
   ],
   "辛苦": [
    "SYN_D00504"
   ],
   "苦": [
-   "SYN_D00504"
+   "SYN_D00504",
+   "SYN_H00205"
   ],
   "一起": [
    "SYN_D00505"
@@ -41124,7 +45794,8 @@
    "SYN_D00518"
   ],
   "不用": [
-   "SYN_D00518"
+   "SYN_D00518",
+   "SYN_H00071"
   ],
   "放假": [
    "SYN_D00519"
@@ -41133,7 +45804,8 @@
    "SYN_D00519"
   ],
   "等等": [
-   "SYN_D00520"
+   "SYN_D00520",
+   "SYN_H00192"
   ],
   "種類": [
    "SYN_D00520"
@@ -41169,13 +45841,16 @@
    "SYN_D00524"
   ],
   "看醫生": [
-   "SYN_D00524"
+   "SYN_D00524",
+   "SYN_H00082"
   ],
   "吐": [
-   "SYN_D00525"
+   "SYN_D00525",
+   "SYN_H00034"
   ],
   "嘔吐": [
-   "SYN_D00525"
+   "SYN_D00525",
+   "SYN_H00034"
   ],
   "走": [
    "SYN_D00527"
@@ -41205,10 +45880,12 @@
    "SYN_D00530"
   ],
   "暖和": [
-   "SYN_D00531"
+   "SYN_D00531",
+   "SYN_H00177"
   ],
   "溫暖": [
-   "SYN_D00531"
+   "SYN_D00531",
+   "SYN_H00177"
   ],
   "水": [
    "SYN_D00532"
@@ -41265,17 +45942,21 @@
    "SYN_D00540"
   ],
   "勝利": [
-   "SYN_D00541"
+   "SYN_D00541",
+   "SYN_H00027"
   ],
   "贏": [
-   "SYN_D00541"
+   "SYN_D00541",
+   "SYN_H00027"
   ],
   "秋天": [
    "SYN_D00542",
-   "SYN_D00663"
+   "SYN_D00663",
+   "SYN_H00121"
   ],
   "風": [
-   "SYN_D00542"
+   "SYN_D00542",
+   "SYN_H00121"
   ],
   "翅膀": [
    "SYN_D00543"
@@ -41332,7 +46013,9 @@
    "SYN_D00553"
   ],
   "打敗": [
-   "SYN_D00554"
+   "SYN_D00554",
+   "SYN_H00051",
+   "SYN_H00056"
   ],
   "克服": [
    "SYN_D00554"
@@ -41394,7 +46077,8 @@
    "SYN_D00588"
   ],
   "順": [
-   "SYN_D00588"
+   "SYN_D00588",
+   "SYN_H00076"
   ],
   "飯店": [
    "SYN_D00591"
@@ -41406,13 +46090,15 @@
    "SYN_D00593"
   ],
   "羽毛球": [
-   "SYN_D00594"
+   "SYN_D00594",
+   "SYN_H00196"
   ],
   "打羽球": [
    "SYN_D00594"
   ],
   "羽球": [
-   "SYN_D00594"
+   "SYN_D00594",
+   "SYN_H00196"
   ],
   "電動玩具": [
    "SYN_D00595",
@@ -41560,7 +46246,8 @@
    "SYN_D00687"
   ],
   "咖啡廳": [
-   "SYN_D00687"
+   "SYN_D00687",
+   "SYN_H00141"
   ],
   "火花": [
    "SYN_D00690"
@@ -41694,6 +46381,1151 @@
   ],
   "反省": [
    "SYN_M00009"
+  ],
+  "不敢": [
+   "SYN_H00001"
+  ],
+  "不好意思": [
+   "SYN_H00001"
+  ],
+  "不敢當": [
+   "SYN_H00001"
+  ],
+  "膽小": [
+   "SYN_H00001"
+  ],
+  "我怕": [
+   "SYN_H00001"
+  ],
+  "丟掉": [
+   "SYN_H00002"
+  ],
+  "交": [
+   "SYN_H00003"
+  ],
+  "交來": [
+   "SYN_H00003"
+  ],
+  "交換": [
+   "SYN_H00004"
+  ],
+  "對調": [
+   "SYN_H00004"
+  ],
+  "輪調": [
+   "SYN_H00004"
+  ],
+  "輪班": [
+   "SYN_H00004",
+   "SYN_H00112"
+  ],
+  "同理心": [
+   "SYN_H00004"
+  ],
+  "仍然": [
+   "SYN_H00005"
+  ],
+  "照舊": [
+   "SYN_H00005"
+  ],
+  "依樣畫葫蘆": [
+   "SYN_H00005"
+  ],
+  "複製": [
+   "SYN_H00005"
+  ],
+  "代替": [
+   "SYN_H00007"
+  ],
+  "代": [
+   "SYN_H00007"
+  ],
+  "以外": [
+   "SYN_H00008"
+  ],
+  "除了…以外": [
+   "SYN_H00008"
+  ],
+  "放在一邊": [
+   "SYN_H00008"
+  ],
+  "便宜": [
+   "SYN_H00010"
+  ],
+  "廉價": [
+   "SYN_H00010"
+  ],
+  "保齡球": [
+   "SYN_H00011"
+  ],
+  "打保齡球": [
+   "SYN_H00011"
+  ],
+  "做不到": [
+   "SYN_H00012"
+  ],
+  "偷偷": [
+   "SYN_H00014"
+  ],
+  "偷偷的": [
+   "SYN_H00014"
+  ],
+  "私下的": [
+   "SYN_H00014"
+  ],
+  "悄悄的": [
+   "SYN_H00014"
+  ],
+  "價格高低": [
+   "SYN_H00015"
+  ],
+  "物價波動": [
+   "SYN_H00015"
+  ],
+  "全部": [
+   "SYN_H00016"
+  ],
+  "整個": [
+   "SYN_H00016"
+  ],
+  "所有的": [
+   "SYN_H00016"
+  ],
+  "全都": [
+   "SYN_H00016"
+  ],
+  "一整天": [
+   "SYN_H00016",
+   "SYN_H00124"
+  ],
+  "兼差": [
+   "SYN_H00017"
+  ],
+  "兼": [
+   "SYN_H00017"
+  ],
+  "腳踏兩條船": [
+   "SYN_H00017"
+  ],
+  "出去": [
+   "SYN_H00018"
+  ],
+  "出門": [
+   "SYN_H00018"
+  ],
+  "刑警": [
+   "SYN_H00021"
+  ],
+  "便衣": [
+   "SYN_H00021"
+  ],
+  "刑": [
+   "SYN_H00021"
+  ],
+  "划算": [
+   "SYN_H00022"
+  ],
+  "額外": [
+   "SYN_H00022"
+  ],
+  "究竟": [
+   "SYN_H00023"
+  ],
+  "終點": [
+   "SYN_H00023"
+  ],
+  "刻苦耐勞": [
+   "SYN_H00024"
+  ],
+  "任勞任怨": [
+   "SYN_H00024"
+  ],
+  "很吃力": [
+   "SYN_H00024"
+  ],
+  "加油": [
+   "SYN_H00025"
+  ],
+  "印章": [
+   "SYN_H00026"
+  ],
+  "圖章": [
+   "SYN_H00026"
+  ],
+  "蓋章": [
+   "SYN_H00026"
+  ],
+  "考上": [
+   "SYN_H00027"
+  ],
+  "...到了": [
+   "SYN_H00027"
+  ],
+  "受傷": [
+   "SYN_H00028"
+  ],
+  "傷": [
+   "SYN_H00028"
+  ],
+  "可怕": [
+   "SYN_H00029"
+  ],
+  "恐怖": [
+   "SYN_H00029",
+   "SYN_H00048"
+  ],
+  "嚇": [
+   "SYN_H00029",
+   "SYN_H00048"
+  ],
+  "驚嚇": [
+   "SYN_H00029",
+   "SYN_H00048"
+  ],
+  "可憐": [
+   "SYN_H00030"
+  ],
+  "憐憫": [
+   "SYN_H00030"
+  ],
+  "同情": [
+   "SYN_H00030"
+  ],
+  "啤酒": [
+   "SYN_H00032"
+  ],
+  "Beer": [
+   "SYN_H00032"
+  ],
+  "喘": [
+   "SYN_H00033"
+  ],
+  "喘氣": [
+   "SYN_H00033"
+  ],
+  "很累": [
+   "SYN_H00033"
+  ],
+  "累死了": [
+   "SYN_H00033"
+  ],
+  "非常辛苦": [
+   "SYN_H00033"
+  ],
+  "噁心": [
+   "SYN_H00034"
+  ],
+  "反胃": [
+   "SYN_H00034"
+  ],
+  "嚴格": [
+   "SYN_H00035"
+  ],
+  "培育": [
+   "SYN_H00036"
+  ],
+  "養育": [
+   "SYN_H00036"
+  ],
+  "陶治": [
+   "SYN_H00036"
+  ],
+  "幾個": [
+   "SYN_H00037"
+  ],
+  "好幾次": [
+   "SYN_H00038"
+  ],
+  "嫌少": [
+   "SYN_H00039"
+  ],
+  "嫌小": [
+   "SYN_H00039"
+  ],
+  "好少": [
+   "SYN_H00039"
+  ],
+  "一點點": [
+   "SYN_H00039"
+  ],
+  "好小": [
+   "SYN_H00039"
+  ],
+  "寶寶": [
+   "SYN_H00040"
+  ],
+  "居住": [
+   "SYN_H00043"
+  ],
+  "住": [
+   "SYN_H00043"
+  ],
+  "住宿": [
+   "SYN_H00043"
+  ],
+  "幾小時": [
+   "SYN_H00044"
+  ],
+  "多少小時": [
+   "SYN_H00044"
+  ],
+  "延後": [
+   "SYN_H00045"
+  ],
+  "延": [
+   "SYN_H00045"
+  ],
+  "大飯店": [
+   "SYN_H00046"
+  ],
+  "彩色": [
+   "SYN_H00047"
+  ],
+  "懊惱": [
+   "SYN_H00049"
+  ],
+  "遺憾": [
+   "SYN_H00049"
+  ],
+  "哎呀": [
+   "SYN_H00049"
+  ],
+  "或者": [
+   "SYN_H00050"
+  ],
+  "或": [
+   "SYN_H00050"
+  ],
+  "或是": [
+   "SYN_H00050",
+   "SYN_H00219"
+  ],
+  "擊敗": [
+   "SYN_H00051",
+   "SYN_H00056"
+  ],
+  "抱歉": [
+   "SYN_H00052"
+  ],
+  "對不起": [
+   "SYN_H00052"
+  ],
+  "拜訪": [
+   "SYN_H00053"
+  ],
+  "訪視": [
+   "SYN_H00053"
+  ],
+  "探視": [
+   "SYN_H00053"
+  ],
+  "掛": [
+   "SYN_H00054"
+  ],
+  "掛鉤": [
+   "SYN_H00054"
+  ],
+  "握手": [
+   "SYN_H00055"
+  ],
+  "建交": [
+   "SYN_H00055"
+  ],
+  "防": [
+   "SYN_H00057"
+  ],
+  "防備": [
+   "SYN_H00057"
+  ],
+  "阻擋": [
+   "SYN_H00057"
+  ],
+  "防止": [
+   "SYN_H00057"
+  ],
+  "收錄": [
+   "SYN_H00058",
+   "SYN_H00171"
+  ],
+  "記": [
+   "SYN_H00058"
+  ],
+  "文件": [
+   "SYN_H00059"
+  ],
+  "斷": [
+   "SYN_H00060"
+  ],
+  "中斷": [
+   "SYN_H00060"
+  ],
+  "折": [
+   "SYN_H00060"
+  ],
+  "是的": [
+   "SYN_H00061"
+  ],
+  "是": [
+   "SYN_H00061"
+  ],
+  "暗": [
+   "SYN_H00062"
+  ],
+  "黑暗": [
+   "SYN_H00062"
+  ],
+  "書法": [
+   "SYN_H00064"
+  ],
+  "寫毛筆字": [
+   "SYN_H00064"
+  ],
+  "打乒乓球": [
+   "SYN_H00065"
+  ],
+  "打桌球": [
+   "SYN_H00065"
+  ],
+  "梅": [
+   "SYN_H00066"
+  ],
+  "酸梅": [
+   "SYN_H00066"
+  ],
+  "按照": [
+   "SYN_H00067"
+  ],
+  "按": [
+   "SYN_H00067"
+  ],
+  "殘障": [
+   "SYN_H00068"
+  ],
+  "身心障礙": [
+   "SYN_H00068"
+  ],
+  "殺": [
+   "SYN_H00069"
+  ],
+  "殺頭": [
+   "SYN_H00069"
+  ],
+  "定案": [
+   "SYN_H00070"
+  ],
+  "沒有用": [
+   "SYN_H00071"
+  ],
+  "廢棄": [
+   "SYN_H00071"
+  ],
+  "不需要": [
+   "SYN_H00071"
+  ],
+  "砂": [
+   "SYN_H00072"
+  ],
+  "沙子": [
+   "SYN_H00072"
+  ],
+  "土地": [
+   "SYN_H00072"
+  ],
+  "活": [
+   "SYN_H00073"
+  ],
+  "活著": [
+   "SYN_H00073"
+  ],
+  "健在": [
+   "SYN_H00073"
+  ],
+  "涼快": [
+   "SYN_H00074",
+   "SYN_H00121"
+  ],
+  "吹": [
+   "SYN_H00074"
+  ],
+  "剩下": [
+   "SYN_H00075",
+   "SYN_H00135"
+  ],
+  "扣除": [
+   "SYN_H00075"
+  ],
+  "滑倒": [
+   "SYN_H00077"
+  ],
+  "摔跤": [
+   "SYN_H00077"
+  ],
+  "火": [
+   "SYN_H00078"
+  ],
+  "著火": [
+   "SYN_H00078"
+  ],
+  "炫耀": [
+   "SYN_H00079"
+  ],
+  "引人注目": [
+   "SYN_H00079"
+  ],
+  "存": [
+   "SYN_H00080"
+  ],
+  "盒子": [
+   "SYN_H00081"
+  ],
+  "便當": [
+   "SYN_H00081"
+  ],
+  "蓋": [
+   "SYN_H00081"
+  ],
+  "看病": [
+   "SYN_H00082"
+  ],
+  "祈求": [
+   "SYN_H00083"
+  ],
+  "禮貌": [
+   "SYN_H00084"
+  ],
+  "禮節": [
+   "SYN_H00084"
+  ],
+  "禮": [
+   "SYN_H00084"
+  ],
+  "狹": [
+   "SYN_H00085"
+  ],
+  "站": [
+   "SYN_H00086",
+   "SYN_H00190"
+  ],
+  "站立": [
+   "SYN_H00086",
+   "SYN_H00190"
+  ],
+  "立": [
+   "SYN_H00086"
+  ],
+  "競爭": [
+   "SYN_H00087"
+  ],
+  "較勁": [
+   "SYN_H00087"
+  ],
+  "管子": [
+   "SYN_H00088"
+  ],
+  "棍子": [
+   "SYN_H00088"
+  ],
+  "簽約": [
+   "SYN_H00089"
+  ],
+  "合約": [
+   "SYN_H00089"
+  ],
+  "紅": [
+   "SYN_H00090",
+   "SYN_H00091"
+  ],
+  "紅色": [
+   "SYN_H00090",
+   "SYN_H00091"
+  ],
+  "丹": [
+   "SYN_H00090",
+   "SYN_H00091"
+  ],
+  "赤": [
+   "SYN_H00090",
+   "SYN_H00091"
+  ],
+  "經濟": [
+   "SYN_H00092"
+  ],
+  "貿易": [
+   "SYN_H00092"
+  ],
+  "濟": [
+   "SYN_H00092"
+  ],
+  "網": [
+   "SYN_H00093"
+  ],
+  "網子": [
+   "SYN_H00093"
+  ],
+  "總共": [
+   "SYN_H00096"
+  ],
+  "統一": [
+   "SYN_H00096"
+  ],
+  "討厭": [
+   "SYN_H00097",
+   "SYN_H00098",
+   "SYN_H00103"
+  ],
+  "氣餒": [
+   "SYN_H00097",
+   "SYN_H00098"
+  ],
+  "沒興趣": [
+   "SYN_H00097",
+   "SYN_H00098"
+  ],
+  "沒意思": [
+   "SYN_H00097",
+   "SYN_H00098"
+  ],
+  "不耐煩": [
+   "SYN_H00097",
+   "SYN_H00098"
+  ],
+  "膩了": [
+   "SYN_H00098"
+  ],
+  "英國": [
+   "SYN_H00099"
+  ],
+  "英": [
+   "SYN_H00099"
+  ],
+  "襪子": [
+   "SYN_H00100"
+  ],
+  "襪": [
+   "SYN_H00100"
+  ],
+  "解散": [
+   "SYN_H00101"
+  ],
+  "散了": [
+   "SYN_H00101"
+  ],
+  "解決": [
+   "SYN_H00102"
+  ],
+  "消除": [
+   "SYN_H00102",
+   "SYN_H00181"
+  ],
+  "消滅": [
+   "SYN_H00102"
+  ],
+  "厭惡": [
+   "SYN_H00103"
+  ],
+  "誘惑": [
+   "SYN_H00105"
+  ],
+  "利用": [
+   "SYN_H00105"
+  ],
+  "逗": [
+   "SYN_H00105"
+  ],
+  "誘導": [
+   "SYN_H00105"
+  ],
+  "貪心": [
+   "SYN_H00108"
+  ],
+  "貪": [
+   "SYN_H00108"
+  ],
+  "佔有": [
+   "SYN_H00108"
+  ],
+  "貪小便宜": [
+   "SYN_H00108"
+  ],
+  "貼": [
+   "SYN_H00110"
+  ],
+  "貼上": [
+   "SYN_H00110"
+  ],
+  "黏": [
+   "SYN_H00110"
+  ],
+  "輪替": [
+   "SYN_H00112"
+  ],
+  "輪值": [
+   "SYN_H00112"
+  ],
+  "進貨": [
+   "SYN_H00113"
+  ],
+  "輸入": [
+   "SYN_H00113"
+  ],
+  "進口": [
+   "SYN_H00113"
+  ],
+  "遵命": [
+   "SYN_H00114"
+  ],
+  "團": [
+   "SYN_H00115"
+  ],
+  "部": [
+   "SYN_H00115"
+  ],
+  "陰天": [
+   "SYN_H00116",
+   "SYN_H00119"
+  ],
+  "雲": [
+   "SYN_H00116",
+   "SYN_H00119"
+  ],
+  "雕刻": [
+   "SYN_H00117"
+  ],
+  "刻": [
+   "SYN_H00117"
+  ],
+  "憂傷": [
+   "SYN_H00118"
+  ],
+  "雲彩": [
+   "SYN_H00119"
+  ],
+  "高明": [
+   "SYN_H00120"
+  ],
+  "高手": [
+   "SYN_H00120"
+  ],
+  "很棒": [
+   "SYN_H00120"
+  ],
+  "很會": [
+   "SYN_H00120",
+   "SYN_H00156"
+  ],
+  "頂尖人物": [
+   "SYN_H00120"
+  ],
+  "駱駝": [
+   "SYN_H00122"
+  ],
+  "一周": [
+   "SYN_H00123"
+  ],
+  "一天內": [
+   "SYN_H00124"
+  ],
+  "下周": [
+   "SYN_H00125"
+  ],
+  "交付": [
+   "SYN_H00127"
+  ],
+  "修": [
+   "SYN_H00128"
+  ],
+  "修理": [
+   "SYN_H00128"
+  ],
+  "催": [
+   "SYN_H00129"
+  ],
+  "快一點": [
+   "SYN_H00129"
+  ],
+  "傾聽": [
+   "SYN_H00130"
+  ],
+  "聽": [
+   "SYN_H00130"
+  ],
+  "價格": [
+   "SYN_H00131"
+  ],
+  "價錢": [
+   "SYN_H00131"
+  ],
+  "判": [
+   "SYN_H00133"
+  ],
+  "裁判": [
+   "SYN_H00133"
+  ],
+  "刷": [
+   "SYN_H00134"
+  ],
+  "刷子": [
+   "SYN_H00134"
+  ],
+  "包裝打開": [
+   "SYN_H00136"
+  ],
+  "封條打開": [
+   "SYN_H00136"
+  ],
+  "古代": [
+   "SYN_H00137"
+  ],
+  "各不相同": [
+   "SYN_H00139"
+  ],
+  "向": [
+   "SYN_H00140"
+  ],
+  "相對": [
+   "SYN_H00140"
+  ],
+  "咖啡店": [
+   "SYN_H00141"
+  ],
+  "圖": [
+   "SYN_H00142"
+  ],
+  "圖片": [
+   "SYN_H00142"
+  ],
+  "埋怨": [
+   "SYN_H00143"
+  ],
+  "抱怨": [
+   "SYN_H00143"
+  ],
+  "堆積如山": [
+   "SYN_H00144"
+  ],
+  "大量": [
+   "SYN_H00144"
+  ],
+  "大雨": [
+   "SYN_H00146"
+  ],
+  "奔跑": [
+   "SYN_H00147"
+  ],
+  "女": [
+   "SYN_H00148"
+  ],
+  "好心": [
+   "SYN_H00149"
+  ],
+  "善良": [
+   "SYN_H00149"
+  ],
+  "導師": [
+   "SYN_H00150"
+  ],
+  "老師": [
+   "SYN_H00150"
+  ],
+  "房子": [
+   "SYN_H00151"
+  ],
+  "島": [
+   "SYN_H00152"
+  ],
+  "島嶼": [
+   "SYN_H00152"
+  ],
+  "差": [
+   "SYN_H00153"
+  ],
+  "差異": [
+   "SYN_H00154"
+  ],
+  "擅長": [
+   "SYN_H00156"
+  ],
+  "情況": [
+   "SYN_H00157"
+  ],
+  "想念": [
+   "SYN_H00158"
+  ],
+  "想": [
+   "SYN_H00158"
+  ],
+  "懷念": [
+   "SYN_H00159"
+  ],
+  "拖拖拉拉": [
+   "SYN_H00160"
+  ],
+  "招過來": [
+   "SYN_H00161"
+  ],
+  "招來": [
+   "SYN_H00161"
+  ],
+  "拿出": [
+   "SYN_H00162"
+  ],
+  "拿出來": [
+   "SYN_H00162"
+  ],
+  "拿起來": [
+   "SYN_H00163"
+  ],
+  "按件計酬": [
+   "SYN_H00164"
+  ],
+  "論件計酬": [
+   "SYN_H00164"
+  ],
+  "掃": [
+   "SYN_H00165"
+  ],
+  "掃地": [
+   "SYN_H00165"
+  ],
+  "提前": [
+   "SYN_H00166"
+  ],
+  "提早": [
+   "SYN_H00166"
+  ],
+  "提著": [
+   "SYN_H00167"
+  ],
+  "提": [
+   "SYN_H00167"
+  ],
+  "插": [
+   "SYN_H00169"
+  ],
+  "搶劫": [
+   "SYN_H00170"
+  ],
+  "收集": [
+   "SYN_H00172"
+  ],
+  "蒐集": [
+   "SYN_H00172"
+  ],
+  "放著": [
+   "SYN_H00173"
+  ],
+  "放": [
+   "SYN_H00173"
+  ],
+  "敵人": [
+   "SYN_H00174"
+  ],
+  "敵對": [
+   "SYN_H00174"
+  ],
+  "新冠": [
+   "SYN_H00175"
+  ],
+  "新冠狀病毒": [
+   "SYN_H00175"
+  ],
+  "晴朗": [
+   "SYN_H00176"
+  ],
+  "月薪": [
+   "SYN_H00178"
+  ],
+  "收入": [
+   "SYN_H00178"
+  ],
+  "殘忍": [
+   "SYN_H00179"
+  ],
+  "慘不忍睹": [
+   "SYN_H00179"
+  ],
+  "洞": [
+   "SYN_H00180"
+  ],
+  "山洞": [
+   "SYN_H00180"
+  ],
+  "除掉": [
+   "SYN_H00181"
+  ],
+  "混亂": [
+   "SYN_H00182"
+  ],
+  "炎熱": [
+   "SYN_H00183"
+  ],
+  "牌": [
+   "SYN_H00184"
+  ],
+  "狀況": [
+   "SYN_H00185"
+  ],
+  "睜眼": [
+   "SYN_H00186"
+  ],
+  "睜開眼": [
+   "SYN_H00186"
+  ],
+  "租借": [
+   "SYN_H00188"
+  ],
+  "借": [
+   "SYN_H00188"
+  ],
+  "稀少": [
+   "SYN_H00189"
+  ],
+  "竹": [
+   "SYN_H00191"
+  ],
+  "等一下": [
+   "SYN_H00192"
+  ],
+  "紅茶": [
+   "SYN_H00193"
+  ],
+  "絕望": [
+   "SYN_H00194"
+  ],
+  "失望": [
+   "SYN_H00194"
+  ],
+  "聞到": [
+   "SYN_H00197"
+  ],
+  "嗅": [
+   "SYN_H00197"
+  ],
+  "背": [
+   "SYN_H00199"
+  ],
+  "後背": [
+   "SYN_H00199"
+  ],
+  "腫": [
+   "SYN_H00200"
+  ],
+  "腫起來": [
+   "SYN_H00200"
+  ],
+  "臉部": [
+   "SYN_H00201"
+  ],
+  "臨時": [
+   "SYN_H00202"
+  ],
+  "暫時": [
+   "SYN_H00202"
+  ],
+  "自": [
+   "SYN_H00203"
+  ],
+  "自己": [
+   "SYN_H00203"
+  ],
+  "花費": [
+   "SYN_H00204"
+  ],
+  "消費": [
+   "SYN_H00204"
+  ],
+  "苦苦的": [
+   "SYN_H00205"
+  ],
+  "裝修": [
+   "SYN_H00206"
+  ],
+  "裝潢": [
+   "SYN_H00206"
+  ],
+  "託付": [
+   "SYN_H00207"
+  ],
+  "責任交給我": [
+   "SYN_H00207"
+  ],
+  "持麥克風訪問": [
+   "SYN_H00208"
+  ],
+  "設置": [
+   "SYN_H00209"
+  ],
+  "調味料": [
+   "SYN_H00210"
+  ],
+  "調味": [
+   "SYN_H00210"
+  ],
+  "證據": [
+   "SYN_H00211"
+  ],
+  "趴著": [
+   "SYN_H00213"
+  ],
+  "趴": [
+   "SYN_H00213"
+  ],
+  "追蹤": [
+   "SYN_H00215"
+  ],
+  "逃生": [
+   "SYN_H00216"
+  ],
+  "逃": [
+   "SYN_H00216"
+  ],
+  "不見了": [
+   "SYN_H00218"
+  ],
+  "還是": [
+   "SYN_H00219"
+  ],
+  "閃爍型警示燈": [
+   "SYN_H00220"
+  ],
+  "閃光燈": [
+   "SYN_H00220"
+  ],
+  "開堆高機": [
+   "SYN_H00221"
+  ],
+  "堆高機": [
+   "SYN_H00221"
+  ],
+  "雞蛋": [
+   "SYN_H00222"
+  ],
+  "領取": [
+   "SYN_H00223"
+  ],
+  "領": [
+   "SYN_H00223"
+  ],
+  "題": [
+   "SYN_H00224"
+  ],
+  "題目": [
+   "SYN_H00224"
+  ],
+  "黴菌": [
+   "SYN_H00225"
+  ],
+  "病菌": [
+   "SYN_H00225"
+  ],
+  "鼓掌": [
+   "SYN_H00226"
+  ],
+  "拍手": [
+   "SYN_H00226"
+  ],
+  "齊全": [
+   "SYN_H00227"
   ]
  }
 }

@@ -291,9 +291,29 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--splits", nargs="*",
                     default=["train", "dev", "test", "test_corpus", "test_papers"])
-    # k=40：實測 dev 集涵蓋率 k=25→77.6%、k=40→79.9%、k=60→82.9%，
-    # 但 token 成本 k=60（壓縮後約 950）會逼近 max_len。40 是性價比轉折點。
-    ap.add_argument("--k", type=int, default=40, help="候選清單長度上限")
+    # k=60（2026-09-02 重測後由 40 調高）。
+    #
+    # 舊的 k=40 是這樣定的：「k=60 壓縮後約 950 token 會逼近 max_len」。那個
+    # 估計在語義 ID 壓縮（候選只寫 TSL_今天，不再附 =今天）之後就過時了。
+    # 在 VM 上用實際的 Gemma 4 tokenizer 量 train 最長的 400 句（含 assistant
+    # 目標，因為 max_len 卡的是整條序列）：
+    #
+    #     k      dev 詞涵蓋率  整句可拼出   最長序列   超過 768
+    #     40        78.2%      48.7%       558       0%
+    #     50        79.7%      50.0%       623       0%
+    #     60        80.8%      51.8%       698       0%     ← 採用
+    #     80        82.1%      53.5%       823      22%
+    #
+    # k=60 是能安全放進 max_len=768 的上限，還剩 70 token 餘裕；k=80 有 22%
+    # 會被截斷，要調 max_len 就得吃顯存與訓練時間。
+    #
+    # 為什麼值得調：out-of-fold 修正後才看清楚缺口的 ~87% 是「檢索沒撈到」
+    # （手語在庫裡、影片也好，就是沒進候選）。舊的 k=40 是在涵蓋率虛報成
+    # 92.5% 的前提下選的，那時看起來沒必要多花序列長度。
+    #
+    # ⚠️ **這只是把天花板抬高，不保證輸出變好**：候選從 40 變 60，模型要在
+    # 更多干擾項裡挑。涵蓋率上升是必要條件不是充分條件，實際效果要重訓才知道。
+    ap.add_argument("--k", type=int, default=60, help="候選清單長度上限")
     ap.add_argument("--compact", action="store_true", default=True,
                     help="候選壓成 ID=gloss 字串（省 36%% token）")
     ap.add_argument("--no-compact", dest="compact", action="store_false",
@@ -301,6 +321,8 @@ def main() -> int:
     ap.add_argument("--n-syn", type=int, default=0,
                     help="同義展開通道的名額上限。**預設 0＝關閉**：實測 train "
                          "涵蓋率 92.6%%→90.7%%、dev 僅 +0.1pp，是淨負的。"
+                         "2026-09-02 在無洩漏候選與 k=60 下複測仍是雜訊級"
+                         "（dev 80.8%%→81.0%%），原判定成立。"
                          "見 sign_candidates._from_synonyms")
     ap.add_argument("--n-sem", type=int, default=0,
                     help="語義向量通道名額（預設 0＝關閉）。>0 時載入 "
@@ -310,7 +332,9 @@ def main() -> int:
     ap.add_argument("--distractor-ratio", type=float, default=0.2,
                     help="字元重疊干擾項佔 k 的比例上限")
     ap.add_argument("--pin-core", type=int, default=0,
-                    help="高頻核心保底名額；實測淨負，見 sign_candidates.candidates 的 docstring")
+                    help="高頻核心保底名額；實測淨負，見 sign_candidates.candidates 的 "
+                         "docstring。2026-09-02 複測（無洩漏、k=40／60）仍是 ±0.2pp "
+                         "雜訊級，原判定成立")
     ap.add_argument("--out", type=Path, default=None,
                     help="輸出目錄，預設 data/splits_script（會覆蓋！建新版務必指定）")
     ap.add_argument("--schema-version", choices=sorted(SCHEMA_FIELD),

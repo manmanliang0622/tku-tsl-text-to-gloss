@@ -75,6 +75,44 @@ STATE = {"model": None, "tokenizer": None, "adapter": None, "model_name": None, 
 # ValidJSON 全部掛零，看起來像模型壞掉，其實模型是好的。
 DEPLOYED_SCHEMA = script_schema.V1
 
+# ── 候選參數契約（教授審查意見 2.1）─────────────────────────────────────
+# 這台服務**必須**用與訓練時完全相同的候選參數，否則模型看到的候選分布
+# 與訓練時不同（training-serving skew）。v17 就是這樣：訓練資料用
+# n_sem=8 建，服務沒載向量模型、實際走 n_sem=0，每句約 8 個候選相異，
+# 參考詞可及率由 100% 掉到 99.0/98.5%。當時這件事只寫在模型卡的
+# 「已知限制」，沒有任何機制擋住。
+#
+# 現在改成契約：build_script_dataset 會把候選參數寫成 candidate_config.json，
+# 部署 checkpoint 時一起帶到 model_service/ 底下。啟動時比對，不一致就吵。
+# 找不到檔案時只警告不擋——舊 checkpoint 沒有這份，擋掉會讓服務起不來。
+CANDIDATE_CONFIG_PATH = Path(__file__).resolve().parent.parent / "candidate_config.json"
+
+
+def _verify_candidate_config(retr) -> None:
+    """比對服務端實際的候選參數與訓練時的存證。"""
+    if not CANDIDATE_CONFIG_PATH.exists():
+        print(f"[serve] ⚠ 找不到 {CANDIDATE_CONFIG_PATH.name}——無法驗證候選參數與"
+              f"訓練時一致。部署新 checkpoint 時請把它一起帶上。", flush=True)
+        return
+    trained = json.loads(CANDIDATE_CONFIG_PATH.read_text(encoding="utf-8"))
+    live = retr.config(k=STATE["k"])
+    diffs = []
+    for key in retr.CONFIG_KEYS:
+        if key in trained and trained[key] != live.get(key):
+            diffs.append(f"{key}: 訓練={trained[key]!r} 服務={live.get(key)!r}")
+    # 語義通道是最常見的那個坑：訓練端有、服務端載不起來
+    if trained.get("n_sem", 0) and not live.get("semantic_loaded"):
+        diffs.append(f"n_sem={trained['n_sem']} 但服務端沒有載入向量模型"
+                     f"（semantic_loaded=False）")
+    if diffs:
+        raise SystemExit(
+            "[serve] ✗ 候選參數與訓練時不一致，模型看到的候選分布會與訓練時不同：\n  "
+            + "\n  ".join(diffs)
+            + "\n  這正是 v17 的 training-serving skew。要嘛改服務端參數，"
+              "要嘛用服務端能重現的參數重建訓練資料並重訓。\n"
+              "  確定要在不一致的狀態下服務，設 ALLOW_CANDIDATE_SKEW=1。")
+    print(f"[serve] 候選參數與訓練時一致（{CANDIDATE_CONFIG_PATH.name}）", flush=True)
+
 # 2026-08-31：原本這裡硬寫一份 system 字串，再用 ast 讀 build_script_dataset.py
 # 的 SYSTEM 字面值比對，防兩份複本漂移。現在兩邊都從 script_schema 取同一份，
 # 複本消失、比對也就不需要了（審查意見 4.3 的「共用模組」同樣適用於 prompt）。
@@ -180,6 +218,8 @@ def _load_script_assets():
         return
     from sign_candidates import CandidateRetriever
     STATE["cand_retriever"] = CandidateRetriever()
+    if os.environ.get("ALLOW_CANDIDATE_SKEW") != "1":
+        _verify_candidate_config(STATE["cand_retriever"])
     STATE["id2gloss"] = {r["sign_id"]: r.get("gloss_clean") or r["gloss"]
                          for r in STATE["cand_retriever"].by_id.values()}
     print(f"[serve] 候選檢索器就緒（{len(STATE['id2gloss'])} 個 sign_id）", flush=True)

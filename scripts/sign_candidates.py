@@ -152,15 +152,73 @@ class CandidateRetriever:
         path = BASE / "data" / "splits" / "train.jsonl"
         if not path.exists():
             return
-        for line in path.read_text(encoding="utf-8").splitlines():
-            if not line.strip():
+        self._all_ex = [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines()
+                        if l.strip()]
+        self.refit_examples()
+
+    # 候選生成的完整參數集。**訓練、離線評估、線上服務必須用同一組**，
+    # 否則模型看到的候選分布與上線時不同（training-serving skew）。
+    # 教授審查意見 2.1：v17 訓練用 n_sem=8，線上服務沒載向量模型、實際
+    # 走 n_sem=0，兩邊每句約 8 個候選相異。
+    CONFIG_KEYS = ("k", "n_examples", "distractor_ratio", "n_align", "n_core",
+                   "n_syn", "n_sem", "pin_core", "exclude_unusable")
+
+    def config(self, **overrides) -> dict:
+        """回傳這個 retriever 實際會用的候選參數（含 candidates() 的預設值）。
+
+        寫進資料集的 candidate_config.json，也供服務端與部署 checkpoint 對帳。
+        """
+        import inspect
+        defaults = {k: v.default for k, v in
+                    inspect.signature(self.candidates).parameters.items()
+                    if v.default is not inspect.Parameter.empty}
+        cfg = {k: defaults.get(k) for k in self.CONFIG_KEYS}
+        cfg["exclude_unusable"] = self.exclude_unusable
+        cfg["semantic_loaded"] = getattr(self, "semantic", None) is not None
+        cfg.update({k: v for k, v in overrides.items() if k in self.CONFIG_KEYS})
+        return cfg
+
+    def has_examples(self) -> bool:
+        """有沒有載到訓練句（沒有的話 cross-fitting 沒意義）。"""
+        return bool(getattr(self, "_all_ex", None))
+
+    def refit_examples(self, exclude_groups: set | None = None,
+                       exclude_ids: set | None = None) -> int:
+        """重建三張由訓練句衍生的表，可排除指定的資料。回傳實際採用的句數。
+
+        2026-08-31（教授審查意見 2.2）。這三張表——例句遷移的 `_ex_rows`、
+        詞對齊表 `_align`、高頻核心詞 `_core`——原本一律用**完整 train** 建，
+        於是替 train 句產生候選時，表裡already含有那句自己的答案：
+
+          - `_align` 數的是「中文片段 c 出現時 gloss g 也出現」的共現，
+            該句自己的 (c, g) 對就在裡面
+          - `_core` 是 train 全體 gloss 的前 30 高頻，該句也投了票
+
+        `candidates(exclude_id=...)` 只擋掉例句遷移把同一句撈回來，擋不到
+        這兩張統計表。教授抽 20 筆做 leave-group-out 實測：詞涵蓋率
+        92.86%→88.10%、整句可拼出 80%→70%，7/20 筆候選集合改變——
+        不是理論上的疑慮。
+
+        **排除的單位是 group 不是 id**：長度平衡會把同一句複製 2–4 份，
+        只排 id 會讓副本留在表裡；而且同一段對話／同一個詞條底下的句子
+        高度相似，只排自己等於沒排。用 group 才是真正的 leave-group-out。
+        """
+        rows = getattr(self, "_all_ex", None)
+        if rows is None:
+            return 0
+        self._ex_rows, self._ex_bg = [], []
+        for r in rows:
+            if not (r.get("chinese") and r.get("gloss_text")):
                 continue
-            r = json.loads(line)
-            if r.get("chinese") and r.get("gloss_text"):
-                self._ex_rows.append(r)
-                self._ex_bg.append(self._bigrams(r["chinese"]))
+            if exclude_groups and r.get("group") in exclude_groups:
+                continue
+            if exclude_ids and r.get("id") in exclude_ids:
+                continue
+            self._ex_rows.append(r)
+            self._ex_bg.append(self._bigrams(r["chinese"]))
         self._build_align()
         self._build_core()
+        return len(self._ex_rows)
 
     def _build_core(self, size: int = 30) -> None:
         """高頻核心手語，每題都放進候選。

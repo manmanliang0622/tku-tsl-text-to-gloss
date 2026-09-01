@@ -14,6 +14,7 @@
   test_bundle_deps          serve_model 的部署相依宣告與程式碼一致
   test_clause_breaks        子句邊界的定義、對齊與失敗退路
   test_gloss_notation       重複貌 ++ 與複合 + 的解析
+  test_candidate_parity     候選參數的訓練／上線一致與 cross-fitting 分組
 """
 import os
 import subprocess
@@ -33,6 +34,7 @@ SCRIPT_TESTS = [
     "test_bundle_deps.py",
     "test_clause_breaks.py",
     "test_gloss_notation.py",
+    "test_candidate_parity.py",
 ]
 # unittest 形式的
 UNITTEST_MODULES = ["test_metrics"]

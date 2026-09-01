@@ -119,6 +119,32 @@ def clause_breaks(clauses, gloss_tokens: list[str],
     return out, "ok"
 
 
+def assign_folds(rows: list[dict], k: int) -> list[int]:
+    """把列分到 k 個 fold，**以 group 為單位**且盡量等量。
+
+    為什麼分組不分列（教授審查意見 2.2 明確要求）：長度平衡會把同一句複製
+    2–4 份，按列分會讓副本散到不同 fold，等於候選器仍看得到那句的答案；
+    而且同一段對話／同一個詞條底下的句子高度相似，只隔開自己沒有意義。
+
+    分配是決定性的：group 依「列數多寡、名稱」排序後，每次把最大的那組
+    丟進目前最小的 fold（貪心裝箱）。同樣的輸入永遠得到同樣的切法，
+    重建資料才可重現。
+    """
+    by_group = collections.defaultdict(list)
+    for i, r in enumerate(rows):
+        by_group[r.get("group") or f"__row{i}"].append(i)
+    # 大的先放，同大小依名稱排序 → 完全決定性
+    order = sorted(by_group.items(), key=lambda kv: (-len(kv[1]), kv[0]))
+    sizes = [0] * k
+    fold_of = [0] * len(rows)
+    for _g, idxs in order:
+        f = min(range(k), key=lambda j: (sizes[j], j))
+        sizes[f] += len(idxs)
+        for i in idxs:
+            fold_of[i] = f
+    return fold_of
+
+
 def _semantic_ids() -> bool:
     """總表是不是語義 ID 方案（build_sign_inventory.py --id-scheme）。"""
     stats = BASE / "data" / "signs" / "inventory_stats.json"
@@ -287,6 +313,13 @@ def main() -> int:
                     default=SCHEMA_VERSION,
                     help="輸出 schema。v2 的旗標欄位是 candidate_coverage_risk，"
                          "v1 是 needs_review（重建 v17 訓練集時用）")
+    ap.add_argument("--folds", type=int, default=0,
+                    help="train 候選的 cross-fitting（審查意見 2.2）。"
+                         "**0＝leave-one-group-out，預設，口徑正確**："
+                         "每組只排除自己、其餘全用，重現上線時「表用全部 train 建、"
+                         "查詢句不在表裡」的條件（約 10 分鐘）。"
+                         "N>1＝N-fold，快但表只剩 (N-1)/N，會低估候選品質。"
+                         "1＝關閉（重建 v17 以前的資料時用）")
     ap.add_argument("--dry-run", action="store_true", help="只算涵蓋率不寫檔")
     ap.add_argument("--limit", type=int, default=0, help="每個切分只處理前 N 句（除錯用）")
     args = ap.parse_args()
@@ -303,6 +336,23 @@ def main() -> int:
         retr.semantic = SemanticRanker(retr.rows)
     print(f"動作庫 {len(retr.rows)} 個手語；訓練例句 {len(retr._ex_rows)} 句", flush=True)
 
+    # ── 候選參數存證（教授審查意見 2.1）────────────────────────────────
+    # v17 的訓練資料用 n_sem=8 建，線上服務沒載向量模型、實際走 n_sem=0，
+    # 兩邊每句約 8 個候選相異——而這件事只寫在模型卡的「已知限制」裡，
+    # 沒有任何機制擋住。把參數寫進資料集，服務端才有得對帳。
+    cand_cfg = retr.config(k=args.k, n_syn=args.n_syn, n_sem=args.n_sem,
+                           n_core=args.n_core,
+                           distractor_ratio=args.distractor_ratio,
+                           pin_core=args.pin_core)
+    cand_cfg["cross_fitting"] = ("leave-one-group-out" if args.folds == 0
+                                 else ("off" if args.folds == 1 else f"{args.folds}-fold"))
+    cand_cfg["schema_version"] = SCHEMA_VERSION
+    if args.n_sem:
+        print("\n⚠️  n_sem > 0：語義通道需要向量模型，**線上服務載不起來**。\n"
+              "   用這份資料訓練出來的模型，上線時看到的候選會與訓練時不同\n"
+              "   （training-serving skew，教授審查意見 2.1）。\n"
+              "   除非部署端也會載入向量模型，否則請用 --n-sem 0。\n", flush=True)
+
     all_stats = {}
     for split in args.splits:
         path = SPLITS / f"{split}.jsonl"
@@ -314,17 +364,60 @@ def main() -> int:
         if args.limit:
             rows = rows[:args.limit]
 
-        records, stats = [], []
-        for i, row in enumerate(rows):
-            rec, st = convert_row(row, retr, args.k, split, compact=args.compact,
-                                  n_syn=args.n_syn, n_sem=args.n_sem,
-                                  n_core=args.n_core,
-                                  distractor_ratio=args.distractor_ratio,
-                                  pin_core=args.pin_core)
-            records.append(rec)
-            stats.append(st)
-            if (i + 1) % 500 == 0:
-                print(f"  {split}: {i+1}/{len(rows)}", flush=True)
+        def _convert(row, split_name=split):
+            return convert_row(row, retr, args.k, split_name, compact=args.compact,
+                               n_syn=args.n_syn, n_sem=args.n_sem,
+                               n_core=args.n_core,
+                               distractor_ratio=args.distractor_ratio,
+                               pin_core=args.pin_core)
+
+        # ── train 走 cross-fitting，其餘用完整 train 建的表 ────────────────
+        # 教授審查意見 2.2：dev/test 用完整 train 建的候選器是正確的
+        # （它們本來就不在 train 裡，看不到自己的答案）；只有 train 不行。
+        use_folds = split == "train" and args.folds != 1 and retr.has_examples()
+        results: list = [None] * len(rows)
+        if use_folds and args.folds == 0:
+            # leave-one-group-out：每次只排除當前這一組，其餘全用。
+            # **這是正確的口徑**——上線時對齊表是用全部 train 建的，而查詢句
+            # 不在表裡；LOGO 重現的正是這個條件。k-fold 會把表縮到 (k-1)/k，
+            # 那是「表變小」不是「洩漏」，會把候選品質低估掉。
+            # 代價：669 組 × 約 0.9 秒重建 ≈ 10 分鐘。建資料是一次性的，
+            # 相對於後面幾小時的訓練可以忽略。
+            by_group = collections.defaultdict(list)
+            for i, row in enumerate(rows):
+                by_group[row.get("group") or f"__row{i}"].append(i)
+            print(f"  {split}: leave-one-group-out，{len(by_group)} 組"
+                  f"（每組的候選器排除該組、其餘全用）", flush=True)
+            for n, (g, idxs) in enumerate(sorted(by_group.items()), 1):
+                retr.refit_examples(exclude_groups={g})
+                for i in idxs:
+                    results[i] = _convert(rows[i])
+                if n % 100 == 0 or n == len(by_group):
+                    print(f"    {n}/{len(by_group)} 組", flush=True)
+            retr.refit_examples()
+        elif use_folds:
+            fold_of = assign_folds(rows, args.folds)
+            by_fold = collections.defaultdict(list)
+            for i, row in enumerate(rows):
+                by_fold[fold_of[i]].append(i)
+            print(f"  {split}: cross-fitting {args.folds} folds"
+                  f"（每 fold 的候選器只用其他 folds 的資料建表）", flush=True)
+            for f in sorted(by_fold):
+                groups = {rows[i].get("group") for i in by_fold[f]}
+                n_used = retr.refit_examples(exclude_groups=groups)
+                print(f"    fold {f}: {len(by_fold[f])} 列，"
+                      f"建表用 {n_used} 句（排除 {len(groups)} 個 group）", flush=True)
+                for i in by_fold[f]:
+                    results[i] = _convert(rows[i])
+            retr.refit_examples()          # 還原成完整表，別影響後面的切分
+        else:
+            for i, row in enumerate(rows):
+                results[i] = _convert(row)
+                if (i + 1) % 500 == 0:
+                    print(f"  {split}: {i+1}/{len(rows)}", flush=True)
+
+        records = [r for r, _ in results]
+        stats = [st for _, st in results]
 
         tok_total = sum(s["tokens"] for s in stats)
         tok_cov = sum(s["covered"] for s in stats)
@@ -371,6 +464,7 @@ def main() -> int:
             "top_missing": miss.most_common(15),
             "top_missing_not_in_library": miss_lib.most_common(15),
         }
+        summary["candidate_config"] = cand_cfg
         all_stats[split] = summary
         print(f"\n[{split}] {len(stats)} 句")
         print(f"  詞涵蓋率 {summary['token_recall']:.1%}"
@@ -400,9 +494,16 @@ def main() -> int:
                         "n_core": args.n_core,
                         "distractor_ratio": args.distractor_ratio,
                         "pin_core": args.pin_core,
+                        "candidate_config": cand_cfg,
                         "splits": all_stats}, ensure_ascii=False, indent=2),
             encoding="utf-8")
+        # 獨立一份給服務端對帳用：部署 checkpoint 時要一起帶，
+        # serve_model 啟動時比對自己的候選參數是否與訓練時相同。
+        (OUT / "candidate_config.json").write_text(
+            json.dumps(cand_cfg, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8")
         print(f"\n寫出 {OUT}")
+        print(f"候選參數存證：{OUT / 'candidate_config.json'}")
     return 0
 
 

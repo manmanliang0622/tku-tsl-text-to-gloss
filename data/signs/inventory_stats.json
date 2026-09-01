@@ -1,7 +1,7 @@
 {
-  "lexicon_entries": 17085,
-  "signs": 17085,
-  "distinct_signs": 17082,
+  "lexicon_entries": 17113,
+  "signs": 17113,
+  "distinct_signs": 17110,
   "duplicates": {
     "TSL_訪談_2": "TSL_訪談",
     "TSL_許久_2": "TSL_許久",
@@ -9,17 +9,18 @@
   },
   "superseded": {
     "TSL_事情_2": "TSL_事情",
+    "TSL_傾聽_2": "TSL_傾聽",
     "TSL_共同_2": "TSL_共同",
     "TSL_求救_2": "TSL_求救",
     "TSL_軟弱_2": "TSL_軟弱"
   },
   "id_scheme": "semantic",
   "ids_changed_vs_previous": 16628,
-  "new_signs_this_run": 450,
-  "index_keys": 17177,
-  "alias_keys_added": 53,
+  "new_signs_this_run": 478,
+  "index_keys": 17204,
+  "alias_keys_added": 52,
   "clean_keys_added": 39,
-  "index_keys_repointed_from_duplicate": 7,
+  "index_keys_repointed_from_duplicate": 8,
   "gloss_dirty": {
     "control_chars": 2,
     "outer_space": 45,
@@ -73,9 +74,9 @@
         {
           "gloss": "事情",
           "name_key": "事情",
-          "source": "moc_corpus",
-          "recording": "moc_G2D7P1.json",
-          "duration": 0.968
+          "source": "other",
+          "recording": "twtsl2_事.json",
+          "duration": 3.062
         },
         {
           "gloss": " 事情",
@@ -93,9 +94,9 @@
         {
           "gloss": "傾聽",
           "name_key": "傾聽",
-          "source": "moc_corpus",
-          "recording": "moc_G2C27_R.json",
-          "duration": 0.889
+          "source": "other",
+          "recording": "twtsl2_傾聽.json",
+          "duration": 4.01
         },
         {
           "gloss": "傾聽 ",
@@ -189,18 +190,18 @@
     }
   ],
   "by_source": {
-    "moe_signdict": 7663,
-    "other": 3809,
-    "moc_corpus": 3734,
+    "moe_signdict": 7517,
+    "other": 4364,
+    "moc_corpus": 3353,
     "tsl_placenames": 846,
     "tsl_familynames": 565,
     "tasli": 468
   },
   "by_gloss_len": {
-    "2": 9793,
+    "2": 9797,
     "4": 3006,
-    "3": 2166,
-    "1": 1009,
+    "3": 2170,
+    "1": 1029,
     "6": 560,
     "5": 551
   },

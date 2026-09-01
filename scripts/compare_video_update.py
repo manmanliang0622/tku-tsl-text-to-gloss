@@ -48,10 +48,11 @@ def load_before(path: Path | None) -> dict:
     return {r["gloss"]: r for r in (json.loads(l) for l in text.splitlines() if l.strip())}
 
 
-def load_quality() -> dict:
-    if not QUALITY.exists():
+def load_quality(path: Path | None = None) -> dict:
+    path = path or QUALITY
+    if not path.exists():
         return {}
-    with QUALITY.open(encoding="utf-8") as fh:
+    with path.open(encoding="utf-8") as fh:
         return {(r["label"], r["recording"]): r for r in csv.DictReader(fh)}
 
 
@@ -71,11 +72,17 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--before", type=Path, default=None,
                     help="更新前的 sign_inventory.jsonl（預設用 git HEAD 那版）")
+    ap.add_argument("--before-quality", type=Path, default=None,
+                    help="更新前的 entries_final.csv。**重掃會把舊的覆蓋掉**，"
+                         "沒有它就查不到舊錄影的品質，品質比較會整段空白——"
+                         "2026-09-02 實際踩到。VM 上有 entries_final.csv.bak-<日期>，"
+                         "或先備份再 scp。")
     args = ap.parse_args()
 
     lex = json.loads(LEXICON.read_text(encoding="utf-8"))
     before = load_before(args.before)
     q = load_quality()
+    q_before = load_quality(args.before_quality) if args.before_quality else q
 
     changed = {g for g in lex if g in before
                and lex[g].get("recording") != before[g].get("recording")}
@@ -100,12 +107,15 @@ def main() -> int:
                   f"——掃描表比動作庫舊，請重跑掃描後再看這一節。")
         pairs = []
         for g in changed:
-            old = q.get((g, before[g]["recording"]))
+            old = q_before.get((g, before[g]["recording"]))
             new = q.get((g, lex[g]["recording"]))
             if old and new:
                 pairs.append((g, old, new))
         if not pairs:
             print("  （沒有前後都有品質資料的項目，無法比較）")
+            if not args.before_quality:
+                print("     ↑ 多半是重掃把舊的 entries_final.csv 覆蓋掉了。"
+                      "用 --before-quality 指定更新前那份（VM 上有 .bak-<日期>）。")
         else:
             trans = collections.Counter((o["tier"], n["tier"]) for _, o, n in pairs)
             better = sum(v for (a, b), v in trans.items()

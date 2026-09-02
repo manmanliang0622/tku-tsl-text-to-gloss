@@ -26,6 +26,11 @@
 ## 2. 學校 VM 與安全界線
 
 - 訓練機：Ubuntu 22.04、NVIDIA GeForce RTX 4060 Ti 16GB；SSH alias 為 `tku-gpu`。
+  **這個 alias 要自己設，不會隨 clone 而來**——本 repo 各處（含 `MODEL_CARD`、
+  `data_preflight.py`、`check_bundle_deps.py --deploy-check`）都以它稱呼訓練機，
+  沒設就會 `Could not resolve hostname`。位址、埠與帳號見 `git show a6e648e`
+  （2026-08-30 把它們從公開 repo 移除的那個 commit），在 `~/.ssh/config` 設成
+  `Host tku-gpu` 即可。
 - 連線位址、帳號與憑證不寫入 public repo；SSH 已固定主機金鑰，不使用 `StrictHostKeyChecking=no`。
 - VM repo：`/home/b310ai/tku-tsl-text-to-gloss`。
 - 管理者重開機後，核心模組、磁碟驅動與 NVML 均為 `580.173.02`；PyTorch `2.7.1+cu126`，CUDA 可用。

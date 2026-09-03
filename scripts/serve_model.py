@@ -65,15 +65,15 @@ BASE = Path(__file__).resolve().parent.parent
 
 STATE = {"model": None, "tokenizer": None, "adapter": None, "model_name": None, "max_new": 64,
          "target": "gloss", "retriever": None, "rag_k": 0, "rag_min": 0.05,
-         "json_targets": {}, "cand_retriever": None, "id2gloss": {}, "k": 40}
+         "json_targets": {}, "cand_retriever": None, "id2gloss": {}, "k": 60}
 
 # ---- 手語腳本格式 ---------------------------------------------------------
 # **這台服務目前載入的 checkpoint 是用哪個 schema 訓練的。**
-# v17（部署中）＝ tsl-script-v1，旗標欄位 needs_review。
+# v18（部署中）＝ tsl-script-v3，旗標欄位 candidate_coverage_risk。
 # 換上 v2 訓練的 checkpoint 時，這一行要跟著改，否則 system prompt 與訓練
 # 不一致——2026-08-20 就因為推論端 prompt 與訓練不同，33 句 test 的 EM 與
 # ValidJSON 全部掛零，看起來像模型壞掉，其實模型是好的。
-DEPLOYED_SCHEMA = script_schema.V1
+DEPLOYED_SCHEMA = script_schema.V3
 
 # ── 候選參數契約（教授審查意見 2.1）─────────────────────────────────────
 # 這台服務**必須**用與訓練時完全相同的候選參數，否則模型看到的候選分布
@@ -128,7 +128,7 @@ SCRIPT_SYSTEM = script_schema.SYSTEM_BY_SCHEMA[DEPLOYED_SCHEMA]
 # 關鍵是漏放行大幅減少：dev 93→23、corpus 35→9、textbook 89→31——
 # 這個旗標的錯誤本來就不對稱（漏放行會讓錯句直接送去給虛擬人比出來，
 # 誤攔只是多一次人看），所以偏 recall 是對的方向。
-NEEDS_REVIEW_THRESHOLD = 0.039707  # v17 dev 上最大化 F1（2026-08-27）
+NEEDS_REVIEW_THRESHOLD = 0.095349  # v18 新 dev 上最大化 F1（2026-09-03，F1 0.7794）
 
 
 def load(base_model, adapter, ple_on_gpu=None):

@@ -1,0 +1,82 @@
+{
+  "BLEU-4": 72.78,
+  "ROUGE-L": 85.86,
+  "ExactMatch%": 72.73,
+  "n": 33,
+  "n_groups": 33,
+  "Reference4Grams": 5,
+  "Hypothesis4Grams": 4,
+  "ValidJSON%": 100.0,
+  "ConstraintViolation%_rows": 0.0,
+  "ConstraintViolation%_ids": 0.0,
+  "UnknownSignID": 0,
+  "ValidSignID%": 100.0,
+  "AssetAvailable%": 100.0,
+  "QualityPlayable%": 100.0,
+  "QualityDetail": {
+    "ids_with_quality_data": 70,
+    "unusable": 0,
+    "degraded": 2,
+    "ok": 68,
+    "source": "data/signs/sign_inventory.jsonl 的 asset_class（來自 0813 quality_scan/entries_final.csv 的 tier）"
+  },
+  "CompositionSuccess%": null,
+  "Playable%": 100.0,
+  "CandidateCoverageRisk": {
+    "precision": 1.0,
+    "recall": 0.5,
+    "f1": 0.6667,
+    "tp": 1,
+    "fp": 0,
+    "fn": 1,
+    "tn": 31,
+    "ref_positive_rate": 0.0606,
+    "decision": "greedy（模型輸出的 true/false）"
+  },
+  "CandidateCoverageRisk_calibrated": {
+    "precision": 0.3333,
+    "recall": 0.5,
+    "f1": 0.4,
+    "tp": 1,
+    "fp": 2,
+    "fn": 1,
+    "tn": 29,
+    "threshold": 0.095349,
+    "rows_with_prob": 33,
+    "rows_fallback_to_greedy": 0,
+    "decision": "p_needs_review >= 0.095349（門檻在 dev 上選定）"
+  },
+  "StructureFields": {
+    "clause_breaks": {
+      "n": 33,
+      "ref_nonempty": 0,
+      "hyp_nonempty": 0,
+      "exact_match%": 100.0,
+      "exact_match_on_nonempty%": null
+    },
+    "compounds": {
+      "n": 33,
+      "ref_nonempty": 0,
+      "hyp_nonempty": 0,
+      "exact_match%": 100.0,
+      "exact_match_on_nonempty%": null
+    },
+    "reduplicated": {
+      "n": 33,
+      "ref_nonempty": 0,
+      "hyp_nonempty": 0,
+      "exact_match%": 100.0,
+      "exact_match_on_nonempty%": null
+    }
+  },
+  "_ref_scope": "上方 BLEU-4／ROUGE-L／ExactMatch%% 是對**候選內參考**算的（撈不到的詞不在參考裡），回答『有沒有從候選裡挑對』；Full_reference 那組才是含檢索缺口的系統整體水準。",
+  "Full_reference": {
+    "BLEU-4": 70.12,
+    "ROUGE-L": 84.24,
+    "ExactMatch%": 66.67,
+    "ref_tokens_full": 79,
+    "ref_tokens_in_candidates": 77,
+    "ref_tokens_dropped%": 2.53,
+    "rows_matched": 33
+  }
+}

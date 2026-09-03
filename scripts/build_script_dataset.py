@@ -348,6 +348,11 @@ def main() -> int:
                          "查詢句不在表裡」的條件（約 10 分鐘）。"
                          "N>1＝N-fold，快但表只剩 (N-1)/N，會低估候選品質。"
                          "1＝關閉（重建 v17 以前的資料時用）")
+    ap.add_argument("--min-coverage", type=float, default=0.0,
+                    help="train 的最低參考詞涵蓋率，低於此值的句子不進訓練集"
+                         "（0＝不過濾）。目的是止住目標被截短造成的『學會少輸出』。"
+                         "實測 0.8 留下 61%% 的資料，截短率由 21.1%% 降到 6.6%%。"
+                         "**只作用於 train**")
     ap.add_argument("--dry-run", action="store_true", help="只算涵蓋率不寫檔")
     ap.add_argument("--limit", type=int, default=0, help="每個切分只處理前 N 句（除錯用）")
     args = ap.parse_args()
@@ -447,6 +452,34 @@ def main() -> int:
         records = [r for r, _ in results]
         stats = [st for _, st in results]
 
+        # ── 低涵蓋句過濾（2026-09-04）────────────────────────────────────
+        # 目標 sign_ids 只收「解析得到且在候選裡」的參考詞，其餘丟進 oov_items。
+        # 於是候選撈不到越多的句子，目標就被截得越短——實測 v18 的 train 目標
+        # 少了 11,163 個詞（21.1%），平均長度 5.84→4.61。
+        #
+        # 那等於在教模型「輸出短一點」，而且截短量與中文輸入無關（取決於檢索
+        # 撈到多少），模型無從分辨該不該短，只能整體縮水。v18 的盲測結果與此
+        # 相符：勝率隨目標完整度單調上升（截很兇 27%／中等 42%／幾乎完整 48%），
+        # 而 49/75 則備註提到「漏詞」，其中 78% 是模型看得到候選卻沒選。
+        #
+        # **只過濾 train**：dev/test 是評估集，過濾它們等於改變評估對象，
+        # 那些低涵蓋句本來就是系統的真實弱點，必須留在分母裡。
+        dropped_lowcov = 0
+        if split == "train" and args.min_coverage > 0:
+            keep = []
+            for rec, st_ in zip(records, stats):
+                denom = st_["covered"] + st_["oov"]
+                covr = st_["covered"] / denom if denom else 1.0
+                if covr >= args.min_coverage:
+                    keep.append((rec, st_))
+            dropped_lowcov = len(records) - len(keep)
+            records = [r for r, _ in keep]
+            stats = [st_ for _, st_ in keep]
+            print(f"  {split}: 低涵蓋過濾（<{args.min_coverage}）剔除 {dropped_lowcov} 列，"
+                  f"留下 {len(records)} 列", flush=True)
+            if not records:
+                print(f"  ⚠ {split} 被過濾光了，門檻太嚴", flush=True)
+
         tok_total = sum(s["tokens"] for s in stats)
         tok_cov = sum(s["covered"] for s in stats)
         n_ok = sum(1 for s in stats if not s["coverage_risk"])
@@ -479,6 +512,8 @@ def main() -> int:
             # 子句邊界的產出情形（2026-08-31）。**覆蓋率極低是事實不是 bug**：
             # 只有中正辭典例句有 clauses 欄位，且 504/544 是單子句，
             # 全資料集真正有邊界的只有 40 筆。引用時務必連同這個數字一起講。
+            "dropped_low_coverage": dropped_lowcov,
+            "min_coverage": args.min_coverage,
             "compound_units": n_comp,
             "compound_rows": rows_comp,
             "reduplicated_signs": n_redup,

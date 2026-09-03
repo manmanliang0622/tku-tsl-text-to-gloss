@@ -1,0 +1,3 @@
+=== /home/b310ai/tsl-v18/results/v19script_dev.jsonl  n=548
+  max_f1                                 t=0.067544  P=0.6146 R=0.8636 F1=0.7181
+  legacy_recall>=0.7_max_precision       t=0.222682  P=0.6992 R=0.7045 F1=0.7019

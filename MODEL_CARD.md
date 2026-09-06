@@ -217,10 +217,16 @@ python3 scripts/check_bundle_deps.py --list          # 印出必帶檔案
 python3 scripts/check_bundle_deps.py --deploy-check  # 印出部署端的驗證指令
 ```
 
-> **2026-08-31**：`constrained_decode.py` 與 `script_schema.py` 是本日新增的
-> 相依，**目前不在 0821_bundle 裡**。線上跑的仍是 517141b 那版（無此相依，
-> 安全但比 branch 舊）。下次部署 serve_model 時這兩個檔必須一起帶，否則啟動
-> 即死——`script_schema` 是模組層 import，會最先炸。
+> **目前線上：v19**（2026-09-07 部署，repo `bb998f8`）。checkpoint-347、
+> schema V3、門檻 0.067544、k=60。啟動時 `candidate_config.json` 對帳通過，
+> 約束解碼開啟。9 個必帶模組與 `candidate_config.json` 都在 bundle 裡。
+> 前一版 v18 的 checkpoint 保留在 `model_service/checkpoint.old`，
+> 完整備份在 `~/deploy-bak-v19-0907-0501`，回滾＝複製回去、換回
+> checkpoint.old、砍服務讓看門狗接手。
+>
+> 部署歷程：v17（8/27）→ v18（9/03，盲測對 v17 41.5%）→ v19（9/07，盲測對 v18
+> 60%）。兩輪盲測都顯示 BLEU 與人的判斷反向，版本決策以盲測為準，
+> 見 `results/v19_blind_eval_report.md`。
 
 ## 候選檢索：現階段的真正瓶頸
 

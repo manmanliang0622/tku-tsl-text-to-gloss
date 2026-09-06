@@ -101,7 +101,21 @@ def main() -> int:
     ap.add_argument("--n-corpus", type=int, default=40)
     ap.add_argument("--n-textbook", type=int, default=40)
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--exclude-key", type=Path, action="append", default=[],
+                    help="先前輪次的 _key.json，其中的句子不再抽。擴大樣本時必用——"
+                         "否則第二輪會與第一輪重疊，那是重問不是擴大。可重複給多份")
+    ap.add_argument("--suffix", default="",
+                    help="輸出檔名後綴（例 _round2）。擴大樣本時必用——第一輪的 xlsx "
+                         "已由評分者填答，沒有後綴會被覆蓋掉")
     args = ap.parse_args()
+
+    # 已用過的句子：擴大樣本時必須排除，而且要在抽樣前就排除，
+    # 不然 rng.sample 抽到重複的再丟掉會讓各 split 的題數不足。
+    used: set[str] = set()
+    for kf in args.exclude_key:
+        used |= {r["id"] for r in json.loads(kf.read_text(encoding="utf-8"))["rows"]}
+    if used:
+        print(f"排除先前 {len(args.exclude_key)} 輪共 {len(used)} 句", file=sys.stderr)
 
     inv = load_inventory()
     rng = random.Random(args.seed)
@@ -115,7 +129,7 @@ def main() -> int:
         # 評分者只能選另一邊，那一題就白問了。實測 437 題中有 1 題如此
         # （v18 在教材集的破 JSON 那列），單獨記錄比混進盲測有用。
         cand = sorted(i for i in (set(pa) & set(pb) & set(zh))
-                      if pa[i] != pb[i] and pa[i] and pb[i])
+                      if pa[i] != pb[i] and pa[i] and pb[i] and i not in used)
         if not cand:
             print(f"⚠ {split}: 沒有兩版不同的句子", file=sys.stderr)
             continue
@@ -195,13 +209,21 @@ def main() -> int:
     ws.freeze_panes = ws.cell(row=start + 1, column=1)
 
     OUT.mkdir(exist_ok=True)
-    stem = f"盲測_{args.a}_vs_{args.b}"
+    stem = f"盲測_{args.a}_vs_{args.b}{args.suffix}"
+    if not args.suffix and (OUT / f"{stem}.xlsx").exists():
+        # 沒給後綴又已有同名檔：多半是要擴大樣本卻忘了 --suffix，覆蓋掉的可能是
+        # 評分者填好的表。寧可中止。
+        print(f"✗ {OUT / f'{stem}.xlsx'} 已存在。擴大樣本請加 --suffix，"
+              f"否則會覆蓋可能已填答的表。", file=sys.stderr)
+        return 1
     xlsx = OUT / f"{stem}.xlsx"
     wb.save(xlsx)
     keyfile = OUT / f"{stem}_key.json"
     keyfile.write_text(json.dumps(
         {"note": "對照 key，**不要**給評分者。A/B 欄位記錄該題左右各是哪一版。",
          "a_tag": args.a, "b_tag": args.b, "seed": args.seed,
+         "excluded_keys": [str(k) for k in args.exclude_key],
+         "excluded_sentences": len(used),
          "n": len(picked), "rows": key}, ensure_ascii=False, indent=2),
         encoding="utf-8")
 

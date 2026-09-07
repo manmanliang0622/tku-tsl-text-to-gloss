@@ -119,6 +119,15 @@ def clause_breaks(clauses, gloss_tokens: list[str],
     return out, "ok"
 
 
+def _split_context_sentences() -> int:
+    """切分建置時的 --context 值，從 manifest 讀。這決定 prompt 裡有沒有前文，
+    要寫進 candidate_config 讓服務端對帳。"""
+    mf = SPLITS / "manifest.json"
+    if not mf.exists():
+        return 0
+    return int(json.loads(mf.read_text(encoding="utf-8")).get("context_sentences") or 0)
+
+
 def assign_folds(rows: list[dict], k: int) -> list[int]:
     """把列分到 k 個 fold，**以 group 為單位**且盡量等量。
 
@@ -238,7 +247,15 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
         candidates = cands
     breaks, breaks_reason = clause_breaks(row.get("clauses"), tokens, contrib)
 
-    user = {"text": text, "candidates": candidates}
+    # 前文脈絡（2026-09-08）。repo 自己就量過：語料庫 22.3% 的參考詞無法從單句
+    # 推得，需前文才能還原；Lost in Translation (2501.09754) 實測 1 句前文拿到
+    # 大部分增益。split_data --context 1 會把同段落前一句填進 row["context"]。
+    #
+    # **欄位永遠存在**（沒前文就是空字串）：prompt 形狀必須固定，服務端才能
+    # 用同一個形狀送請求，否則就是 training-serving skew。
+    # 候選參數存證會記 context_sentences，服務端啟動時對帳。
+    user = {"text": text, "context": str(row.get("context") or ""),
+            "candidates": candidates}
     assistant = {
         "schema_version": SCHEMA_VERSION,
         "sign_ids": sign_ids,
@@ -377,6 +394,7 @@ def main() -> int:
                            n_core=args.n_core,
                            distractor_ratio=args.distractor_ratio,
                            pin_core=args.pin_core)
+    cand_cfg["context_sentences"] = _split_context_sentences()
     cand_cfg["cross_fitting"] = ("leave-one-group-out" if args.folds == 0
                                  else ("off" if args.folds == 1 else f"{args.folds}-fold"))
     cand_cfg["schema_version"] = SCHEMA_VERSION

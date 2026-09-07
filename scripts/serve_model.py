@@ -74,6 +74,9 @@ STATE = {"model": None, "tokenizer": None, "adapter": None, "model_name": None, 
 # 不一致——2026-08-20 就因為推論端 prompt 與訓練不同，33 句 test 的 EM 與
 # ValidJSON 全部掛零，看起來像模型壞掉，其實模型是好的。
 DEPLOYED_SCHEMA = script_schema.V3
+# 服務端能提供幾句前文。0＝API 目前不帶前文。用 --context 訓的 checkpoint
+# 要上線，得先讓前端傳上一句並把這裡改成 1，否則啟動對帳會擋。
+SERVE_CONTEXT_SENTENCES = 0
 
 # ── 候選參數契約（教授審查意見 2.1）─────────────────────────────────────
 # 這台服務**必須**用與訓練時完全相同的候選參數，否則模型看到的候選分布
@@ -101,6 +104,11 @@ def _verify_candidate_config(retr) -> None:
         if key in trained and trained[key] != live.get(key):
             diffs.append(f"{key}: 訓練={trained[key]!r} 服務={live.get(key)!r}")
     # 語義通道是最常見的那個坑：訓練端有、服務端載不起來
+    # 前文脈絡：訓練時 prompt 有前文而服務端送空字串，模型看到的分布就不同。
+    # 現階段 API 沒有前文來源，所以只要 checkpoint 是用 context>0 訓的就擋。
+    if trained.get("context_sentences", 0) and not SERVE_CONTEXT_SENTENCES:
+        diffs.append(f"context_sentences={trained['context_sentences']} 但服務端沒有前文來源"
+                     f"（SERVE_CONTEXT_SENTENCES=0）——前端需先能傳上一句")
     if trained.get("n_sem", 0) and not live.get("semantic_loaded"):
         diffs.append(f"n_sem={trained['n_sem']} 但服務端沒有載入向量模型"
                      f"（semantic_loaded=False）")
@@ -294,13 +302,16 @@ except ImportError as e:                 # noqa: BLE001
         "不允許靜默停用。請把 scripts/constrained_decode.py 一起部署到 "
         "model_service/scripts/ 後再啟動。") from e
 
-def translate_script(text):
+def translate_script(text, context=""):
     """tsl-script-v1：跑候選檢索 → 模型從候選挑 sign_id → 對回 gloss 與影片。"""
     _load_script_assets()
     tok, model = STATE["tokenizer"], STATE["model"]
     retr = STATE["cand_retriever"]
     cands = retr.candidates(text, k=STATE["k"])
-    user = {"text": text, "candidates": [c["sign_id"] for c in cands]}
+    # context：前文脈絡。欄位永遠存在（沒前文送空字串），prompt 形狀與訓練一致。
+    # 目前 API 未傳前文；要用前文的 checkpoint 上線時，前端得把上一句帶進來。
+    user = {"text": text, "context": str(context or ""),
+            "candidates": [c["sign_id"] for c in cands]}
     msgs = [{"role": "system", "content": SCRIPT_SYSTEM},
             {"role": "user", "content": json.dumps(user, ensure_ascii=False)}]
     inputs = tok.apply_chat_template(msgs, add_generation_prompt=True,
@@ -367,7 +378,7 @@ def translate_script(text):
 
 def translate(text, context=""):
     if STATE["target"] == "script":
-        return translate_script(text)
+        return translate_script(text, context)
     tok, model = STATE["tokenizer"], STATE["model"]
     ex_pairs, ex_info = _rag_examples(text)
     # v12 以段落前文訓練；呼叫端若提供 context，推論必須用同一格式送入。

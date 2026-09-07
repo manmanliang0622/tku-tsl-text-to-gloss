@@ -228,6 +228,25 @@ python3 scripts/check_bundle_deps.py --deploy-check  # 印出部署端的驗證�
 > **62%，147 題，p=0.030 顯著**；語料庫長句 68% p=0.019）。兩輪盲測都顯示 BLEU 與人的判斷反向，版本決策以盲測為準，
 > 見 `results/v19_blind_eval_report.md`。
 
+## 前文脈絡：一個做好卻從沒開過的功能（2026-09-08）
+
+`split_data.py --context N` 會把同段落的前 N 句中文填進 `context` 欄位，
+repo 自己就量過**語料庫 22.3% 的參考詞無法從單句推得，需前文才能還原**。
+但它預設 0、v17–v19 的切分全是 0、腳本 prompt 也沒用這個欄位。
+
+文獻支持（2026-09-08 查）：Lost in Translation, Found in Context（2501.09754）
+實測 1 句前文拿到大部分增益、2–3 句邊際，並引用「三分之一的句子只有加前文才能
+完整翻譯」；DiscoSign（2609.02796，本月）把前文句子–翻譯對放進 prompt，空間
+指涉一致性 0.29→0.84。
+
+v20ctx 起 prompt 多一個 `context` 鍵（**永遠存在**，沒前文是空字串，形狀固定）。
+`candidate_config.json` 記 `context_sentences`，服務端啟動時比對：
+`SERVE_CONTEXT_SENTENCES=0` 代表 API 還沒有前文來源，用 context 訓的 checkpoint
+會被擋下——這是候選契約延伸到 prompt 第三個欄位。**要讓 v20ctx 上線，前端得先
+把上一句帶進 `/translate` 的 body**（欄位名 `context`，handler 已會讀）。
+
+token 預算：VM tokenizer 實測 v20ctx 最長序列 698，0% 超過 768，`--max-len` 不變。
+
 ## 候選檢索：現階段的真正瓶頸
 
 out-of-fold 修正之後才看清楚，缺口的 **約 87% 是「檢索沒撈到」**——手語在

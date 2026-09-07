@@ -215,7 +215,10 @@ def main():
     ap.add_argument("--context", type=int, default=0,
                     help="上下文翻譯（SCOPE 路線）：為語料庫句補上同段落的前 N 句中文。"
                          "0=關閉。依據：留存測試集實測 22.3%% 的參考 Gloss token 無法從"
-                         "中文字面推得，需前文才能還原。test_corpus 依對話群組整組留存，"
+                         "中文字面推得，需前文才能還原。"
+                         "**2026-09-09 實測無效**（v20ctx）：有前文的句子 F1 +0.006，"
+                         "餵給檢索器 −0.3pp。那些詞多是語法機制，前一句也供不出來；"
+                         "且模型只能從候選選，前文改變不了候選。見 results/v20ctx_report.md。test_corpus 依對話群組整組留存，"
                          "故其前文也在 test 內，不會洩漏。")
     ap.add_argument("--papers-as-test", action="store_true",
                     help="論文例句改作**獨立測試集**（test_papers.jsonl）而非訓練資料。"

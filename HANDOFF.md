@@ -88,6 +88,17 @@
 >   **2026-09-08 起 min-coverage 預設豁免「整詞缺但單字都有」的 OOV**（教「不要
 >   拆字」的例子由 19 回到 58 列）。要重建 v19／v20ctx 那份完全一樣的資料，
 >   加 `--no-exempt-whole-word-gaps`。
+  **v21 資料已建好**（2026-09-08，本機 `data/splits_script_v21/`，VM
+  `~/tsl-v18/data/splits_script_v21/`）：與 v19 的唯一差異是 train 多 39 列
+  （5,545→5,584，`coverage_stats.json` 的 `whole_word_gap_rows`=58），dev／test／
+  test_corpus／test_textbook 與 v19 **逐位元相同**——盲測若有差異只能歸因於那 39 列。
+  重訓：先停線上模型、建 `training.lock`，再跑 VM 的 `~/run_v21.sh`
+  （訓練→推論→門檻→評分→v19 vs v21 盲測表，一條龍不放 GPU）。
+- ⚠️ **prompt 的 `context` 鍵只在切分開了 `--context` 時存在**（2026-09-08）。
+  兩端都經 `script_schema.user_prompt` 組裝：訓練端看 manifest 的
+  `context_sentences`，服務端看 `SERVE_CONTEXT_SENTENCES`，啟動閘門雙向對帳。
+  曾寫成「鍵永遠存在、沒前文放空字串」，無前文的重建資料因此與 v19 差一個鍵，
+  而線上 v19 是沒這個鍵訓的。`tests/test_prompt_shape.py` 守著這條。
 >   要重建 v17 那份完全一樣的資料：
 >   `--schema-version tsl-script-v1`，並在 `CandidateRetriever` 傳
 >   `exclude_unusable=False`。

@@ -78,3 +78,24 @@ def read_flag(obj, default=False):
 def flag_field(schema_version=CURRENT):
     """該 schema 版本的寫入欄位名。"""
     return SCHEMA_FIELD[schema_version]
+
+
+def user_prompt(text, candidates, context=None):
+    """user 訊息的形狀——訓練端（build_script_dataset）與上線端（serve_model）
+    唯一的組裝處，兩邊不得各自手寫 dict。
+
+    ``context=None`` 表示「沒有前文機制」，鍵**不出現**；傳 str（含空字串）表示
+    有前文機制，鍵永遠出現。要不要傳，兩邊各由同一種開關決定：訓練端看切分
+    manifest 的 ``context_sentences``，上線端看 ``SERVE_CONTEXT_SENTENCES``，
+    而 serve_model._verify_candidate_config 會擋兩者不一致的部署。
+
+    2026-09-08 教訓：v20ctx 為了「形狀固定」把 context 鍵改成永遠存在（空字串），
+    結果無前文重建的資料多了一個 v19 沒有的鍵，dev／test 由逐位元相同變成 548 列
+    全部不同；線上 v19 是沒這個鍵訓的，改過的 serve_model 一部署就是 skew。
+    形狀該由「有沒有前文」決定，不是無條件帶著。
+    """
+    user = {"text": text}
+    if context is not None:
+        user["context"] = str(context)
+    user["candidates"] = list(candidates)
+    return user

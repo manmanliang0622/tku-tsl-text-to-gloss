@@ -15,6 +15,7 @@
   test_clause_breaks        子句邊界的定義、對齊與失敗退路
   test_gloss_notation       重複貌 ++ 與複合 + 的解析
   test_candidate_parity     候選參數的訓練／上線一致與 cross-fitting 分組
+  test_prompt_shape         user prompt 形狀：context 鍵由開關決定，兩端共用組裝
 """
 import os
 import subprocess
@@ -35,6 +36,7 @@ SCRIPT_TESTS = [
     "test_clause_breaks.py",
     "test_gloss_notation.py",
     "test_candidate_parity.py",
+    "test_prompt_shape.py",
 ]
 # unittest 形式的
 UNITTEST_MODULES = ["test_metrics"]

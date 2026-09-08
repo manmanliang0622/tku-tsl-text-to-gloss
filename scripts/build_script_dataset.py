@@ -41,6 +41,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import functools
 import json
 import sys
 from pathlib import Path
@@ -132,6 +133,7 @@ def is_whole_word_gap(seg: str, retr: CandidateRetriever) -> bool:
             and all(retr.resolve(ch) is not None for ch in seg))
 
 
+@functools.lru_cache(maxsize=None)
 def _split_context_sentences() -> int:
     """切分建置時的 --context 值，從 manifest 讀。這決定 prompt 裡有沒有前文，
     要寫進 candidate_config 讓服務端對帳。"""
@@ -260,15 +262,17 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
         candidates = cands
     breaks, breaks_reason = clause_breaks(row.get("clauses"), tokens, contrib)
 
-    # 前文脈絡（2026-09-08）。repo 自己就量過：語料庫 22.3% 的參考詞無法從單句
-    # 推得，需前文才能還原；Lost in Translation (2501.09754) 實測 1 句前文拿到
-    # 大部分增益。split_data --context 1 會把同段落前一句填進 row["context"]。
+    # 前文脈絡：split_data --context 1 會把同段落前一句填進 row["context"]
+    # （v20ctx 實測三層皆零，見 results/v20ctx_report.md；機制留著）。
     #
-    # **欄位永遠存在**（沒前文就是空字串）：prompt 形狀必須固定，服務端才能
-    # 用同一個形狀送請求，否則就是 training-serving skew。
-    # 候選參數存證會記 context_sentences，服務端啟動時對帳。
-    user = {"text": text, "context": str(row.get("context") or ""),
-            "candidates": candidates}
+    # context 鍵**只在切分開了 --context 時存在**，由 manifest 的 context_sentences
+    # 決定，不看單列有沒有前文——同一份資料的 prompt 形狀要固定。服務端用同一條
+    # 規則（SERVE_CONTEXT_SENTENCES），啟動時對帳 candidate_config 的 context_sentences。
+    # 曾經寫成「鍵永遠存在、沒前文放空字串」，結果無前文的重建資料與 v19 差一個鍵，
+    # 線上 v19 又是沒這個鍵訓的——形狀由開關決定，不能無條件帶著。
+    user = script_schema.user_prompt(
+        text, candidates,
+        context=str(row.get("context") or "") if _split_context_sentences() else None)
     assistant = {
         "schema_version": SCHEMA_VERSION,
         "sign_ids": sign_ids,

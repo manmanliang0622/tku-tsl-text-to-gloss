@@ -104,11 +104,13 @@ def _verify_candidate_config(retr) -> None:
         if key in trained and trained[key] != live.get(key):
             diffs.append(f"{key}: 訓練={trained[key]!r} 服務={live.get(key)!r}")
     # 語義通道是最常見的那個坑：訓練端有、服務端載不起來
-    # 前文脈絡：訓練時 prompt 有前文而服務端送空字串，模型看到的分布就不同。
-    # 現階段 API 沒有前文來源，所以只要 checkpoint 是用 context>0 訓的就擋。
-    if trained.get("context_sentences", 0) and not SERVE_CONTEXT_SENTENCES:
-        diffs.append(f"context_sentences={trained['context_sentences']} 但服務端沒有前文來源"
-                     f"（SERVE_CONTEXT_SENTENCES=0）——前端需先能傳上一句")
+    # 前文脈絡：prompt 有沒有 context 鍵由這個開關決定，兩邊不同就是 skew——
+    # 訓練有、服務沒有（模型看到的分布不同），或訓練沒有、服務多送一個鍵，都擋。
+    # 現階段 API 沒有前文來源，所以 context>0 訓的 checkpoint 一律上不去。
+    trained_ctx = int(trained.get("context_sentences", 0) or 0)
+    if bool(trained_ctx) != bool(SERVE_CONTEXT_SENTENCES):
+        diffs.append(f"context_sentences: 訓練={trained_ctx} 服務={SERVE_CONTEXT_SENTENCES}"
+                     f"——prompt 的 context 鍵存不存在由它決定；服務端要開前文得先讓前端傳上一句")
     if trained.get("n_sem", 0) and not live.get("semantic_loaded"):
         diffs.append(f"n_sem={trained['n_sem']} 但服務端沒有載入向量模型"
                      f"（semantic_loaded=False）")
@@ -308,10 +310,13 @@ def translate_script(text, context=""):
     tok, model = STATE["tokenizer"], STATE["model"]
     retr = STATE["cand_retriever"]
     cands = retr.candidates(text, k=STATE["k"])
-    # context：前文脈絡。欄位永遠存在（沒前文送空字串），prompt 形狀與訓練一致。
-    # 目前 API 未傳前文；要用前文的 checkpoint 上線時，前端得把上一句帶進來。
-    user = {"text": text, "context": str(context or ""),
-            "candidates": [c["sign_id"] for c in cands]}
+    # context 鍵只在 SERVE_CONTEXT_SENTENCES>0 時存在，與訓練端（manifest 的
+    # context_sentences）同一條規則；形狀由 script_schema.user_prompt 統一組裝。
+    # 目前 API 未傳前文；要用前文的 checkpoint 上線時，前端得把上一句帶進來，
+    # 且 _verify_candidate_config 會擋 context_sentences 與這裡不一致的 checkpoint。
+    user = script_schema.user_prompt(
+        text, [c["sign_id"] for c in cands],
+        context=str(context or "") if SERVE_CONTEXT_SENTENCES else None)
     msgs = [{"role": "system", "content": SCRIPT_SYSTEM},
             {"role": "user", "content": json.dumps(user, ensure_ascii=False)}]
     inputs = tok.apply_chat_template(msgs, add_generation_prompt=True,

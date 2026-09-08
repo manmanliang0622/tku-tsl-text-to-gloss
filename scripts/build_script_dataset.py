@@ -119,6 +119,19 @@ def clause_breaks(clauses, gloss_tokens: list[str],
     return out, "ok"
 
 
+def is_whole_word_gap(seg: str, retr: CandidateRetriever) -> bool:
+    """整詞不在動作庫、但每個字都在——會被拆字的那一類（毛利人／調香師／羅馬競技場）。
+
+    2026-09-08：這類詞的訓練目標很明確——整詞進 oov_items——但 v19 只剩 19 個例子，
+    因為 --min-coverage 0.8 把含它們的句子從 122 列砍到 19 列（一個三字不明詞就把
+    涵蓋率拖到門檻邊緣）。模型學不到「不要拆字」，實際輸出就變成 毛/利/人。
+    豁免它們不計入涵蓋率分母，例子回到 58 列；被救回的句子其餘涵蓋率中位 83%，
+    不是爛句。詳見 results/v20ctx_report.md 之後的拆字分析。
+    """
+    return (len(seg) >= 2 and retr.resolve(seg) is None
+            and all(retr.resolve(ch) is not None for ch in seg))
+
+
 def _split_context_sentences() -> int:
     """切分建置時的 --context 值，從 manifest 讀。這決定 prompt 裡有沒有前文，
     要寫進 candidate_config 讓服務端對帳。"""
@@ -297,6 +310,9 @@ def convert_row(row: dict, retr: CandidateRetriever, k: int,
         "reduplicated": reduplicated,
         "oov_items": oov,
         "not_in_library": [t for t, r in zip(oov, oov_reasons) if r == "not_in_library"],
+        # 整詞缺但單字都有：目標明確（進 oov_items），min-coverage 過濾時豁免
+        "whole_word_gap": [t for t, r in zip(oov, oov_reasons)
+                           if r == "not_in_library" and is_whole_word_gap(t, retr)],
         "unusable_asset": [t for t, r in zip(oov, oov_reasons) if r == "unusable_asset"],
         "retrieval_miss": [t for t, r in zip(oov, oov_reasons) if r == "retrieval_miss"],
     }
@@ -370,6 +386,11 @@ def main() -> int:
                          "（0＝不過濾）。目的是止住目標被截短造成的『學會少輸出』。"
                          "實測 0.8 留下 61%% 的資料，截短率由 21.1%% 降到 6.6%%。"
                          "**只作用於 train**")
+    ap.add_argument("--no-exempt-whole-word-gaps", action="store_true",
+                    help="min-coverage 過濾時**不**豁免「整詞缺但單字都有」的 OOV。"
+                         "預設豁免（2026-09-08）：這類詞的目標明確（進 oov_items），"
+                         "v19 因未豁免只剩 19 個教「不要拆字」的例子。"
+                         "重建 v19 那份完全相同的資料時加此旗標")
     ap.add_argument("--dry-run", action="store_true", help="只算涵蓋率不寫檔")
     ap.add_argument("--limit", type=int, default=0, help="每個切分只處理前 N 句（除錯用）")
     args = ap.parse_args()
@@ -484,13 +505,22 @@ def main() -> int:
         # 那些低涵蓋句本來就是系統的真實弱點，必須留在分母裡。
         dropped_lowcov = 0
         if split == "train" and args.min_coverage > 0:
-            keep = []
+            keep = []; exempt_saved = 0
             for rec, st_ in zip(records, stats):
-                denom = st_["covered"] + st_["oov"]
+                # 整詞缺但單字都有的 OOV 不計入分母——見 is_whole_word_gap()。
+                # 它們的目標是「整詞進 oov_items」，教的是不要拆字；讓這種句子
+                # 因為一個詞被過濾掉，等於把教材丟了。
+                n_gap = len(st_["whole_word_gap"]) if not args.no_exempt_whole_word_gaps else 0
+                denom = st_["covered"] + st_["oov"] - n_gap
                 covr = st_["covered"] / denom if denom else 1.0
+                strict = st_["covered"] / (st_["covered"] + st_["oov"]) if st_["covered"] + st_["oov"] else 1.0
                 if covr >= args.min_coverage:
                     keep.append((rec, st_))
+                    if strict < args.min_coverage:
+                        exempt_saved += 1
             dropped_lowcov = len(records) - len(keep)
+            if exempt_saved:
+                print(f"  {split}: 其中 {exempt_saved} 列靠「整詞缺但單字都有」豁免留下", flush=True)
             records = [r for r, _ in keep]
             stats = [st_ for _, st_ in keep]
             print(f"  {split}: 低涵蓋過濾（<{args.min_coverage}）剔除 {dropped_lowcov} 列，"
@@ -532,6 +562,8 @@ def main() -> int:
             # 全資料集真正有邊界的只有 40 筆。引用時務必連同這個數字一起講。
             "dropped_low_coverage": dropped_lowcov,
             "min_coverage": args.min_coverage,
+            "whole_word_gap_exempt": not args.no_exempt_whole_word_gaps,
+            "whole_word_gap_rows": sum(1 for st_ in stats if st_["whole_word_gap"]),
             "compound_units": n_comp,
             "compound_rows": rows_comp,
             "reduplicated_signs": n_redup,

@@ -85,6 +85,9 @@
 > - ⚠️ **切分記錄新增 `clauses` 欄位**（2026-08-31）：`clause_breaks` 現在靠它
 >   產生，舊切分沒有這個欄位，用舊 `data/splits/` 重建 splits_script 會讓
 >   `clause_breaks` 又變回全空。重建前務必先重跑 `split_data.py`。
+>   **2026-09-08 起 min-coverage 預設豁免「整詞缺但單字都有」的 OOV**（教「不要
+>   拆字」的例子由 19 回到 58 列）。要重建 v19／v20ctx 那份完全一樣的資料，
+>   加 `--no-exempt-whole-word-gaps`。
 >   要重建 v17 那份完全一樣的資料：
 >   `--schema-version tsl-script-v1`，並在 `CandidateRetriever` 傳
 >   `exclude_unusable=False`。

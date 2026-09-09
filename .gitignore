@@ -67,3 +67,7 @@ data/video/entries_final.csv
 # 目前不入庫——本分支的 data/tslcorpus/parallel.jsonl 還在人工校訂中，
 # 先鎖 hash 會變成對他人在製品的絆索。校訂落地後再產一份 commit 進來。
 data/source_manifest.json
+
+# 教材／論文例句測試集依授權不得公開（同 splits_v17 的規則，涵蓋所有 splits_script_v* 版本目錄）
+data/splits_script_v*/test_textbook.jsonl
+data/splits_script_v*/test_papers.jsonl

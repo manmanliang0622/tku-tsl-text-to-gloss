@@ -92,8 +92,14 @@
   `~/tsl-v18/data/splits_script_v21/`）：與 v19 的唯一差異是 train 多 39 列
   （5,545→5,584，`coverage_stats.json` 的 `whole_word_gap_rows`=58），dev／test／
   test_corpus／test_textbook 與 v19 **逐位元相同**——盲測若有差異只能歸因於那 39 列。
-  重訓：先停線上模型、建 `training.lock`，再跑 VM 的 `~/run_v21.sh`
-  （訓練→推論→門檻→評分→v19 vs v21 盲測表，一條龍不放 GPU）。
+  **v21 已於 2026-09-09 訓完**（`~/outputs/qlora_e4b_v21script/checkpoint-349`，
+  門檻 0.001814）：自動指標小升但拆字零改善、OOV 旗標反而變弱，
+  見 `results/v21_vs_v19_report.md`；88 題盲測表在 VM `~/tsl-v18/outputs/`
+  （`outputs/` 不入庫），待評。**線上維持 v19。**
+  重訓起跑順序（v21 第一次就 OOM 的教訓）：`touch training.lock` →
+  砍父程序 `pkill -f "[b]undle_server.py --host 127.0.0.1 --port 8084"` → 砍
+  `pkill -f "[s]erve_model.py"`（只砍子程序沒用，bundle_server 秒級重生它）→
+  等 `pgrep serve_model` 為空 → `setsid nohup ~/run_v21.sh &`。腳本起訓前已加守衛。
 - ⚠️ **prompt 的 `context` 鍵只在切分開了 `--context` 時存在**（2026-09-08）。
   兩端都經 `script_schema.user_prompt` 組裝：訓練端看 manifest 的
   `context_sentences`，服務端看 `SERVE_CONTEXT_SENTENCES`，啟動閘門雙向對帳。

@@ -1,0 +1,19 @@
+{
+  "tag": "v21script",
+  "split": "test",
+  "n_rows": 33,
+  "git_commit": "1fedad18e24cdebac6961dcc98ca9f86f05a4dde",
+  "adapter": "/home/b310ai/outputs/qlora_e4b_v21script/checkpoint-349",
+  "adapter_sha256": "089432c49ad4a96169c8ae99b05dd7eb8753ae48c44698e373565988c02d0d2d",
+  "data_dir": "/home/b310ai/tsl-v18/data/splits_script_v21",
+  "data_sha256": "7cf50cf18222984d232604c4565e83bfd3e4f2ed804c6ee3872b29951a54c1db",
+  "constrained_decode": true,
+  "max_new": 256,
+  "max_len_ctx": 768,
+  "limit": null,
+  "command": "scripts/infer_script_model.py --adapter /home/b310ai/outputs/qlora_e4b_v21script/checkpoint-349 --data /home/b310ai/tsl-v18/data/splits_script_v21 --split dev test test_corpus test_textbook --tag v21script",
+  "constraint_guards": {
+    "MAX_RUN": 6,
+    "MAX_SIGNS": 18
+  }
+}

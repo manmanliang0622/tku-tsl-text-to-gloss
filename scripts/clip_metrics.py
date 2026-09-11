@@ -12,6 +12,11 @@
      （台灣、紅、生病…）就被算成 act=0.00，29 支好片被誤判成 severe。
      改用**姿態判哪隻手在打**：手腕相對肩寬的最大位移 mov，只有 mov 夠大的那側
      才進較差側取值。實測 台灣 L=0.21／R=0.72、幫 L=0.74／R=0.73 分得很開。
+  3. 光看 mov 還是會漏：單手詞的另一隻手臂抬起又放下，位移跟主手一樣大。
+     2026-09-02 那批辭典片有 3 支（叔叔／姑姑／幾歲）主手偵測 0.89–0.94，
+     卻因為閒置手被算進來而 act 掉到 0.01–0.12，又是一輪假 severe。再加一道
+     門檻：整段幾乎抓不到手（hr < HR_FLOOR）**且**手腕從沒抬過腰
+     （high > WAIST）的那側直接剔除，兩件事要同時成立才算閒置。
 
 所以 act_eff ＝「真正在打的那些手，在有效區段裡被偵測到的比例」。要跟
 entries_final.csv 的 tier 比較時**兩邊都要用這支算**，口徑才對得起來
@@ -23,6 +28,8 @@ import numpy as np
 
 MOV_ABS = 0.25   # 手腕位移下限（肩寬為單位）：低於此視為閒置手
 MOV_REL = 0.40   # 且至少要有主動手的四成，否則同樣視為閒置
+HR_FLOOR = 0.15  # 閒置手第二道門檻：整段幾乎抓不到手
+WAIST = 0.90     # 且手腕（相對肩中點、肩寬為單位）從沒抬過腰
 
 
 def _arrays(d):
@@ -109,7 +116,7 @@ def metrics(path, start=None, end=None):
     out["span_frames"] = int(i1 - i0 + 1)
     out["span_dur"] = round(float(ts[i1] - ts[i0]), 3)
 
-    mov, hr = {}, {}
+    mov, hr, high = {}, {}, {}
     for s in ("L", "R"):
         hr[s] = float(np.mean(a["pres_" + s][sl]))
         w, vis = a["wrist_" + s][sl], a["vis_" + s][sl] > 0.5
@@ -118,8 +125,10 @@ def metrics(path, start=None, end=None):
                   if len(ww) > 3 and not np.isnan(ww).all() else 0.0)
         if np.isnan(mov[s]):
             mov[s] = 0.0
+        high[s] = float(np.nanmin(ww[:, 1])) if len(ww) else 9.9
         out[f"hand_rate_{s}"] = round(hr[s], 4)
         out[f"mov_{s}"] = round(mov[s], 3)
+        out[f"high_{s}"] = round(high[s], 3)
         wok = np.where(vis[:, None], w, np.nan)
         for c in range(wok.shape[1]):
             col = wok[:, c]
@@ -134,6 +143,17 @@ def metrics(path, start=None, end=None):
     top = max(mov.values())
     in_play = [s for s in ("L", "R")
                if mov[s] >= max(MOV_ABS, MOV_REL * top) or mov[s] == top]
+    # mov 一招擋不住「單手詞的另一隻手臂抬起又放下」：位移一樣大，卻沒在打。
+    # 2026-09-02 這批辭典片踩到 3 支（叔叔／姑姑／幾歲，主手 0.89–0.94，
+    # 卻因閒置手被算進來而 act=0.01–0.12，一律誤判 severe）。閒置手的特徵是
+    # 「整段幾乎抓不到 **且** 手腕從沒抬過腰」——真的在打的手不會兩件事同時
+    # 成立（最低的 邀請你 底手也有 hr 0.26、抬到 0.67）。代價是：真的在腰下
+    # 打、又整段抓不到手的雙手詞會被當成單手詞放行，這種片本來就該人工過目。
+    lead = max(hr.values())
+    if lead >= 0.60:
+        idle = [s for s in in_play if hr[s] < HR_FLOOR and high[s] > WAIST]
+        if idle and len(idle) < len(in_play):
+            in_play = [s for s in in_play if s not in idle]
     out["hands"] = "".join(in_play) or "none"
     out["act_eff"] = round(min(hr[s] for s in in_play), 4) if in_play else 0.0
     jits = [out[f"jit_{s}"] for s in in_play if out.get(f"jit_{s}") is not None]

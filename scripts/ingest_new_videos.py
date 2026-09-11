@@ -65,7 +65,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from clip_metrics import metrics  # noqa: E402
 
-SOURCE_TAG = "twtsl:rescan-2026-09"
+SOURCE_TAG = "twtsl:rescan-2026-09"   # 預設沿用第一批；換來源時用 --source
 
 
 def _extract_one(src: str, out: str, label: str):
@@ -159,7 +159,11 @@ def main() -> int:
     ap.add_argument("--min-upgrade-act", type=float, default=0.30,
                     help="升級模式的地板：低於此換了也還是抓不到手，不換")
     ap.add_argument("--refresh-metrics", action="store_true")
+    ap.add_argument("--source", default=SOURCE_TAG,
+                    help="寫進 lexicon 的 source 欄。一批片只會有一個出處，"
+                         "換批就要換，別讓第二批繼續掛第一批的標籤")
     args = ap.parse_args()
+    source = args.source
 
     root = args.root.expanduser()
     inc = root / args.batch
@@ -281,10 +285,16 @@ def main() -> int:
         e = dict(lex.get(key) or {})
         old_rec = e.get("recording")
         e.update({"recording": f"{p['rec']}.json", "start": q["start"], "end": q["end"],
-                  "gloss": e.get("gloss", key), "source": SOURCE_TAG})
+                  "gloss": e.get("gloss", key), "source": source})
         if old_rec and old_rec != f"{p['rec']}.json":
             # 保留最初的出處：重跑不可以把它蓋成上一輪的補片
             e.setdefault("replaced_from", old_rec)
+            # system／text 講的是「上一支錄影」——打法系統、或那支片的原句與
+            # 手形描述。換了片就不再成立（moe 的文法手語片換成自然手語片之後
+            # 還掛著 system=文法手語 是最容易誤導的一種），一律丟掉；
+            # 舊值留在 lexicon.json.bak-newvideos-* 裡查得到。
+            e.pop("system", None)
+            e.pop("text", None)
         if extra:
             e.update(extra)
         lex[key] = e
@@ -298,7 +308,7 @@ def main() -> int:
 
     paths["lex"].write_text(json.dumps(lex, ensure_ascii=False), encoding="utf-8")
     paths["manifest"].write_text(json.dumps(
-        {"applied_at": ts, "source": SOURCE_TAG, "backup": bak,
+        {"applied_at": ts, "source": source, "backup": bak,
          "allow_upgrade": args.allow_upgrade, "min_upgrade_act": args.min_upgrade_act,
          "entries": manifest}, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"\n寫入完成：{len(writes)} 主鍵 + {len(alias_writes)} 別名 + {len(variants)} 變體，"

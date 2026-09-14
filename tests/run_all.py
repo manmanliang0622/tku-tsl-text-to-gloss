@@ -11,6 +11,7 @@
   test_split_normalization  切分的表面形式正規化與去洩漏
   test_inventory_legacy_id  legacy_sign_id 不被重建覆寫（追溯欄位的冪等性）
   test_comitative           伴隨句雙數收攏規則（重點在不該補的一個都沒補）
+  test_phrasebook           常用語句整句對照（整句才命中、演不出來的不收）
   test_bundle_deps          serve_model 的部署相依宣告與程式碼一致
   test_clause_breaks        子句邊界的定義、對齊與失敗退路
   test_gloss_notation       重複貌 ++ 與複合 + 的解析
@@ -32,6 +33,7 @@ SCRIPT_TESTS = [
     "test_split_normalization.py",
     "test_inventory_legacy_id.py",
     "test_comitative.py",
+    "test_phrasebook.py",
     "test_bundle_deps.py",
     "test_clause_breaks.py",
     "test_gloss_notation.py",

@@ -54,6 +54,7 @@ BUNDLE_MODULES = (
     "constrained_decode",  # 約束解碼；缺檔**故意**讓服務起不來，見下方說明
     "eval_video_coverage",  # sign_candidates 的 gloss 正規化（fold／norm）
     "gloss_fallback",
+    "phrasebook",          # 常用語句整句對照（缺檔會 warn 後停用，不擋啟動）
     "prompt_common",
     "rag_retrieve",
     "script_schema",       # schema 常數與旗標欄位名；模組層 import，缺檔最先炸
@@ -65,7 +66,8 @@ BASE = Path(__file__).resolve().parent.parent
 
 STATE = {"model": None, "tokenizer": None, "adapter": None, "model_name": None, "max_new": 64,
          "target": "gloss", "retriever": None, "rag_k": 0, "rag_min": 0.05,
-         "json_targets": {}, "cand_retriever": None, "id2gloss": {}, "k": 60}
+         "json_targets": {}, "cand_retriever": None, "id2gloss": {}, "k": 60,
+         "phrasebook": {}}
 
 # ---- 手語腳本格式 ---------------------------------------------------------
 # **這台服務目前載入的 checkpoint 是用哪個 schema 訓練的。**
@@ -233,6 +235,11 @@ def _load_script_assets():
     STATE["id2gloss"] = {r["sign_id"]: r.get("gloss_clean") or r["gloss"]
                          for r in STATE["cand_retriever"].by_id.values()}
     print(f"[serve] 候選檢索器就緒（{len(STATE['id2gloss'])} 個 sign_id）", flush=True)
+    if PHRASEBOOK and phrasebook is not None:
+        table, skipped = phrasebook.load(STATE["cand_retriever"])
+        STATE["phrasebook"] = table
+        print(f"[serve] 常用語句對照 {len(table)} 句；略過 {len(skipped)} 句："
+              + "；".join(f"{i} {why}" for i, why in skipped), flush=True)
 
 
 def _needs_review_prob(tok, seq, scores):
@@ -286,6 +293,15 @@ except ImportError:                      # noqa: BLE001 - 缺檔不該讓整個�
     comitative = None
     print("[serve] ⚠ 找不到 comitative.py，伴隨句雙數收攏規則停用（部署時漏帶？）",
           flush=True)
+# 常用語句整句對照（2026-09-14，見 phrasebook.py）。PHRASEBOOK=0 可關掉。
+# 同 comitative：只作用在線上服務，缺檔 warn 後停用。
+PHRASEBOOK = os.environ.get("PHRASEBOOK", "1") != "0"
+try:
+    import phrasebook
+except ImportError:                      # noqa: BLE001 - 缺檔不該讓整個服務起不來
+    phrasebook = None
+    print("[serve] ⚠ 找不到 phrasebook.py，常用語句整句對照停用（部署時漏帶？）",
+          flush=True)
 # 2026-08-31：原本這裡有一份與 scripts/constrained_decode.py 逐行相同的副本，
 # 靠 tests/test_serve_parity.py 守著不漂移。改成直接 import 同一份實作——
 # 教授審查意見 4.3 要求「離線推論與服務端 import 同一份」。副本消失，
@@ -307,6 +323,25 @@ except ImportError as e:                 # noqa: BLE001
 def translate_script(text, context=""):
     """tsl-script-v1：跑候選檢索 → 模型從候選挑 sign_id → 對回 gloss 與影片。"""
     _load_script_assets()
+    hit = phrasebook.lookup(STATE["phrasebook"], text) if STATE["phrasebook"] else None
+    if hit:
+        toks = [STATE["id2gloss"][i] for i in hit["sign_ids"]]
+        return {
+            "chinese": text, "gloss": toks, "gloss_text": "/".join(toks), "glosses": toks,
+            "sign_ids": list(hit["sign_ids"]),
+            "comitative_dual": False,
+            # 標準答案每個詞都驗過演得出來，沒有覆蓋風險；不經模型所以沒有機率
+            "candidate_coverage_risk": False,
+            "candidate_coverage_risk_prob": None,
+            "candidate_coverage_risk_model": None,
+            "needs_review": False,
+            "needs_review_prob": None,
+            "needs_review_model": None,
+            "oov_items": [], "dropped_ids": [], "candidates_k": 0,
+            "schema_version": DEPLOYED_SCHEMA,
+            "source": "phrasebook", "phrasebook_id": hit["id"],
+            "model": STATE["model_name"], "raw": "", "seconds": 0.0,
+        }
     tok, model = STATE["tokenizer"], STATE["model"]
     retr = STATE["cand_retriever"]
     cands = retr.candidates(text, k=STATE["k"])

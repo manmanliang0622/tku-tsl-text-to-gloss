@@ -71,8 +71,9 @@
 >
 > - **`--no-papers` 是關鍵**：現行切分**不含**中正論文例句（manifest 的
 >   `counts.test_papers` 為 0、`train_composition` 無 `paper` 來源）。
->   `data/splits/test_papers.jsonl`（143 句）是更早一輪的殘檔，這輪沒有重產——
->   拿它做評估前先確認你要的是哪一版。
+>   `data/splits/test_papers.jsonl`（143 句）原是更早一輪的殘檔，**2026-09-14 已刪除**
+>   （與 `data/splits_v17/test_papers.jsonl` 逐位元相同，要重算論文例句 13.29% 請讀那份）；
+>   `split_data.py` 也改成這輪為 0 句的測試集會順手刪掉舊檔，不再殘留。
 > - `--textbook-as-test`：2026-08-22 起以臺灣手語教材 423 句作第三個測試集，
 >   取代論文例句。需先跑 `scripts/build_textbook_testset.py`。
 > - 下游要跟著重跑，且 `--splits` 必須列出 `test_textbook`，否則那份會留舊檔：

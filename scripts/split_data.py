@@ -582,6 +582,15 @@ def main():
         out_splits.append(("test_papers", test_papers))
     if test_textbook:
         out_splits.append(("test_textbook", test_textbook))
+    # 這輪沒產出的測試集要把舊檔刪掉。2026-09-14 前只「有才寫」，於是 --no-papers
+    # 之後 test_papers.jsonl（143 句）一直殘留，manifest 寫 0、檔案卻有 143 列，
+    # 下游 eval_video_coverage／build_script_dataset 預設清單又含 test_papers，照讀不誤。
+    written = {name for name, _ in out_splits}
+    for name in ("test_corpus", "test_papers", "test_textbook"):
+        stale = OUT / f"{name}.jsonl"
+        if name not in written and stale.exists():
+            stale.unlink()
+            print(f"刪除殘檔 {stale.name}（這輪 {name} 為 0 句）")
     for name, rows in out_splits:
         with (OUT / f"{name}.jsonl").open("w", encoding="utf-8") as f:
             for e in rows:

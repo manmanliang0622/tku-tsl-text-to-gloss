@@ -17,6 +17,13 @@
      卻因為閒置手被算進來而 act 掉到 0.01–0.12，又是一輪假 severe。再加一道
      門檻：整段幾乎抓不到手（hr < HR_FLOOR）**且**手腕從沒抬過腰
      （high > WAIST）的那側直接剔除，兩件事要同時成立才算閒置。
+  4. mov／high 取的是極值，一個瞬間跳點就能讓兩道門檻同時失效。2026-09-15 站姿
+     綠幕片：閒置手垂在畫面底，另一手從旁經過時姿態模型把左腕拉到胸口 4 幀
+     （67ms），high 從 2.2 變 0.75，喝（右手偵測 0.96）被算成 act=0.006。
+     故 mov／high 改用 SPIKE_WIN 秒的滑動中位數去跳點；jit 仍用原始訊號。
+  5. 同一批還有反過來的情況：動得少的詞（一點／什麼／多少錢），畫面外那隻閒置手
+     外插出來的手腕位移反而最大，mov 只挑中它，第 3 條又規定不能把在打的手剔光，
+     act 就拿閒置手的 0 來算。mov 挑中的全是閒置手時，改用偵測率 >= 0.60 的那側。
 
 所以 act_eff ＝「真正在打的那些手，在有效區段裡被偵測到的比例」。要跟
 entries_final.csv 的 tier 比較時**兩邊都要用這支算**，口徑才對得起來
@@ -30,6 +37,7 @@ MOV_ABS = 0.25   # 手腕位移下限（肩寬為單位）：低於此視為閒�
 MOV_REL = 0.40   # 且至少要有主動手的四成，否則同樣視為閒置
 HR_FLOOR = 0.15  # 閒置手第二道門檻：整段幾乎抓不到手
 WAIST = 0.90     # 且手腕（相對肩中點、肩寬為單位）從沒抬過腰
+SPIKE_WIN = 0.15  # 秒：mov／high 去跳點的中位數視窗（壓得掉 <0.075 秒的跳點）
 
 
 def _arrays(d):
@@ -59,6 +67,16 @@ def _arrays(d):
     return a, ts, fps, n
 
 
+def _despike(ww, fps):
+    """姿態手腕序列的滑動中位數（視窗 SPIKE_WIN 秒、奇數幀），只給 mov／high 用。"""
+    k = max(3, int(round(SPIKE_WIN * (fps or 30))) | 1)
+    if len(ww) < k:
+        return ww
+    h = k // 2
+    pad = np.pad(ww, ((h, h), (0, 0)), mode="edge")
+    return np.nanmedian(np.lib.stride_tricks.sliding_window_view(pad, k, axis=0), axis=-1)
+
+
 def _highpass_rms(x, win=5):
     n = len(x)
     if n < win + 2:
@@ -85,8 +103,9 @@ def _active_span(pres, ts, fps):
 
 
 def metrics(path, start=None, end=None):
-    """start/end 給了就量那個區段（比既有詞條時用），否則自己找有效區段。"""
-    d = json.loads(open(path, encoding="utf-8").read())
+    """start/end 給了就量那個區段（比既有詞條時用），否則自己找有效區段。
+    path 也可以直接給已載入的 sidecar dict（例如先修過 handedness 的）。"""
+    d = path if isinstance(path, dict) else json.loads(open(path, encoding="utf-8").read())
     a, ts, fps, n = _arrays(d)
     out = {"n_frames": n, "fps": round(fps, 2),
            "dur": round(float(ts[-1] - ts[0]), 3) if n > 1 else 0.0,
@@ -120,7 +139,7 @@ def metrics(path, start=None, end=None):
     for s in ("L", "R"):
         hr[s] = float(np.mean(a["pres_" + s][sl]))
         w, vis = a["wrist_" + s][sl], a["vis_" + s][sl] > 0.5
-        ww = w[vis]
+        ww = _despike(w[vis], fps)
         mov[s] = (float(np.nanmax(np.linalg.norm(ww - np.nanmedian(ww, axis=0), axis=1)))
                   if len(ww) > 3 and not np.isnan(ww).all() else 0.0)
         if np.isnan(mov[s]):
@@ -154,6 +173,11 @@ def metrics(path, start=None, end=None):
         idle = [s for s in in_play if hr[s] < HR_FLOOR and high[s] > WAIST]
         if idle and len(idle) < len(in_play):
             in_play = [s for s in in_play if s not in idle]
+        elif idle:
+            # mov 挑中的全是閒置手：垂在畫面外的那隻，姿態模型外插的手腕會飄，
+            # 位移比「真正在打、但動得少」的手還大（一點／什麼／多少錢，偵測 0.99
+            # 卻 act=0.00）。改由偵測率過 0.60 的那側當在打的手。
+            in_play = [s for s in ("L", "R") if hr[s] >= 0.60]
     out["hands"] = "".join(in_play) or "none"
     out["act_eff"] = round(min(hr[s] for s in in_play), 4) if in_play else 0.0
     jits = [out[f"jit_{s}"] for s in in_play if out.get(f"jit_{s}") is not None]

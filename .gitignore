@@ -1,6 +1,9 @@
 .claude/
 .DS_Store
 __pycache__/
+# 金鑰與憑證：一律不入版控
+.env
+.env.*
 ~$*.xlsx
 data/twtsl/raw_details.jsonl
 data/refs/tslcorpus_raw.jsonl

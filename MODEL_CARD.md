@@ -1,45 +1,51 @@
 ---
-title: Model Card — TSL Text→Gloss (Gemma 4 E4B QLoRA, v11 holdout)
-updated: 2026-08-13
-supersedes: v4 teacher-reviewed (2026-08-04)
+title: Model Card — TSL Text→Script (Gemma 4 E4B QLoRA, v17script_k40sem)
+updated: 2026-08-30
+supersedes: v11 holdout (2026-08-13)
 ---
 
-# Model Card：中文 → 臺灣手語 Gloss 翻譯（Gemma 4 E4B QLoRA v11）
+# Model Card：中文 → 臺灣手語腳本（Gemma 4 E4B QLoRA v17）
 
-> **2026-08-13 修訂**：本卡先前停在 v4，引用的是「擴大 584 句 BLEU 18.61」。
-> 那批 584 句其後被證實**多數已在訓練集內**，該數字不代表泛化能力，已整段
-> 汰換為 v11 在兩個留存測試集上的數字。詳見
+> **2026-08-30 改版**：本卡先前停在 **v11**，記錄的是舊的 Gloss 字串輸出格式與
+> 該版指標。線上生成端自 2026-08-27 起是 **v17＋約束解碼**，輸出格式也已改為
+> 候選 `sign_id` 的結構化 JSON（`tsl-script-v1`）。整卡依 v17 重寫；v11 的內容
+> 不再適用，歷史數字見 git 紀錄與
 > [results/stageB_v11_generalization_report.md](results/stageB_v11_generalization_report.md)。
 
-淡江大學專題。將中文句子翻譯為**臺灣手語 Gloss 詞序**的 QLoRA adapter。
-本卡記錄**訓練配方、資料出處與授權、評估結果與重現方式**。權重二進位（adapter）目前留在訓練 VM，
-未放入本 repo；依下方配方可從本 repo 重跑得到同一個 adapter。
+淡江大學專題「譯手通 SignTranslate」。把中文句子翻成**臺灣手語詞彙 ID 序列**的
+QLoRA adapter，輸出直接驅動 3D 虛擬人逐詞播放。本卡記錄**訓練配方、資料出處與
+授權、評估結果與重現方式**。權重二進位不入 repo（`outputs/` 為 gitignore），
+取得方式見文末。
 
 ## 定位與界線（先讀）
 
-- **是什麼**：Text→Gloss 的**詞彙／語序層**候選模型。輸入中文、輸出 Gloss token 序列（以 `/` 分隔）。
-- **不是什麼**：**不輸出、也不保證 NMS（非手部標記：表情／搖頭／揚眉）、手形、地區變體**。這些屬「影片軌」，需母語者看影片裁定，不在本模型範圍。
-- **成熟度**：內部候選 / 管線驗證，**尚非最終成果**，勿當成通用可用模型。
-  未見過的語料庫長句 Exact Match 僅 **1.20%**、論文例句 **13.29%**；
-  核心 33 句的 69.70% 是**問候語為主的短句**（參考答案平均 2.39 詞），
+- **是什麼**：**候選挑選＋排序**模型。輸入一句中文與該句的 40 個候選 `sign_id`，
+  輸出挑出並排好序的 `sign_ids`、子句切點與品質預警旗標。
+- **不是什麼**：**不輸出、也不保證 NMS（非手部標記：表情／搖頭／揚眉）、手形、
+  地區變體**。這些屬「影片軌」，需母語者看影片裁定，不在本模型範圍。
+- **成熟度**：內部候選／管線驗證，**尚非最終成果**。語料庫留存長句的完全正確率
+  僅 **0.60%**、教材集 **15.60%**；核心 33 句的 66.67% 是**問候語為主的短句**，
   不可拿來代表整體能力。
-- **已知學到什麼**：語序（錯誤率僅 2–5%）、疑問類型 93–99%、否定 96–97%、
-  有效 JSON 99–100%。**沒學到的是詞彙**——選詞錯誤＋未知詞佔全部錯誤的 60–81%。
+- **已知學到什麼**：語序與輸出格式（有效 JSON 100%）、從候選中挑詞。
+  **沒學到的是詞彙**——錯誤仍以選詞為大宗。
 - 自動指標高 ≠ 手語文法正確；正式品質須經計畫 6.2 手語老師 5 分制人工評估，
   **該評估尚未執行**。
 
 ## 基礎模型
 
 - `google/gemma-4-E4B-it`（Gemma 4 E4B，instruction-tuned）。
-- **授權提醒**：本 adapter 為 Gemma 衍生物，散布 Gemma 衍生權重須遵守 **Google Gemma Terms of Use**（需隨附條款、含使用限制）。公開權重前請先確認 Gemma 條款；本卡不代為認定。
+- **授權（2026-08-22 已查證）**：Gemma 4 適用 **Apache License 2.0**，不適用
+  Gemma Terms of Use（該條款明文僅涵蓋 Gemma 1–3n）。公開 adapter 在 Google
+  授權側無阻擋，僅需標明衍生來源；查證依據見
+  [Gemma條款查證_2026-08-22.md](Gemma條款查證_2026-08-22.md)。
 
 ## 資料與出處（散布須標明）
 
 | 來源 | 用途 | 出處／授權 |
 |---|---|---|
 | 文化部臺灣手語語料庫（測試版） | 主要真實平行語料 | © 文化部臺灣手語語料庫。訓練＋散布授權已確認合法（2026-08-04），須標明出處 |
-| 中正大學台灣手語線上辭典（第五版） | 詞彙查證、例句 | 蔡素娟、戴浩一、劉世凱、陳怡君。2026。《台灣手語線上辭典（中文版第五版）》。嘉義：國立中正大學手語語言學台灣研究中心。訓練＋散布授權已確認合法（2026-08-04），須標明出處 |
-| 自有標記表 | 自有 35 句／38 詞 | 專案自製 |
+| 中正大學台灣手語線上辭典（第五版） | 詞彙查證、例句、論文例句 | 蔡素娟、戴浩一、劉世凱、陳怡君。2026。《台灣手語線上辭典（中文版第五版）》。嘉義：國立中正大學手語語言學台灣研究中心。訓練＋散布授權已確認合法（2026-08-04），須標明出處 |
+| 自有標記表 | 核心 33 句真實錄影與自製詞彙標記 | 專案自製 |
 | 規則模板合成句 | 資料擴充 | 合成；經手語老師 2026-07-24 gloss 層審核（108 句修正，7 句待影片者排除） |
 
 > 授權詳見 [資料來源.md](資料來源.md) 檔首「授權更新（2026-08-04）」。
@@ -48,102 +54,348 @@ supersedes: v4 teacher-reviewed (2026-08-04)
 ## 訓練配方（可重現）
 
 ### 1) 切分
+
 ```bash
-python3 scripts/split_data.py --use-all --length-balance --papers-as-test \
-    --corpus-test-ratio 0.12 --corpus-test-min-len 6
-python3 scripts/build_json_targets.py --splits train dev test test_corpus test_papers
+python3 scripts/split_data.py --use-all --length-balance --no-papers \
+  --textbook-as-test --corpus-test-ratio 0.12 --corpus-test-min-len 6 --seed 42
 ```
-- 組成：train **5,347 個相異句對**（長度平衡過取樣後 8,992 列）／dev 666／
-  核心 test 33／`test_corpus` 167／`test_papers` 143。
-  **對外一律寫「5,347 句」，不可寫「8,992 句」**——後者含 3,645 列刻意複製。
-- 長度平衡：≤4 詞 ×1、5–7 詞 ×2、≥8 詞 ×4，用於矯正輸出過短的偏差。
-- synth 只納入 `teacher_train_eligible`（108 句教師修正生效；7 句待影片者不進訓練）。
-- 去洩漏〔2026-08-13 複驗〕：三個測試集與 train 的中文、`(中文,Gloss)` 重疊
-  **皆為 0**；dev 有 8 句中文與 train 相同但 Gloss 不同（標籤噪音，尚未處置）。
-- Sidecar：`data/splits/test_corpus_teacher_review_2026-07-24.json`
-  （SHA-256 `4f305cc44c37ed4c329b71c009f4418ce6c3c744ac1532e164cb7ea62f5a549a`）。
 
-### 2) 訓練
+| split | 列數 | 說明 |
+|---|---:|---|
+| `train` | 8,915 | 長度平衡過取樣後；**相異句對 5,321、相異中文 5,283** |
+| `dev` | 663 | 選 checkpoint 與校準 needs_review 門檻 |
+| `test`（核心 33） | 33 | 真實錄影、歷代可比 |
+| `test_corpus` | 166 | 語料庫留存長句 |
+| `test_textbook` | 423 | 教材集，最大也最接近展示情境 |
+
+- **對外一律寫「5,321 句對」，不可寫「8,915 句」**——後者含刻意複製的過取樣列。
+- 長度平衡用於矯正輸出過短的偏差。
+- 去洩漏〔2026-08-30 複驗〕：三個測試集與 train 的中文、`(中文,Gloss)` 重疊
+  **皆為 0**；dev 有 6 句中文與 train 相同但 Gloss 不同（標籤噪音，尚未處置）。
+
+### 2) 建候選資料集（tsl-script-v1）
+
 ```bash
-PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
-python3 scripts/train_qlora.py \
-  --model google/gemma-4-E4B-it --output outputs/qlora_e4b_v11_holdout \
-  --target json --epochs 2 --batch 2 --grad-accum 4 --max-len 192 --lr 2e-4 --seed 42
+.venv-emb/bin/python3 scripts/build_script_dataset.py \
+  --splits train dev test test_corpus test_textbook \
+  --k 40 --n-sem 8 --compact --out data/splits_script_k40sem
 ```
-- QLoRA：LoRA **r=16、alpha=32、dropout=0.05**；4-bit **nf4** ＋ double quant、**bf16** compute。
-  （r=32 試過，dev loss 反而略差 0.7268 vs 0.7061，見 v7 實驗。）
-- target modules：`language_model` 的 `q/k/v/o/gate/up/down_proj`。
-- **選模**：僅依最低 dev loss → `checkpoint-1124`（epoch 1，dev loss 0.2233）。
-  `save_total_limit=None` 保留每個 epoch 的 checkpoint 供事後挑選，**未用 test 選模**。
 
-### 3) 評估
+每句附 **40 個候選 `sign_id`**，其中最多 8 個名額由語義向量檢索填入，其餘為字面／
+例句遷移／詞對齊／核心詞／干擾項。`--n-sem` 需 `.venv-emb`（bge-small-zh-v1.5）。
+
+⚠️ **`data/splits_script_k40sem/` 無法逐位元重現**。建資料當時的候選排序會受
+Python set 迭代順序（隨 `PYTHONHASHSEED` 變動）影響，同一條指令連跑兩次會有少數
+句子不同。此缺陷已於 2026-08-30 修正（commit 64ad7c5），**日後**建的資料集可重現，
+但用修正後的程式重建 v17 資料只有約 8 成句子與原檔相同。v17 的資料集是已提交的
+既有產物，不需重新產生。
+
+### 3) 訓練
+
 ```bash
-python3 scripts/eval_json_model.py --adapter outputs/qlora_e4b_v11_holdout/checkpoint-1124 \
-    --tag v11_test_corpus --test-file test_corpus.jsonl --ple gpu
+python3 scripts/train_script_qlora.py --verify-v17
 ```
-⚠️ `--ple gpu` 必要：`device_map` 含任何 `"cpu"` 項目會讓 accelerate 掛 offload
-hook，每 token 慢到約 35 秒（全放 GPU 是 0.06 秒/token）。
 
-## 評估結果（v11）
+| 項目 | 值 | 項目 | 值 |
+|---|---|---|---|
+| epochs | 2（**採 epoch 1**） | 學習率 | 2e-4 |
+| 有效 batch | 16（2 × 8 累積） | 最大長度 | 768 tokens |
+| LoRA r / α | 16 / 32 | LoRA dropout | 0.05 |
+| 量化 | 4-bit nf4＋double quant | compute dtype | bf16 |
+| 隨機種子 | 42 | 總步數 | 1,116 |
+| 訓練時間 | 156.98 分鐘 | 峰值顯存 | 11.80 GB |
 
-**對外報告一律用 `test_corpus` / `test_papers`；核心 33 句僅作歷史對照。**
+- 框架：**Unsloth ＋ TRL SFT**（PyTorch 2.7.1、CUDA 12.6），硬體 RTX 4060 Ti 16GB。
+- **選模**：僅依 dev loss。epoch 1 = **0.19101**、epoch 2 = **0.22790**（上升＝過擬合），
+  故採 **checkpoint-558**。訓練 loss 全程平均 0.1109（曲線由 1.036 降至 0.036）。
+  **未用 test 選模。**
+- target modules 見 `train_script_qlora.TARGET_MODULES`；可訓練參數 36,700,160。
+  改動該常數會打到視覺／音訊塔，`--verify-v17` 會核對參數量擋下。
+- 完整紀錄：`outputs/qlora_e4b_v17script_k40sem/unsloth_run.json`。
 
-| 指標 | 核心 33（短句） | `test_corpus` 167 | `test_papers` 143 |
-|---|---:|---:|---:|
-| Exact Match | 69.70% | **1.20%** | **13.29%** |
-| ROUGE-L | 82.71 | 50.08 | 57.08 |
-| BLEU-4 | 62.96 | 14.83 | 17.71 |
-| 可播放率 | 91.67% | 66.96% | 78.20% |
-| 　（參考答案天花板） | 100% | 67.09% | 74.96% |
-| 有效 JSON | 100% | 100% | 99.30% |
-| 疑問類型正確 | 96.97% | 93.41% | 98.60% |
-| 否定正確 | 100% | 95.81% | 97.20% |
+### 4) 評估
 
-`test_papers` 的 EM／ROUGE-L／BLEU 為 **2026-08-13 修正參考答案後**的重算值
-（原為 11.19／55.23／16.51）——39 句參考答案曾把論文的替代詞串成 Gloss 序列。
+```bash
+python3 scripts/eval_script_format.py --pred results/v17cd_test_textbook.jsonl \
+    --threshold 0.039707
+```
 
-### 分維度錯誤分析
+`tests/test_eval_script_format.py` 會拿 `results/v17cd_*` 重跑並與既有
+`*_scriptmetrics.json` 逐欄比對（4 個資料集 × 43 欄全同），確保評分管線可重現。
 
-| 錯誤型態 | `test_corpus` | `test_papers` |
+## 評估結果（v17）
+
+### 兩種參考口徑，引用時務必標明
+
+- **Full_reference**：以 `data/splits/<split>.jsonl` 的完整 `gloss_text` 為參考，
+  **含檢索撈不到的詞**——這才是系統整體水準。
+- **候選內參考**：只拿有進候選的參考詞比對，回答「有沒有從候選裡挑對」。
+  兩者差很大：`test_corpus` 有 **30.18%** 的參考詞從未進入候選。
+
+**以下一律為 Full_reference。** 「v17」為模型本身，「v17＋約束」為線上實際部署組合。
+
+| 測試集 | 版本 | BLEU-4 | ROUGE-L | EM% |
+|---|---|---:|---:|---:|
+| 核心 33（短句） | v17 ／ ＋約束 | 72.68 ／ 72.68 | 87.04 ／ 87.04 | 66.67 ／ 66.67 |
+| `test_corpus` 166 | v17 ／ ＋約束 | 16.61 ／ 16.36 | 53.09 ／ 52.92 | 0.60 ／ 0.60 |
+| `test_textbook` 423 | v17 ／ ＋約束 | 24.67 ／ 24.47 | 61.30 ／ 61.16 | 15.60 ／ 15.60 |
+| `dev` 663 | v17 ／ ＋約束 | 27.98 ／ 27.87 | 62.31 ／ 62.19 | 28.05 ／ 27.90 |
+
+### 輸出紀律：約束解碼把缺陷歸零
+
+推論時把 `sign_ids` 鎖在該句候選清單上（`scripts/constrained_decode.py`）。
+2026-08-31 起服務端與離線推論都 **import 同一份實作**，不再各留一份副本；
+`tests/test_serve_parity.py` 改為守「不得再內嵌」。
+
+| 指標 | v17 | v17＋約束 |
 |---|---:|---:|
-| 選詞（Gloss替換） | 47.90% | 37.76% |
-| 未知詞（OOV） | 33.53% | 22.38% |
-| 漏詞 | 12.57% | 6.99% |
-| **語序** | **2.40%** | **4.90%** |
-| 亂加詞 | 0.60% | 10.49% |
-| 完全錯誤 | 1.80% | 4.20% |
-| 正確 | 1.20% | 13.29% |
+| 詞彙違規率（列）corpus／textbook | 5.42% ／ 5.67% | **0.0% ／ 0.0%** |
+| 未知 sign_id（corpus／textbook） | 8 ／ 29 | **0 ／ 0** |
+| ValidSignID%（corpus／textbook） | 99.18% ／ 98.37% | **100% ／ 100%** |
+| 有效 JSON（全集合） | 100% | 100% |
 
-**語序不是瓶頸，詞彙覆蓋才是。** 三層診斷（不同測試集、不同方法）獨立得到
-同一結論，見 [results/three_tier_report.md](results/three_tier_report.md)。
-OOV 判定基準為「詞彙總表 ∪ 訓練詞彙」（13,663 詞），非訓練詞彙——後者會把
-合法但訓練未出現的手語詞誤判成造詞，實測高估 67%。
+品質代價為零（±0.2 BLEU 屬雜訊）。另加退化守衛：同一 `sign_id` 最多連續 6 次、
+陣列最多 18 個元素（取自 10,200 句參考實測極值）。
 
-### 尚未具備的證據
+> **2026-08-31 更正：上表的「可播放率 100%」是名不副實的，已改名為
+> `ValidSignID%`。** 它只檢查「預測的 ID 存不存在於總表」，沒有檢查影片能不能
+> 正常播、動作完不完整。實際比對 0813 的影片品質掃描後，動作庫 17,085 支裡
+> 只有 43.7% 的品質判定為 ok，39.8% 是 severe（幾乎整段偵測不到舉手動作）。
+> 指標已拆成四層（`scripts/eval_script_format.py`），v17cd 的真實數字是：
+>
+> | 資料集 | ValidSignID% | QualityPlayable% | ok／品質差／不堪用 |
+> |---|---:|---:|---|
+> | 核心 33 | 100.0 | **92.31** | 60／0／5 |
+> | test_corpus | 100.0 | **96.93** | 913／34／30 |
+> | test_textbook | 100.0 | **94.11** | 1621／73／106 |
+> | dev | 100.0 | **96.35** | 2283／66／89 |
+>
+> `CompositionSuccess%`（多動作串接後能否正常播）尚未實作——那要在 0813
+> 虛擬人端實際串起來播一次才量得到，不在本 repo 範圍。目前一律回報 `null`，
+> **不可**解讀為「串接已驗證沒問題」。
 
-- **母語者人工評估未執行**。工具已備妥（`scripts/make_human_eval_sheet.py`，
-  盲測 A/B 設計），尚未產表送出。語意維度自動指標答不了。
-- **未微調基線只在核心 33 句上跑過**（zero 27.27%／rules 30.30%／
-  fewshot 36.36% EM），與 `test_corpus`／`test_papers` 重疊為 0。
-  「微調到底有沒有幫助」在兩個誠實測試集上**目前無法回答**。
+### candidate_coverage_risk 校準（候選覆蓋風險）
 
-- 詳細設定與錯誤分析：[results/stageB_v11_generalization_report.md](results/stageB_v11_generalization_report.md)、
-  [教授回饋對帳與D1進度_2026-08-13.md](教授回饋對帳與D1進度_2026-08-13.md)。
+> **2026-08-31 正名：原名 `needs_review`。** 這個旗標的正解是「參考 Gloss 有沒有
+> 全部落進候選清單」，純粹是檢索覆蓋率訊號。它**偵測不到**候選完整但選錯詞、
+> 語序錯、重複／複合遺失、整句語意不自然、NMS 或影片品質問題。舊名會讓人
+> 以為模型具備翻譯品質預警能力，實際上沒有。schema v2 起欄位名為
+> `candidate_coverage_risk`（`scripts/script_schema.py`）；線上 API 兩個鍵都回，
+> `needs_review*` 僅為相容別名。
+
+模型對每句輸出覆蓋風險機率，供前端提示「這句建議人工確認」。門檻只在 dev 上選，
+不看測試集調。**線上採用 0.039707**（2026-08-27 改以最大化 F1 選定）：
+
+| 門檻 | dev F1 | corpus F1 | textbook F1 | dev 漏放行 |
+|---|---:|---:|---:|---:|
+| 0.095349（舊規則：recall≥0.7 下最大 precision） | 0.702 | 0.827 | 0.653 | 93 |
+| **0.039707（現行：最大化 F1）** | **0.741** | **0.905** | **0.702** | **23** |
+
+偏 recall 是刻意的——漏放行會讓錯句直接送去給虛擬人比出來，誤攔只是多一次人看。
+重選門檻用 `scripts/nr_threshold.py`。
+
+### 與未微調基線的對照（核心 33 句）
+
+| | zero-shot | rules | few-shot | **v17** |
+|---|---:|---:|---:|---:|
+| BLEU-4 | 39.50 | — | 44.95 | **72.68** |
+| EM% | 27.3 | — | 36.4 | **66.67** |
+
+來源 [results/stageA_report.md](results/stageA_report.md)（同一套推論堆疊，
+唯一差別是有沒有掛 adapter）。**這是短句集，不可外推**：未微調在語料庫留存句上
+的 BLEU-4 僅 6.74（見 v17 報告 §6.1），微調後也只到 16.61——長句仍是弱項。
+
+## 部署到 0821_bundle 的必帶檔案
+
+`serve_model.py` 依賴 `scripts/` 底下數個本地模組，少一個就起不來。清單由
+`serve_model.BUNDLE_MODULES` 宣告，並由 `scripts/check_bundle_deps.py`
+以 AST 算出遞移相依對帳（CI 會跑，加了 import 忘了更新清單就會紅）。
+
+```bash
+python3 scripts/check_bundle_deps.py --list          # 印出必帶檔案
+# 另需 candidate_config.json（build_script_dataset 產出，放在 model_service/ 底下）
+python3 scripts/check_bundle_deps.py --deploy-check  # 印出部署端的驗證指令
+```
+
+> **目前線上：v19**（2026-09-07 部署，repo `bb998f8`）。checkpoint-347、
+> schema V3、門檻 0.067544、k=60。啟動時 `candidate_config.json` 對帳通過，
+> 約束解碼開啟。9 個必帶模組與 `candidate_config.json` 都在 bundle 裡。
+> 前一版 v18 的 checkpoint 保留在 `model_service/checkpoint.old`，
+> 完整備份在 `~/deploy-bak-v19-0907-0501`，回滾＝複製回去、換回
+> checkpoint.old、砍服務讓看門狗接手。
+>
+> 部署歷程：v17（8/27）→ v18（9/03，盲測對 v17 41.5%）→ v19（9/07，盲測對 v18
+> **62%，147 題，p=0.030 顯著**；語料庫長句 68% p=0.019）。兩輪盲測都顯示 BLEU 與人的判斷反向，版本決策以盲測為準，
+> 見 `results/v19_blind_eval_report.md`。
+
+## 前文脈絡：一個做好卻從沒開過的功能（2026-09-08）
+
+`split_data.py --context N` 會把同段落的前 N 句中文填進 `context` 欄位，
+repo 自己就量過**語料庫 22.3% 的參考詞無法從單句推得，需前文才能還原**。
+但它預設 0、v17–v19 的切分全是 0、腳本 prompt 也沒用這個欄位。
+
+文獻支持（2026-09-08 查）：Lost in Translation, Found in Context（2501.09754）
+實測 1 句前文拿到大部分增益、2–3 句邊際，並引用「三分之一的句子只有加前文才能
+完整翻譯」；DiscoSign（2609.02796，本月）把前文句子–翻譯對放進 prompt，空間
+指涉一致性 0.29→0.84。
+
+v20ctx 起 prompt 多一個 `context` 鍵（**永遠存在**，沒前文是空字串，形狀固定）。
+`candidate_config.json` 記 `context_sentences`，服務端啟動時比對：
+`SERVE_CONTEXT_SENTENCES=0` 代表 API 還沒有前文來源，用 context 訓的 checkpoint
+會被擋下——這是候選契約延伸到 prompt 第三個欄位。**要讓 v20ctx 上線，前端得先
+把上一句帶進 `/translate` 的 body**（欄位名 `context`，handler 已會讀）。
+
+token 預算：VM tokenizer 實測 v20ctx 最長序列 698，0% 超過 768，`--max-len` 不變。
+
+> **2026-09-09 結果：沒有效果。** v20ctx 訓練並評估後，有前文的 139 句 corpus
+> token F1 0.664→0.670（+0.006），對照組（教材集，0% 前文）持平；把前文餵給
+> 檢索器也只有 −0.3pp。原因：22.3% 那些詞多半是 這／那／什麼 這類語法機制，
+> 前一句也供不出來；而且模型只能從候選裡選，前文改變不了候選。k=60 之下候選
+> 零和，與 `n_syn`／`n_sem`／`pin_core` 同一個結論。**這條線關閉。**
+> 人工盲測（85 題）同樣歸零：53%、p=0.70，語意與語序分項差 0.00，有前文的句子
+> 反而 46%。三層測量一致，這條線確定關閉。詳見 `results/v20ctx_report.md`。v20ctx 不部署。
+
+## 資料側修拆字：也不行（v21，2026-09-09）
+
+專有名詞拆字（毛利人→毛／利／人）的假設是「教『不要拆字』的例子太少」：
+`--min-coverage 0.8` 把整詞缺的句子整句砍掉，例子由 122 列剩 19 列。v21 豁免
+「整詞不在庫、但每個字都在」的 OOV，例子回到 58 列（train +39，其餘與 v19 逐位元
+相同）。結果自動指標小升（corpus BLEU +1.5、textbook +2.3），但目標行為零改善：
+166 個誘惑案例裡把整詞列進 oov_items 的由 10 降到 0，拆字率 19%→17%，OOV 旗標
+召回全面下降（corpus 0.80→0.67）。原因：只要候選裡有單字，「從候選挑字」就是
+5,584 列的壓倒性主訊號，39 列扭不動；而且那些例子是語料庫式複合 gloss，不是專有名詞。
+拆字只能在候選層修（整詞缺時壓掉單字候選）或補片。豁免保留為預設（語意正確、
+不傷指標）。**盲測（9/14，88 題）v21 卻勝 69%（p=0.004）、語意 +0.40、漏詞備註 19→4**
+——v21 比 v19 好，但好在漏詞更少（訓練軌跡差異），不是拆字修好了；拆字兩版一樣
+（西伯利亞、海龜都拆）。**v21 已於 2026-09-14 上線**（門檻 0.001814）。報告：`results/v21_vs_v19_report.md`。
+
+## 候選檢索：現階段的真正瓶頸
+
+out-of-fold 修正之後才看清楚，缺口的 **約 87% 是「檢索沒撈到」**——手語在
+動作庫裡、影片品質也好，就是沒進候選清單。模型再強也選不到不在候選裡的詞，
+所以現階段限制系統上限的是檢索器，不是模型規模。
+
+2026-09-02 在**無洩漏候選**與**新影片庫**下重掃 k（dev，548 句）：
+
+| k | 詞涵蓋率 | 整句可拼出 | train 最長序列 | 超過 `max_len=768` |
+|---:|---:|---:|---:|---:|
+| 40（舊預設） | 78.2% | 48.7% | 558 | 0% |
+| 50 | 79.7% | 50.0% | 623 | 0% |
+| **60（現行）** | **80.8%** | **51.8%** | **698** | **0%** |
+| 80 | 82.1% | 53.5% | 823 | 22% |
+
+序列長度是用 VM 上實際的 Gemma 4 tokenizer 量 train 最長的 400 句、含
+assistant 目標。舊註解說「k=60 約 950 token 逼近 max_len」是語義 ID 壓縮
+之前的估計，早已過時。k=60 還剩 70 token 餘裕，k=80 則有 22% 會被截斷。
+
+三個既有的否定結果（`n_syn`／`n_sem`／`pin_core`）在無洩漏、k=60 的條件下
+複測仍是 ±0.2pp 雜訊級，**原判定成立**——它們當初是在 k=40 且候選有洩漏的
+前提下判死的，兩個前提都變了，結論卻沒變。
+
+> ⚠️ **k 只抬高天花板，不保證輸出變好。** 候選從 40 變 60，模型要在更多
+> 干擾項裡挑。涵蓋率上升是必要條件不是充分條件，實際效果必須重訓才知道。
+
+## 已知限制
+
+- **切分曾有表面形式洩漏（2026-08-31 已修）**：`split_data.py` 原本只比對
+  原始中文字串，核心 33 句有 3 句（`我住在台北。`／`我知道`／`我不知道`）
+  去標點後就在 train，dev 與 train 更有 6 句原字串完全相同。**上表的 v14–v17
+  數字都是在那份舊切分上量的。** 三個測試集（核心 33、test_corpus、
+  test_textbook）修正後位元完全相同，所以測試集數字仍可比；但 dev 變了
+  （663→548），依 dev 選出的 checkpoint 與門檻 0.095349／0.039707 都應在
+  新 dev 上重驗。舊切分凍結於 `data/splits_v17/`。
+- **測試集已被當成 validation 使用**：v14／v17／k40／k60／語義通道／pin_core
+  等方案反覆參考 corpus、textbook 與核心 33 的結果，最後依教材集表現決定部署
+  v17（見 `results/v17cd_deploy_note.md`）。這三個集合實際上已是開發集，
+  **不應再宣稱為 unbiased final test**。真正的 final holdout 尚未建立。
+- **重複與複合已修（schema v3），方位標記仍未修**（2026-08-31）：
+  `++`（重複貌）與 `+`（複合）原本在正規化時被當雜訊丟掉——`買++` 變成
+  `買`、`樹+見` 只剩 `樹`，第二段在 train 被直接刪除 664 次（多為
+  `腳踝+這`／`倒+杯子` 這類指涉或分類詞結構）。
+  查證後確認 **`X+Y` 從來不是一個複合手語**：384 個複合 token 裡整串本身是
+  動作庫鍵的有 0 個，拆開後每段都查得到的有 71.6%。所以攤平成連續 sign_id
+  是對的，救回 668 個參考 token（+1.28%）。
+  v3 另加兩個索引欄位：`compounds`（同一複合單位的 sign_ids 索引群組）與
+  `reduplicated`（帶重複貌的索引）。刻意用索引陣列而非巢狀物件，約束解碼
+  因此完全不必改。
+  **沒有採用審查意見提案的 `repeat: 2`**：`++` 依語料庫標記慣例是「重複貌」
+  而非次數（見 `scrape_tslcorpus_full.clean_token`），345 個 `++` 與 1 個
+  `+++` 都沒有指出要重複幾次，寫死一個數字等於替標註者宣稱他沒寫的事。
+  播幾次留給虛擬人端決定。
+  **仍未修**：twtsl 的 `gloss_raw` 有 758 個方位標記（`_A`／`_B`／`_S`／`_N`），
+  `gloss_text` 只剩 8 個——那是在建 `gloss_text` 時就流失的，要修得回頭改
+  爬取端，且需手語老師確認方位標記的播放語意。
+- **`clause_breaks` 已修好，但訓練訊號極薄**（2026-08-31）：欄位原本在 8,915 列
+  訓練資料中**全部是空陣列**——先用 `/` 切 gloss_text 再找 `//`，而 `//` 在切分
+  那一步就沒了；且把語料庫的重複記號 `++` 誤當成子句邊界。現改為承接上游本來
+  就有的 `clauses` 欄位（`split_data` 帶進切分、`build_script_dataset` 換算成
+  `sign_ids` 索引）。
+  **但覆蓋率是 train 1.1%／dev 0.73%**：只有中正辭典例句有 `clauses`，而其中
+  504/544 是單子句，全資料集真正有邊界的僅 40 筆。模型固定輸出 `[]` 仍能對
+  99% 的題目，**不可宣稱本模型具備子句切分能力**。要真的做這件事需要對語料庫
+  補子句標註。
+- **長句泛化是主要弱點**：`test_corpus` 完全正確率 0.60%，錯誤以選詞為大宗。
+- **訓練候選曾有標籤洩漏（2026-08-31 已修）**：候選器的詞對齊表與高頻核心詞
+  是用**完整 train** 建的，替 train 句產生候選時表裡已含該句自己的答案。
+  `exclude_id` 只擋掉例句遷移把同一句撈回來，擋不到這兩張統計表。
+  現改為 **leave-one-group-out**：每組的候選器排除該組、其餘全用，重現上線時
+  「表用全部 train 建、查詢句不在表裡」的條件。
+  （沒有用 k-fold，因為那會把表縮到 (k-1)/k，那是「表變小」不是「洩漏」，
+  會把候選品質低估掉；`--folds N` 仍保留作為快速近似。）
+  實測洩漏的量（train，2026-08-31）：
+
+  | 建表口徑 | 詞涵蓋率 | 整句可拼出 | 候選覆蓋風險 |
+  |---|---:|---:|---:|
+  | 完整 train（有洩漏，v14–v17 用的） | 92.5% | 67.8% | 32.2% |
+  | 5-fold | 75.2% | 35.5% | 64.5% |
+  | **leave-one-group-out（正確口徑）** | **75.3%** | **36.0%** | **64.0%** |
+
+  洩漏值 **17.2 個百分點**的詞涵蓋率、**31.8 點**的整句可拼出——遠大於審查
+  意見抽樣 20 筆估的 4.76pp。原因是對齊表本質上在記憶 train 句：查詢用的
+  中文就是它自己，共現統計直接把正解交出來。
+  5-fold 與 LOGO 只差 0.1–0.5pp，代表「表縮到 (k-1)/k」的效應很小，
+  主導的確實是洩漏本身。
+  **上表所有 v14–v17 的數字都是在有洩漏的候選上訓練與評估的**，
+  重訓後 train 的涵蓋率會下降，那是修正而非退步。
+  dev/test 不受影響——它們本來就不在 train 裡，用完整 train 建的表看不到
+  自己的答案，那是正確做法（審查意見 2.2 也是這樣講的）。
+- **訓練與上線的候選清單組成不同**：訓練與評估的候選含語義向量名額，
+  **線上服務未載入向量模型**（`0821_bundle` 的 `sign_candidates.py` 連 `n_sem`
+  參數都沒有），改以純字面檢索補滿 40 個。2026-08-30 實測每句約 8 個候選相異
+  （重疊率 corpus 90.6%、textbook 84.4%）；參考詞可及率由 100% 降為 99.0%／98.5%，
+  約 5% 的句子少撈到至少一個參考詞。**上表數字是在訓練側候選分布下量得，
+  線上實際表現可能略低。**
+  2026-08-31 起這件事有機制擋住了：`build_script_dataset` 會把候選參數寫成
+  `candidate_config.json`，`serve_model` 啟動時比對自己的參數與訓練時的存證，
+  不一致就拒絕啟動（`ALLOW_CANDIDATE_SKEW=1` 可強制放行）。
+  `--n-sem > 0` 也會在建資料時印出警告。下一版訓練資料請用 `--n-sem 0`——
+  那是線上服務唯一跑得起來的組態。
+- **NMS 不在評估範圍**：本模型不輸出表情、搖頭、揚眉、手形與地區變體。
+  原始計畫（`臺灣手語翻譯語言模型_微調訓練計畫.md` §1）要求 Gloss 與 NMS
+  雙輸出，目前實作只做候選排序，等於偏離了原題目。**而且補不回來**：
+  2026-08-31 清點三份訓練來源，NMS 標註只存在於合成句（967 筆中 589 筆，
+  且只有 3 種模板字串），tslcorpus 5,272 筆與 twtsl 544 筆**完全沒有 NMS 欄位**。
+  拿合成句的 NMS 訓練只會學回產生它的那三條規則。要真正做 NMS，必須對
+  5,816 筆真實語料重新人工標註，需要具臺灣手語能力的標註者——這是資源決定，
+  不是程式問題。
+- **母語者人工評估無有效結果**：2026-08-22 曾以 v14 輸出回收一輪盲測（100 題），
+  評分不符量表設計，**結果不採用、不引用**。
+- **訓練資料未經母語者抽查**：抽查表已產出（`outputs/訓練資料抽查表_train.xlsx`）
+  但尚未送出。合成句僅少數有審核紀錄——**「資料已經老師審核」這句話不可對外宣稱**。
 
 ## 如何取得 adapter 權重
 
-adapter 目前只在訓練 VM：`outputs/qlora_e4b_v11_holdout/checkpoint-1124`（`outputs/` 為 gitignore，不入庫）。
-另有 v12（上下文版）`outputs/qlora_e4b_v12_context/checkpoint-1124`——實測僅
-+0.6pp EM／+1.04 BLEU，疑問類型反退 3.6pp，訓練成本翻倍，**不建議採用**。
-
-兩種方式：
-1. **重跑**：依上方三步（seed 42 固定）即可重現同一 adapter。
-2. **取檔**：有 VM 存取權者
-   `scp -r tku-gpu:.../qlora_e4b_v11_holdout/checkpoint-1124 ./`。
-   若日後要公開權重，建議發到 Hugging Face Hub（內建 LFS）並附本卡出處與 Gemma 條款。
+- 訓練 VM：`outputs/qlora_e4b_v17script_k40sem/checkpoint-558`
+  （`adapter_model.safetensors` 146,888,168 bytes）。
+- 線上部署副本：`~/0821_bundle/model_service/checkpoint`（同一權重）。
+- **重跑取得**：`python3 scripts/train_script_qlora.py --verify-v17`。已驗證忠實
+  （2026-08-27）：eval_loss 與 wall time 差異全部落在 1.2% 以內，量級與 bf16
+  跨行程非決定性相同，adapter 權重檔大小完全一致。
+- 若日後要公開權重，建議發到 Hugging Face Hub 並附本卡出處
+  （基礎模型 Apache 2.0）。
 
 ## 引用
 
 - 文化部臺灣手語語料庫（測試版）。文化部。<https://tslcorpus.moc.gov.tw/>
 - 蔡素娟、戴浩一、劉世凱、陳怡君。2026。《台灣手語線上辭典（中文版第五版）》。嘉義：國立中正大學手語語言學台灣研究中心。<https://twtsl.ccu.edu.tw/>
-- 基礎模型：Google Gemma 4 E4B（依 Gemma Terms of Use）。
+- 基礎模型：Google Gemma 4 E4B（Apache License 2.0）。

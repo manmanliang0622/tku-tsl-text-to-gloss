@@ -1,0 +1,928 @@
+﻿word,usage,main_tier,main_act,main_frames,main_recording,main_source,variants
+他,761,ok,0.9702,31,desk0912_他.json,signtube:手語天地-2026-09,他_B:severe:0.2816 他_A:poor:0.3
+很,134,ok,0.9946,58,desk0912_很.json,desk0912:混合來源-2026-09-12,
+看,132,ok,1.0,118,desk0912_看.json,desk0912:混合來源-2026-09-12,看_N:poor:0.3305 看_S:poor:0.5
+檢查,128,ok,0.9474,40,desk0912_檢查.json,desk0912:混合來源-2026-09-12,
+好,122,ok,1.0,80,desk0912_好.json,desk0912:混合來源-2026-09-12,好_A:severe:0.0 好_B:poor:0.5
+身體,112,ok,0.8189,62,desk0912_身體.json,desk0912:混合來源-2026-09-12,身體_A:poor:0.3871 身體_B:poor:0.4
+為什麼,104,ok,0.9302,19,desk0912_為什麼.json,desk0912:混合來源-2026-09-12,為什麼_B:ok:0.6842 為什麼_A:severe:0.2923
+晚上,92,ok,0.8351,119,desk0912_晚上.json,desk0912:混合來源-2026-09-12,晚上_A:severe:0.2689 晚上_B:poor:0.5682
+坐車,90,ok,0.8235,55,desk0912_坐車.json,desk0912:混合來源-2026-09-12,
+等,69,ok,1.0,116,desk0912_等.json,desk0912:混合來源-2026-09-12,等_B:poor:0.4052 等_A:severe:0.0118
+服務,65,ok,0.8643,85,desk0912_服務.json,desk0912:混合來源-2026-09-12,服務_N:severe:0.042 服務_S:poor:0.4941
+爸爸,56,ok,0.8762,15,desk0912_爸爸.json,signtube:手語天地-2026-09,
+雲林,54,poor,0.4688,32,moc_G4D2P1.json,moc:G4D2P1,
+不要,53,ok,0.9538,104,desk0912_不要.json,desk0912:混合來源-2026-09-12,不要_N:poor:0.3942 不要_S:severe:0.1111
+台東,53,ok,0.6117,120,desk0912_台東.json,desk0912:混合來源-2026-09-12,
+菜,49,ok,0.9399,125,desk0912_菜.json,desk0912:混合來源-2026-09-12,菜_N:poor:0.472 菜_S:severe:0.2389
+情形,49,poor,0.8261,23,moc_G4D2P1.json,moc:G4D2P1,
+美國,45,poor,0.4085,142,2331_美國_A.json,twtsl:2331,美國_A:poor:0.4085 美國_B:ok:0.7451
+南投,45,poor,0.4412,136,pn_0529_南投縣1.json,placename:529,
+金門,42,poor,0.5769,130,pn_0508_金門縣.json,placename:508,
+嘉義_A(地名),40,severe,0.0855,117,0367_嘉義_A(地名).json,twtsl:367,
+嘉義_B(地名),40,severe,0.2456,114,0368_嘉義_B(地名).json,twtsl:368,
+苗栗,40,poor,0.3404,94,1321_苗栗.json,twtsl:1321,
+澎湖,40,poor,0.44,125,1602_澎湖.json,twtsl:1602,
+馬祖,40,severe,0.215,107,pn_0623_馬祖.json,placename:623,
+基隆,40,poor,0.349,149,pn_0639_基隆1.json,placename:639,
+嘉義,40,poor,0.383,94,pn_0831_嘉義1.json,placename:831,
+中壢,38,poor,0.4811,106,pn_0128_中壢1.json,placename:128,中壢_A:severe:0.0125 中壢_B:severe:0.0
+特別,34,poor,0.3028,109,2021_特別.json,twtsl:2021,特別_N:poor:0.3028 特別_S:severe:0.0159
+困難,33,poor,0.3793,29,moc_G2D1P2.json,moc:G2D1P2,
+痛,32,severe,0.2174,23,moc_G2D2P3.json,moc:G2D2P3,
+謝謝,31,ok,0.8662,103,desk0912_謝謝.json,desk0912:混合來源-2026-09-12,謝謝_A:poor:0.3786 謝謝_B:severe:0.0
+新聞,30,poor,0.3388,121,moe_04_0630.json,moe:vocabulary/04/0630,
+下雨,27,poor,0.4318,132,1733_下雨.json,twtsl:1733,
+哥哥,26,severe,0.1714,35,moc_G2D9P1.json,moc:G2D9P1,
+臉,26,poor,0.4286,14,moc_G3D12P3.json,moc:G3D12P3,
+美麗,24,severe,0.186,43,moc_G2D8P2.json,moc:G2D8P2,美麗_N:poor:0.5114 美麗_S:severe:0.2712
+照顧,24,poor,0.4079,76,2153_照顧_B.json,moc:G4D2P1,照顧_A:severe:0.0 照顧_B:poor:0.4079
+兩個,24,poor,0.3571,28,moc_G3D4P2.json,moc:G3D4P2,
+聲音,23,poor,0.359,39,moc_G2D1P2.json,moc:G2D1P2,
+國畫,23,poor,0.4039,203,moe_05_0193.json,moe:vocabulary/05/0193,
+同意,22,severe,0.1421,190,moe_13_0258.json,moe:vocabulary/13/0258,同意_B:severe:0.0 同意_A:severe:0.0099
+不喜歡,22,poor,0.459,61,0596_不喜歡_S.json,twtsl:595,不喜歡_N:poor:0.4697 不喜歡_S:poor:0.459
+星期六,21,poor,0.4766,128,1843_星期六.json,twtsl:1843,星期六_N:poor:0.4766 星期六_S:poor:0.5556
+男,20,poor,0.5114,88,1269_先生.json,twtsl:1269,
+胖,20,poor,0.4182,55,1484_肥_B.json,twtsl:1483,胖_A:severe:0.0 胖_B:poor:0.4182
+筷子,19,severe,0.28,100,0384_筷子.json,twtsl:384,筷子_N:severe:0.28 筷子_S:severe:0.0
+假,19,poor,0.4091,22,moc_G4D11P2.json,moc:G4D11P2,
+照片,19,poor,0.36,100,moe_04_0862.json,moe:vocabulary/04/0862,
+在,18,poor,0.4198,81,0110_在.json,twtsl:110,
+小,18,poor,0.3689,103,1214_小.json,twtsl:1214,
+訓練,18,poor,0.5132,76,2270_訓練_A.json,moe:vocabulary/05/2191,訓練_A:poor:0.5132 訓練_B:ok:0.7739 訓練_C:severe:0.0567
+用,18,poor,0.4195,174,twtsl2_用.json,twtsl:rescan-2026-09,
+美,17,poor,0.5114,88,0175_美.json,twtsl:175,美_N:poor:0.5114 美_S:severe:0.2712
+漂亮,17,poor,0.5114,88,0175_美_N.json,moc:G2D4P1,漂亮_N:poor:0.5114 漂亮_S:severe:0.2712
+要不要,17,poor,0.3544,158,3533_要不要_S.json,twtsl:3534,要不要_S:poor:0.3544 要不要_N:poor:0.5147
+第一次,17,severe,0.2963,27,moc_G4D11P2.json,moc:G4D11P2,
+所以,17,severe,0.0851,94,moe_04_0552.json,moe:vocabulary/04/0552,
+肉,16,poor,0.3659,123,1306_肉_A.json,twtsl:1306,肉_A:poor:0.3659 肉_B:ok:0.6351
+奇怪,16,poor,0.5574,122,2072_奇怪.json,twtsl:2072,奇怪_N:poor:0.5574 奇怪_S:severe:0.2222
+真,16,severe,0.2692,26,moc_G4D11P2.json,moc:G4D11P2,
+怕,15,poor,0.3383,133,0039_危險.json,twtsl:40,怕_N:poor:0.3383 怕_S:severe:0.0396
+舊,15,poor,0.5476,84,1508_舊_B.json,moc:G1D8P3,舊_B:poor:0.5476 舊_A:severe:0.0413
+游泳,15,poor,0.58,50,moe_06_0644.json,moe:vocabulary/06/0644,游泳_A:ok:0.6092 游泳_B:poor:0.4079
+超過,15,poor,0.5075,67,moc_G3D8P3.json,moc:G3D8P3,
+懶,15,poor,0.4153,118,moc_G4D8P3.json,moc:G4D8P3,
+舉手,15,poor,0.7273,55,twtsl2_舉手.json,twtsl:rescan-2026-09,
+哭,14,severe,0.186,43,moc_G3D2P2.json,moc:G3D2P2,哭_A:severe:0.0095 哭_B:severe:0.2442
+頭暈,14,poor,0.3725,102,0584_頭暈.json,twtsl:584,
+贏,14,poor,0.3659,82,2460_勝利.json,twtsl:2460,
+足夠,13,poor,0.3267,101,0687_足夠.json,twtsl:687,足夠_N:poor:0.3267 足夠_S:severe:0.0286
+夫妻,13,poor,0.4896,96,1047_夫婦.json,moe:vocabulary/02/0227,夫妻_A:poor:0.4896 夫妻_B:poor:0.3021
+怎麼,13,poor,0.4148,229,twtsl2_怎麼.json,twtsl:rescan-2026-09,
+大賣場,12,poor,0.4741,116,2725_購物(量販)中心_A.json,twtsl:2725,大賣場_A:poor:0.4741 大賣場_B:severe:0.2823
+會不會,12,poor,0.5882,102,3531_會不會.json,twtsl:3531,會不會_N:poor:0.5882 會不會_S:poor:0.561
+三次,12,poor,0.4667,90,moc_G2D2P3.json,moc:G2D2P3,
+感冒,11,poor,0.4118,85,0330_感冒_B.json,moe:vocabulary/06/0467,感冒_A:severe:0.0 感冒_B:poor:0.4118
+有名,11,poor,0.5647,85,0752_有名.json,twtsl:752,有名_N:poor:0.5647 有名_S:poor:0.3587
+第一名,11,poor,0.3955,134,0803_第一名.json,twtsl:803,第一名_N:poor:0.3955 第一名_S:severe:0.0112
+驚訝,11,poor,0.3617,94,2047_吃驚.json,moc:G3D10P5,驚訝_A:poor:0.3617 驚訝_B:poor:0.3056
+手錶,11,poor,0.5909,22,moc_G1D15P1.json,moc:G1D15P1,
+以上,11,poor,0.56,50,moc_G3D9P3.json,moc:corpus-gapfill,
+兩天,11,severe,0.2459,61,moc_G4D13P4.json,moc:G4D13P4,
+再次,11,poor,0.5714,14,moc_I1P2_L.json,moc:I1P2,
+解決,11,poor,0.3711,194,twtsl2_解決.json,twtsl:rescan-2026-09,
+契約,10,poor,0.4086,93,0483_契約_B.json,moe:vocabulary/05/0337,契約_A:poor:0.4262 契約_B:poor:0.4086
+OK,10,severe,0.2314,121,1507_OK.json,twtsl:1507,
+公車站,10,poor,0.4842,95,2900_公車站_A.json,twtsl:2900,公車站_A:poor:0.4842 公車站_B:poor:0.3417
+建設,10,severe,0.193,114,moe_05_0978.json,moe:vocabulary/05/0978,
+觀光,10,severe,0.2267,75,moe_05_2139.json,moe:vocabulary/05/2139,
+畫臉譜,10,poor,0.5735,68,moc_I3P2_L.json,moc:I3P2,
+老婆,10,poor,0.5714,49,twtsl2_老婆.json,twtsl:rescan-2026-09,
+我,2899,ok,1.0,20,moc_G2D1P1.json,moc:G2D1P1,我_A:poor:0.3654 我_B:poor:0.4886
+去,1528,ok,1.0,55,gs0911_去.json,unknown-d:綠幕-2026-09-11,去_A:severe:0.2667 去_B:severe:0.2195
+你,1221,ok,0.9714,70,moc_G1D4P2.json,moc:G1D4P2,
+要,1149,ok,1.0,58,gs0911_要.json,unknown-d:綠幕-2026-09-11,要_N:poor:0.4535 要_S:severe:0.0
+這,980,ok,0.9677,31,moc_G1D1P1.json,moc:G1D1P1,
+什麼,703,ok,0.9577,71,gs0911_什麼.json,unknown-d:綠幕-2026-09-11,什麼_A:poor:0.4741 什麼_B:ok:0.6761
+有,597,ok,0.9881,84,moc_G1D1P1.json,moc:G1D1P1,
+不,457,ok,0.9688,32,moc_G2D2P3.json,moc:G2D2P3,
+工作,420,ok,0.9442,215,twtsl2_工作.json,twtsl:rescan-2026-09,
+可以,409,ok,1.0,129,moc_G3D3P1.json,moc:G3D3P1,
+明天,408,ok,1.0,16,moc_G2D3P2.json,moc:G2D3P2,
+今天,404,ok,0.9091,55,gs0911_今天.json,unknown-d:綠幕-2026-09-11,
+那,391,ok,0.825,40,moc_G1D1P1.json,moc:G1D1P1,
+再,359,ok,0.9623,53,gs0911_再.json,unknown-d:綠幕-2026-09-11,再_A:poor:0.4796 再_B:severe:0.0096
+想,343,ok,1.0,13,moc_G1D3P1.json,moc:G1D3P1,
+聾人,332,ok,0.9333,15,moc_G2D2P1.json,moc:G2D2P1,
+棒,315,ok,1.0,30,moc_G4D4P1.json,moc:G4D4P1,棒_A:poor:0.4203 棒_B:severe:0.0235
+自己,284,ok,0.7059,119,1874_自己.json,twtsl:1874,自己_N:ok:0.7059 自己_S:poor:0.3803
+以前,279,ok,1.0,275,twtsl2_以前.json,twtsl:rescan-2026-09,
+會,269,ok,0.8448,58,twtsl2_會.json,twtsl:rescan-2026-09,會_N:severe:0.0 會_S:poor:0.3452
+現在,231,ok,0.9091,55,gs0911_今天.json,unknown-d:綠幕-2026-09-11,
+告訴,227,ok,0.8696,23,moc_G4D2P1.json,moc:G4D2P1,
+沒有,225,ok,0.9259,81,moc_G4D3P1.json,moc:G4D3P1,沒有_A:poor:0.4333 沒有_B:poor:0.5152 沒有_C:poor:0.5692
+手語,224,ok,0.825,40,moc_G3D4P1.json,moc:G3D4P1,
+人,222,ok,1.0,32,moc_G1D1P1.json,moc:G1D1P1,人_B:severe:0.2222 人_A:severe:0.0
+如果,218,ok,0.9219,64,moc_G1D4P1.json,moc:G1D4P1,
+朋友,217,ok,0.9286,70,moc_G2D1P1.json,moc:G2D1P1,
+他們,211,ok,0.9355,93,moc_G1D1P1.json,moc:G1D1P1,
+住,208,ok,1.0,31,moc_G4D1P1.json,moc:G4D1P1,住_B:poor:0.4565 住_A:severe:0.0
+是,199,ok,0.9741,116,moc_G2D1P1.json,moc:G2D1P1,
+一樣,196,ok,1.0,36,moc_G3D4P1.json,moc:G3D4P1,
+吃,196,ok,0.7955,132,moc_G4D1P2.json,moc:G4D1P2,
+老師,194,ok,0.6879,157,2174_老師.json,twtsl:2174,老師_S:ok:0.6154 老師_N:ok:0.6879
+我們,192,ok,0.9,50,moc_G4D1P1.json,moc:G4D1P1,
+多,189,ok,0.871,31,moc_G1D1P1.json,moc:G1D1P1,多_A:severe:0.0737 多_B:poor:0.4625 多_C:poor:0.4792
+完,175,ok,0.7303,89,twtsl2_完.json,twtsl:rescan-2026-09,
+知道,164,ok,0.9747,79,gs0911_知道.json,unknown-d:綠幕-2026-09-11,知道_N:poor:0.5699 知道_S:poor:0.4308
+喜歡,160,ok,0.9879,165,twtsl2_喜歡.json,twtsl:rescan-2026-09,喜歡_N:poor:0.3761 喜歡_S:poor:0.3396
+有沒有,156,ok,1.0,33,moc_G2D2P1.json,moc:G2D2P1,
+時間,148,ok,1.0,30,moc_G4D10P6.json,moc:corpus-gapfill,時間_A:severe:0.0 時間_B:severe:0.0 時間_S:severe:0.0396
+買,143,ok,0.8878,98,moc_G4D3P2.json,moc:G4D3P2,買_A:severe:0.0261 買_B:severe:0.1983
+覺得,142,ok,1.0,27,moc_G3D2P4.json,moc:G3D2P4,
+溝通,136,ok,0.7091,110,twtsl2_溝通.json,twtsl:rescan-2026-09,
+聽人,135,ok,1.0,25,moc_G2D1P1.json,moc:G2D1P1,
+讀書,130,ok,0.8125,32,moc_G4D3P3.json,moc:G4D3P3,
+見,129,ok,0.9697,33,moc_G1D3P3.json,moc:G1D3P3,
+最近,128,ok,1.0,36,moc_G1D1P1.json,moc:G1D1P1,
+手機,126,ok,0.75,16,moc_G1D3P1.json,moc:G1D3P1,
+但是,126,ok,0.9027,113,twtsl2_但是.json,twtsl:rescan-2026-09,
+寫,122,ok,0.9775,89,moc_G4D3P1.json,moc:G4D3P1,
+學校,121,ok,1.0,41,moc_G4D4P1.json,moc:G4D4P1,
+她,116,ok,0.9333,30,moc_G3D2P1.json,moc:G3D2P1,她_B:severe:0.2816 她_A:poor:0.3
+找,115,ok,0.912,125,twtsl2_找.json,twtsl:rescan-2026-09,
+玩,114,ok,0.8526,95,moc_G1D1P1.json,moc:G1D1P1,
+家,113,ok,1.0,23,moc_G4D1P1.json,moc:G4D1P1,家_A:poor:0.3444 家_B:poor:0.3717
+媽媽,113,ok,0.8991,22,desk0912_媽媽.json,signtube:手語天地-2026-09,
+以後,112,ok,0.7949,78,moc_G2D1P1.json,moc:G2D1P1,以後_A:severe:0.1111 以後_B:severe:0.2872
+希望,112,ok,0.8824,17,moc_G2D3P2.json,moc:G2D3P2,
+不一樣,110,ok,1.0,89,moc_G1D3P2.json,moc:G1D3P2,
+一,109,ok,0.9337,196,twtsl2_一.json,twtsl:rescan-2026-09,
+像,108,ok,1.0,56,moc_G2D1P2.json,moc:G2D1P2,
+各式各樣,107,ok,0.8065,31,moc_G1D1P1.json,moc:G1D1P1,
+幫忙,106,ok,0.8158,38,moc_G3D2P1.json,moc:G3D2P1,幫忙_N:severe:0.1809 幫忙_S:severe:0.0316
+東西,101,ok,1.0,33,moc_G4D1P2.json,moc:G4D1P2,
+能,100,ok,1.0,117,moc_G2D3P1.json,moc:G2D3P1,
+每天,100,ok,0.9787,47,moc_G4D4P1.json,moc:G4D4P1,
+上班,98,ok,0.975,80,gs0911_上班.json,unknown-d:綠幕-2026-09-11,上班_A:severe:0.2016 上班_B:severe:0.2743
+習慣,97,ok,0.9816,163,twtsl2_習慣.json,twtsl:rescan-2026-09,習慣_N:poor:0.3767 習慣_S:severe:0.0168
+注意,95,ok,1.0,26,moc_G3D3P1.json,moc:G3D3P1,
+問,94,ok,0.9667,30,moc_G2D2P1.json,moc:G2D2P1,
+對,94,ok,0.9444,18,moc_G2D4P1.json,moc:G2D4P1,
+臺灣,92,ok,0.8571,14,moc_G2D4P1.json,moc:G2D4P1,
+學,92,ok,0.9846,65,moc_G4D3P1.json,moc:G4D3P1,
+一起,91,ok,1.0,26,moc_G2D2P1.json,moc:G2D2P1,一起_A:poor:0.4141 一起_B:poor:0.589
+學生,91,ok,1.0,43,moc_G3D4P1.json,moc:G3D4P1,
+幫,90,ok,0.9524,84,gs0911_幫.json,unknown-d:綠幕-2026-09-11,幫_N:severe:0.1809 幫_S:severe:0.0316
+記得,90,ok,1.0,39,moc_G1D3P3.json,moc:G1D3P3,
+開始,89,ok,0.8427,89,moc_G4D6P2.json,moc:G4D6P2,
+方便,88,ok,1.0,39,moc_G3D1P1.json,moc:G3D1P1,
+常常,88,ok,0.925,40,moc_G3D2P1.json,moc:G3D2P1,
+視訊,88,ok,1.0,38,moc_G4D8P3.json,moc:G4D8P3,
+如何,87,ok,1.0,81,moc_G4D1P2.json,moc:G4D1P2,如何_A:poor:0.3671 如何_B:poor:0.4257
+孩子,86,ok,1.0,47,moc_G1D1P1.json,moc:G1D1P1,
+生活,86,ok,0.8913,92,moc_G3D1P1.json,moc:G3D1P1,
+學習,85,ok,1.0,35,moc_G3D4P2.json,moc:G3D4P2,
+不會,83,ok,1.0,146,twtsl2_不會.json,twtsl:rescan-2026-09,不會_N:severe:0.0678 不會_S:poor:0.51
+教,83,ok,1.0,41,moc_G3D4P1.json,moc:G3D4P1,
+給,80,ok,0.9091,33,moc_G3D2P3.json,moc:G3D2P3,給_B:poor:0.3816 給_A:severe:0.0753
+醫生,79,ok,0.6098,41,moc_G2D2P1.json,moc:G2D2P1,
+全部,78,ok,0.8378,37,moc_G1D3P2.json,moc:G1D3P2,全部_A:poor:0.3333 全部_B:poor:0.5614
+種類,78,ok,0.9677,62,moc_G3D1P1.json,moc:G3D1P1,
+醫院,77,ok,0.9706,34,moc_G2D1P1.json,moc:G2D1P1,醫院_A:severe:0.0968 醫院_B:severe:0.0476 醫院_C:severe:0.0952
+早上,77,ok,0.6818,22,moc_G1D3P1.json,moc:G1D3P1,早上_A:severe:0.1757 早上_B:severe:0.0301
+新,77,ok,0.9111,45,moc_G4D4P3.json,moc:G4D4P3,
+小孩,76,ok,1.0,31,moc_G1D1P1.json,moc:G1D1P1,
+沒辦法,76,ok,1.0,102,moc_G2D1P1.json,moc:G2D1P1,
+時候,76,ok,0.6181,144,twtsl2_時候.json,twtsl:rescan-2026-09,
+大家,75,ok,0.9848,66,moc_G3D3P1.json,moc:G3D3P1,
+我們兩個,75,ok,0.8699,123,twtsl2_我們兩個.json,twtsl:rescan-2026-09,
+不錯,74,ok,1.0,29,moc_G1D3P1.json,moc:G1D3P1,
+煮,74,ok,1.0,42,moc_G4D1P2.json,moc:G4D1P2,
+公司,74,ok,1.0,28,moc_G4D4P3.json,moc:G4D4P3,
+吃飯,73,ok,1.0,68,tslsigner_吃飯.json,tslsigner:吃飯,吃飯_A:severe:0.0098 吃飯_B:poor:0.5
+聽說,72,ok,0.6757,37,moc_G3D1P2.json,moc:G3D1P2,聽說_A:severe:0.2987 聽說_B:poor:0.5963
+聾,72,ok,1.0,27,moc_G3D4P1.json,moc:G3D4P1,
+大,71,ok,1.0,44,moc_G1D1P1.json,moc:G1D1P1,
+事情,71,ok,0.8871,124,twtsl2_事.json,twtsl:rescan-2026-09,
+政府,70,ok,1.0,35,moc_G2D3P1.json,moc:G2D3P1,
+聊天,70,ok,1.0,35,moc_G4D4P1.json,moc:G4D4P1,
+演講,69,ok,1.0,68,moc_G2C6_R.json,moc:corpus-gapfill,演講_N:severe:0.0 演講_S:severe:0.0
+開車,69,ok,1.0,25,moc_G2D4P1.json,moc:G2D4P1,
+欣賞,68,ok,1.0,19,moc_G1D3P1.json,moc:G1D3P1,
+申請,68,ok,0.65,40,moc_G2D1P3.json,moc:G2D1P3,
+進入,68,ok,0.8919,37,moc_G4D2P1.json,moc:G4D2P1,
+網路,67,ok,1.0,60,moc_G1D6P1.json,moc:G1D6P1,
+進步,67,ok,1.0,14,moc_G2D3P2.json,moc:G2D3P2,
+畫畫,66,ok,1.0,38,moc_G1D7P1.json,moc:G1D7P1,
+做,66,ok,1.0,17,moc_G2D3P2.json,moc:G2D3P2,
+台南,65,ok,0.9189,74,gs0911_台南.json,unknown-d:綠幕-2026-09-11,台南_B:severe:0.056 台南_A:poor:0.368
+訂,64,ok,0.9828,58,moc_G1D14P1.json,moc:G1D14P1,
+打手語,64,ok,0.6829,41,moc_G3D4P1.json,moc:G3D4P1,
+說,64,ok,1.0,29,moc_G3D2P2.json,moc:G3D2P2,
+高雄,64,ok,0.8873,71,gs0911_高雄.json,unknown-d:綠幕-2026-09-11,
+第一,64,ok,0.994,166,twtsl2_第一.json,twtsl:rescan-2026-09,
+之前,63,ok,0.8444,45,moc_G1D4P1.json,moc:G1D4P1,
+走,62,ok,0.9643,28,moc_G2D2P1.json,moc:G2D2P1,
+台北,62,ok,0.907,43,moc_G4D15P1.json,moc:G4D15P1,
+這兩個,61,ok,1.0,58,moc_G4C25_L.json,moc:corpus-gapfill,
+路,60,ok,1.0,28,moc_G1D4P1.json,moc:G1D4P1,
+火車,59,ok,0.8827,179,twtsl2_火車.json,twtsl:rescan-2026-09,火車_N:poor:0.3259 火車_S:severe:0.021
+二,59,ok,0.8333,12,moc_G4D4P2.json,moc:G4D4P2,
+發現,58,ok,1.0,46,moc_G2D1P1.json,moc:G2D1P1,發現_A:severe:0.0 發現_B:severe:0.1379 發現_C:severe:0.0364
+快,58,ok,0.9672,61,moc_G3D3P2.json,moc:G3D3P2,快_N:poor:0.3627 快_S:severe:0.25
+負責,58,ok,0.9565,23,moc_G1D5P1.json,moc:G1D5P1,負責_A:severe:0.1068 負責_B:poor:0.5326
+聽,58,ok,1.0,24,moc_G2D1P1.json,moc:G2D1P1,
+這些,58,ok,1.0,63,moc_G2D4P2.json,moc:G2D4P2,
+到,58,ok,1.0,47,moc_G3C2_L.json,moc:corpus-gapfill,
+準備,58,ok,0.8404,94,twtsl2_準備.json,twtsl:rescan-2026-09,
+感覺,57,ok,0.931,29,moc_G2D2P1.json,moc:G2D2P1,
+之後,57,ok,0.963,27,moc_G4D2P1.json,moc:G4D2P1,
+第二,57,ok,1.0,31,moc_G4D2P2.json,moc:G4D2P2,
+清楚,56,ok,1.0,15,moc_G2D3P2.json,moc:G2D3P2,
+喝,56,ok,1.0,239,twtsl2_喝.json,twtsl:rescan-2026-09,
+馬上,56,ok,0.8736,174,twtsl2_馬上.json,twtsl:rescan-2026-09,
+心,55,ok,1.0,30,moc_G3D7P1.json,moc:G3D7P1,心_A:severe:0.0442 心_B:poor:0.4746
+手語翻譯,55,ok,0.8462,91,moc_G2D3P1.json,moc:G2D3P1,
+久,55,ok,1.0,58,moc_G2D3P1.json,moc:G2D3P1,
+累,55,ok,0.9714,35,moc_G2D3P2.json,moc:G2D3P2,
+花蓮,54,ok,0.9412,85,gs0911_花蓮.json,unknown-d:綠幕-2026-09-11,花蓮_N:severe:0.0 花蓮_S:poor:0.4538
+看見,54,ok,0.9184,49,moc_G1D1P2.json,moc:G1D1P2,
+任何,54,ok,1.0,24,moc_G4D2P1.json,moc:G4D2P1,
+哪裡,53,ok,0.9773,88,gs0911_哪裡.json,unknown-d:綠幕-2026-09-11,
+乾淨,53,ok,0.9355,62,moc_G4D2P2.json,moc:corpus-gapfill,
+平常,52,ok,1.0,76,moc_G3D1P1.json,moc:G3D1P1,
+衣服,52,ok,1.0,25,moc_G4D6P1.json,moc:G4D6P1,
+比賽,51,ok,0.9839,62,moc_G2D7P2.json,moc:G2D7P2,
+他們兩個,51,ok,1.0,47,moc_G2D3P1.json,moc:G2D3P1,
+不知道,50,ok,0.9452,73,gs0911_不知道.json,unknown-d:綠幕-2026-09-11,不知道_N:poor:0.534 不知道_S:poor:0.3077
+屏東,50,ok,1.0,73,moc_G1D14P1.json,moc:G1D14P1,屏東_B:severe:0.0111 屏東_A:severe:0.0723
+運動,50,ok,1.0,14,moc_G4D10P5.json,moc:G4D10P5,運動_A:poor:0.4599 運動_B:poor:0.3678
+台中,49,ok,0.8592,71,gs0911_台中.json,unknown-d:綠幕-2026-09-11,台中_A:severe:0.0214 台中_B:poor:0.3615
+看到,49,ok,1.0,21,moc_G1D3P1.json,moc:G1D3P1,
+快樂,49,ok,1.0,35,moc_G4D4P1.json,moc:G4D4P1,
+畢業,49,ok,1.0,27,moc_G4D4P3.json,moc:G4D4P3,
+約,48,ok,1.0,41,moc_G1D4P2.json,moc:G1D4P2,約_B:poor:0.4795 約_A:severe:0.0091
+上課,48,ok,0.9804,51,moc_G3D2P2.json,moc:G3D2P2,上課_A:poor:0.307 上課_B:poor:0.3119 上課_C:poor:0.3274
+宜蘭,47,ok,0.9212,165,signtube_宜蘭.json,signtube:手語天地-2026-09,
+不是,47,ok,1.0,56,moc_G1D3P2.json,moc:G1D3P2,不是_B:ok:0.6452 不是_A:poor:0.5366
+開心,47,ok,0.88,25,moc_G2D2P1.json,moc:G2D2P1,
+電視,47,ok,0.9362,47,moc_G2D3P1.json,moc:G2D3P1,
+但,47,ok,0.9027,113,twtsl2_但.json,twtsl:rescan-2026-09,
+先,46,ok,0.9375,16,moc_G1D5P1.json,moc:G1D5P1,
+結束,45,ok,1.0,38,moc_G1D1P2.json,moc:G1D1P2,
+臺灣手語,45,ok,0.9062,96,moc_G1D14P3.json,moc:G1D14P3,
+手勢,45,ok,1.0,36,moc_G1D7P1.json,moc:G1D7P1,
+發生,45,ok,0.9388,49,moc_G3D3P4.json,moc:G3D3P4,
+順利,45,ok,1.0,18,moc_G4D4P2.json,moc:G4D4P2,
+首先,45,ok,0.7241,29,moc_G4D5P1.json,moc:G4D5P1,
+淡水,45,ok,0.9913,230,twtsl2_淡水.json,twtsl:rescan-2026-09,
+試試,45,ok,0.7179,78,twtsl2_試試.json,twtsl:rescan-2026-09,
+舒服,44,ok,1.0,81,moc_G1D8P3.json,moc:G1D8P3,舒服_A:poor:0.3431 舒服_B:ok:0.6322
+回家,44,ok,0.9604,101,moc_G1D1P2.json,moc:G1D1P2,回家_A:severe:0.1714 回家_B:severe:0.1359
+高鐵,44,ok,1.0,65,moc_G3D3P3.json,moc:G3D3P3,高鐵_A:poor:0.3605 高鐵_B:poor:0.4344
+設立,44,ok,0.9038,52,moc_G1D1P1.json,moc:G1D1P1,
+還有,44,ok,1.0,67,moc_G1D1P1.json,moc:G1D1P1,
+重要,44,ok,1.0,57,moc_G3D3P1.json,moc:G3D3P1,
+彰化,44,ok,0.9266,177,signtube_彰化.json,signtube:手語天地-2026-09,
+不能,44,ok,0.9803,152,twtsl2_不能.json,twtsl:rescan-2026-09,
+裡面,44,ok,1.0,128,twtsl2_裡面.json,twtsl:rescan-2026-09,
+考試,43,ok,0.6667,30,moc_G3D2P4.json,moc:G3D2P4,考試_N:poor:0.3972 考試_S:severe:0.0075
+後來,43,ok,0.9512,41,moc_G1D4P2.json,moc:G1D4P2,
+科技,43,ok,0.9831,59,moc_G1D4P3.json,moc:G1D4P3,
+地方,43,ok,0.8095,21,moc_G2D12P2.json,moc:G2D12P2,
+解釋,43,ok,0.9792,48,moc_G2D3P1.json,moc:G2D3P1,
+影響,43,ok,0.9492,59,moc_G2D3P1.json,moc:G2D3P1,
+旅遊,43,ok,0.9848,66,moc_G3D10P1.json,moc:G3D10P1,
+麻煩,42,ok,0.8936,47,moc_G1D4P1.json,moc:G1D4P1,
+新竹,42,ok,0.9605,76,gs0911_新竹.json,unknown-d:綠幕-2026-09-11,
+昨天,42,ok,0.8915,129,twtsl2_昨天.json,twtsl:rescan-2026-09,
+適合,41,ok,1.0,25,moc_G1D1P2.json,moc:G1D1P2,
+大學,41,ok,0.7391,46,moc_G3D4P2.json,moc:G3D4P2,
+電腦,41,ok,1.0,37,moc_G4D8P3.json,moc:G4D8P3,
+難,41,ok,0.92,25,moc_G4D4P2.json,moc:G4D4P2,
+基隆_A(地名),40,ok,0.6038,53,1138_基隆_A(地名).json,twtsl:1138,
+基隆_B(地名),40,ok,0.6829,41,1139_基隆_B(地名).json,twtsl:1139,
+蘭嶼,40,ok,0.908,163,pn_0980_蘭嶼1.json,placename:980,蘭嶼_A:severe:0.2857 蘭嶼_B:severe:0.1882
+滑手機,40,ok,1.0,33,moc_G1D3P1.json,moc:G1D3P1,
+來,40,ok,0.8788,33,moc_G1D7P2.json,moc:G1D7P2,
+弟弟,40,ok,0.8594,64,moc_G4D1P3.json,moc:G4D1P3,
+桃園,40,ok,0.9036,83,gs0911_桃園.json,unknown-d:綠幕-2026-09-11,
+綠島,40,ok,0.875,88,pn_0855_綠島1.json,placename:855,
+新北,40,ok,0.88,75,gs0911_新北.json,unknown-d:綠幕-2026-09-11,
+換,39,ok,0.625,32,moc_G4D3P3.json,moc:G4D3P3,換_A:severe:0.0642 換_B:severe:0.1522 換_C:poor:0.4769
+不行,39,ok,0.7955,44,moc_G1D9P2.json,moc:G1D9P2,
+身心障礙,39,ok,0.9714,35,moc_G2D3P1.json,moc:G2D3P1,
+書,39,ok,0.8056,36,moc_G3D2P3.json,moc:G3D2P3,
+睡覺,39,ok,0.8953,86,twtsl2_睡覺.json,twtsl:rescan-2026-09,
+北投,38,ok,0.7739,115,pn_0208_北投1.json,placename:208,北投_A:severe:0.0206 北投_B:severe:0.0597
+公車,38,ok,1.0,60,moc_G3D3P3.json,moc:G3D3P3,公車_A:poor:0.4225 公車_B:ok:0.6716
+同學,38,ok,0.96,25,moc_G4D4P2.json,moc:G4D4P2,同學_B:poor:0.4237 同學_C:poor:0.425 同學_D:severe:0.2195 同學_F:ok:0.6 同學_A:poor:0.3173 同學_E:ok:0.7255
+計畫,38,ok,1.0,39,moc_G2D3P1.json,moc:G2D3P1,計畫_A:severe:0.0 計畫_B:severe:0.0185
+同事,38,ok,1.0,59,moc_G4D4P3.json,moc:G4D4P3,同事_A:ok:0.7397 同事_B:ok:0.7143
+中山,38,ok,0.9275,138,pn_0116_中山.json,placename:116,
+西門町,38,ok,0.93,100,pn_0375_西門町.json,placename:375,
+士林,38,ok,0.6789,218,twtsl2_士林.json,twtsl:rescan-2026-09,
+板橋,38,ok,0.6963,135,twtsl2_板橋.json,twtsl:rescan-2026-09,
+下午,37,ok,0.8421,19,moc_G2D4P1.json,moc:G2D4P1,下午_B:poor:0.5581 下午_A:severe:0.0
+水,37,ok,1.0,155,twtsl2_水.json,twtsl:rescan-2026-09,水_N:severe:0.2037 水_S:severe:0.0431
+環視,37,ok,1.0,81,moc_G1D1P1.json,moc:G1D1P1,
+剛剛,37,ok,1.0,38,moc_G1D13P3.json,moc:G1D13P3,
+咖啡,37,ok,0.8378,37,moc_G1D10P1.json,moc:G1D10P1,
+活動,37,ok,0.8235,68,moc_G2D7P2.json,moc:G2D7P2,
+一點點,37,ok,1.0,19,moc_G2D2P3.json,moc:G2D2P3,
+比較,37,ok,1.0,45,moc_G2D3P1.json,moc:G2D3P1,
+保護,37,ok,0.7292,48,moc_G3D3P2.json,moc:G3D3P2,
+那裡,36,ok,1.0,47,moc_G1D1P1.json,moc:G1D1P1,
+公園,36,ok,0.9565,23,moc_G1D5P1.json,moc:G1D5P1,
+不成,36,ok,1.0,51,moc_G1D6P1.json,moc:G1D6P1,
+參加,36,ok,0.6857,35,moc_G2D10P4.json,moc:G2D10P4,
+練習,36,ok,0.95,20,moc_G2D6P1.json,moc:G2D6P1,
+誰,36,ok,0.9833,60,moc_G2D3P1.json,moc:G2D3P1,
+討論,36,ok,0.9846,130,moc_G3D3P1.json,moc:G3D3P1,
+外面,36,ok,1.0,33,moc_G4D1P1.json,moc:G4D1P1,
+可能,35,ok,0.8846,26,moc_G2D4P1.json,moc:G2D4P1,
+旅行,35,ok,0.9796,49,moc_G2D8P2.json,moc:G2D8P2,
+針對,35,ok,0.8857,35,moc_G3D4P1.json,moc:G3D4P1,
+休息,35,ok,0.8511,47,moc_G3D2P2.json,moc:G3D2P2,
+文化,35,ok,0.7941,68,moc_G3D8P3.json,moc:G3D8P3,
+坐,35,ok,0.9474,38,moc_G4D3P1.json,moc:G4D3P1,
+決定,35,ok,0.9733,75,twtsl2_決定.json,twtsl:rescan-2026-09,
+老是,35,ok,0.9313,131,twtsl2_老是.json,twtsl:rescan-2026-09,
+顏色,34,ok,1.0,29,moc_G2D16P2.json,moc:G2D16P2,顏色_B:poor:0.5349 顏色_A:poor:0.4963
+說話,34,ok,1.0,53,moc_G2D1P2.json,moc:G2D1P2,說話_A:poor:0.3942 說話_B:severe:0.2989
+突然,34,ok,0.8519,27,moc_G2D1P1.json,moc:G2D1P1,突然_A:severe:0.1163 突然_B:poor:0.3605
+聯絡,34,ok,0.9655,29,moc_G1D4P1.json,moc:G1D4P1,
+例如,34,ok,0.9167,72,moc_G1D4P2.json,moc:G1D4P2,
+國小,34,ok,1.0,56,moc_G4D4P1.json,moc:G4D4P1,
+妹妹,34,ok,0.8476,105,twtsl2_妹妹.json,twtsl:rescan-2026-09,
+不懂,33,ok,0.9268,41,moc_G4D2P1.json,moc:G4D2P1,不懂_N:poor:0.534 不懂_S:poor:0.3077 不懂_A:ok:0.7465 不懂_B:ok:0.7294
+障礙,33,ok,1.0,31,moc_G3D3P4.json,moc:G3D3P4,障礙_A:ok:0.7077 障礙_B:poor:0.5606
+報名,33,ok,0.9423,52,moc_G3D2P1.json,moc:G3D2P1,報名_A:poor:0.3362 報名_B:severe:0.2348
+努力,33,ok,0.8056,36,moc_G1D2.json,moc:G1D2,
+擔心,33,ok,1.0,104,moc_G2D3P1.json,moc:G2D3P1,
+眼睛,33,ok,0.9744,39,moc_G3D6P1.json,moc:G3D6P1,
+安全,33,ok,0.8784,74,moc_G3D3P1.json,moc:G3D3P1,
+健康,33,ok,1.0,43,moc_G3D7P2.json,moc:G3D7P2,
+設計,33,ok,1.0,39,moc_G4D7P1.json,moc:G4D7P1,
+錢,33,ok,1.0,36,moc_G4D3P2.json,moc:G4D3P2,
+一定,33,ok,0.8916,286,twtsl2_一定.json,twtsl:rescan-2026-09,
+名字,32,ok,0.9552,67,gs0911_名字.json,unknown-d:綠幕-2026-09-11,名字_N:poor:0.4206 名字_S:poor:0.4138
+怎麼辦,32,ok,0.9344,61,moc_G1D4P1.json,moc:G1D4P1,怎麼辦_A:severe:0.0965 怎麼辦_B:poor:0.3205
+原本,32,ok,0.9062,32,moc_G2D16P1.json,moc:G2D16P1,
+閱讀,32,ok,1.0,75,moc_G2D3P1.json,moc:G2D3P1,
+一次,32,ok,0.9062,32,moc_G2D5P1.json,moc:G2D5P1,
+放鬆,32,ok,1.0,63,moc_G3D7P1.json,moc:G3D7P1,
+讀,32,ok,0.75,12,moc_G4D11P1.json,moc:G4D11P1,
+辛苦,32,ok,0.985,133,moc_G4D1P3.json,moc:G4D1P3,
+國外,32,ok,0.8056,72,moc_I1P4_R.json,moc:I1P4,
+臺南,31,ok,1.0,30,moc_G4D4P1.json,moc:G4D4P1,臺南_B:severe:0.056 臺南_A:poor:0.368
+還好,31,ok,0.9545,22,moc_G2D11P1.json,moc:G2D11P1,
+多少錢,31,ok,1.0,28,moc_G2D6P2.json,moc:G2D6P2,
+張,31,ok,0.8696,23,moc_G2D2P3.json,moc:G2D2P3,
+真的,31,ok,0.9737,38,moc_G3D2P1.json,moc:G3D2P1,
+少,31,ok,0.9639,83,moc_G3D2P4.json,moc:G3D2P4,
+年輕,31,ok,0.9953,212,twtsl2_年輕.json,twtsl:rescan-2026-09,
+電影,31,ok,0.6869,99,twtsl2_電影.json,twtsl:rescan-2026-09,
+幫助,30,ok,0.783,106,twtsl2_幫助.json,twtsl:rescan-2026-09,幫助_N:severe:0.1809 幫助_S:severe:0.0316
+老,30,ok,0.8462,39,moc_G1D4P2.json,moc:G1D4P2,老_A:severe:0.2468 老_B:poor:0.375
+建議,30,ok,1.0,62,moc_G2D16P1.json,moc:corpus-gapfill,
+重,30,ok,0.9,20,moc_G2D1P1.json,moc:G2D1P1,
+複雜,30,ok,1.0,74,moc_G2D2P2.json,moc:G2D2P2,
+志工,30,ok,0.9615,26,moc_G2D5P1.json,moc:G2D5P1,
+家人,30,ok,0.9683,63,moc_G4D1P3.json,moc:G4D1P3,
+兒子,30,ok,1.0,44,moc_G4D6P1.json,moc:G4D6P1,
+三,30,ok,1.0,22,moc_G4D4P2.json,moc:G4D4P2,
+表情,30,ok,0.9839,62,twtsl2_表情.json,twtsl:rescan-2026-09,
+簡單,29,ok,0.9184,98,moc_G1D4P2.json,moc:G1D4P2,簡單_C:severe:0.1954 簡單_A:severe:0.0 簡單_B:poor:0.301
+從來沒有,29,ok,0.9286,28,moc_G1D3P1.json,moc:G1D3P1,從來沒有_A:severe:0.2762 從來沒有_B:ok:0.6667
+餐廳,29,ok,0.875,24,moc_G1D10P2.json,moc:G1D10P2,餐廳_A:severe:0.1983 餐廳_B:poor:0.5227
+還沒,29,ok,1.0,35,moc_G1D4P1.json,moc:G1D4P1,
+打電話,29,ok,0.9474,114,moc_G1D4P1.json,moc:G1D4P1,
+原來,29,ok,0.775,40,moc_G1D7P1.json,moc:G1D7P1,
+過程,29,ok,1.0,54,moc_G2D2P2.json,moc:G2D2P2,
+山,29,ok,1.0,30,moc_G2D4P1.json,moc:G2D4P1,
+見到,29,ok,1.0,36,moc_G3D3P1.json,moc:G3D3P1,
+第二個,29,ok,0.9355,31,moc_G4D12P2.json,moc:G4D12P2,
+第三,29,ok,0.8864,44,moc_G4D2P2.json,moc:G4D2P2,
+台灣,29,ok,0.8769,130,twtsl2_台灣.json,twtsl:rescan-2026-09,
+筆談,28,ok,1.0,21,moc_G4D4P2.json,moc:G4D4P2,筆談_A:severe:0.0 筆談_B:poor:0.3625
+素,28,ok,1.0,23,moc_G1D16P1.json,moc:G1D16P1,
+交給,28,ok,0.8226,62,moc_G1D8P1.json,moc:G1D8P1,
+下次,28,ok,0.875,16,moc_G2D6P1.json,moc:G2D6P1,
+熱,28,ok,0.875,32,moc_G2D4P1.json,moc:G2D4P1,
+老闆,28,ok,0.9821,56,moc_G4D3P2.json,moc:G4D3P2,
+人員,28,ok,0.9677,62,moc_I2P2_L.json,moc:corpus-gapfill,
+鼓勵,28,ok,0.6164,73,twtsl2_鼓勵.json,twtsl:rescan-2026-09,
+展覽,27,ok,0.8788,33,moc_G1D3P3.json,moc:G1D3P3,展覽_A:severe:0.0 展覽_B:severe:0.0291
+程度,27,ok,1.0,60,moc_G2D1P1.json,moc:G2D1P1,
+翻譯,27,ok,1.0,24,moc_G2D2P1.json,moc:G2D2P1,
+起床,27,ok,0.8125,48,moc_G3D2P3.json,moc:G3D2P3,
+外婆,27,ok,0.8676,287,twtsl2_外婆.json,twtsl:rescan-2026-09,
+繼續,27,ok,0.8938,113,twtsl2_繼續.json,twtsl:rescan-2026-09,
+不好,26,ok,0.9545,22,moc_G1D15P3.json,moc:G1D15P3,不好_A:severe:0.2386 不好_B:poor:0.3093
+慢,26,ok,0.9714,70,gs0911_慢.json,unknown-d:綠幕-2026-09-11,慢_N:severe:0.2336 慢_S:poor:0.5833
+帶,26,ok,1.0,34,moc_G1D1P1.json,moc:G1D1P1,
+左右,26,ok,1.0,44,moc_G1D1P2.json,moc:G1D1P2,
+臉書,26,ok,1.0,16,moc_G1D3P1.json,moc:G1D3P1,
+打字,26,ok,1.0,37,moc_G1D6P1.json,moc:G1D6P1,
+加,26,ok,0.8723,47,moc_G2D7P2.json,moc:G2D7P2,
+當然,26,ok,1.0,93,moc_G2D4P2.json,moc:G2D4P2,
+開竅,26,ok,1.0,17,moc_G2D9P2.json,moc:G2D9P2,
+英文,26,ok,0.8095,21,moc_G4D12P1.json,moc:G4D12P1,
+唯一,26,ok,1.0,61,moc_G4D4P3.json,moc:G4D4P3,
+其他,26,ok,0.8333,24,moc_G4D5P1.json,moc:G4D5P1,
+別人,26,ok,0.9167,12,moc_G4D9P2.json,moc:G4D9P2,
+接下來,26,ok,0.9362,94,twtsl2_接下來.json,twtsl:rescan-2026-09,
+過了,25,ok,0.9737,38,moc_G3C32_L.json,moc:corpus-gapfill,過了_B:severe:0.0 過了_A:poor:0.5
+吵架,25,ok,0.9524,21,moc_G2D9P1.json,moc:G2D9P1,吵架_A:poor:0.5846 吵架_B:severe:0.2459
+進去,25,ok,1.0,42,moc_G1D7P1.json,moc:G1D7P1,
+船,25,ok,0.7105,38,moc_G2D16P1.json,moc:G2D16P1,
+幸好,25,ok,0.9178,73,moc_G2D2P1.json,moc:G2D2P1,
+觀賞,25,ok,1.0,50,moc_G2D3P1.json,moc:G2D3P1,
+種種,25,ok,0.6,55,moc_G2D8P1.json,moc:G2D8P1,
+印象,25,ok,0.9659,88,moc_G3D10P3.json,moc:G3D10P3,
+忘記,25,ok,0.9762,42,moc_G3D2P3.json,moc:G3D2P3,
+火災,25,ok,0.9167,24,moc_G4D14P1.json,moc:G4D14P1,
+店,25,ok,1.0,45,moc_G4D1P3.json,moc:G4D1P3,
+回去,25,ok,0.9844,64,moc_G4D4P3.json,moc:G4D4P3,
+改,25,ok,0.8447,103,twtsl2_改.json,twtsl:rescan-2026-09,
+聽損,24,ok,1.0,33,moc_G2D1P1.json,moc:G2D1P1,聽損_A:poor:0.4222 聽損_B:severe:0.011
+票,24,ok,1.0,34,moc_G1D14P3.json,moc:G1D14P3,
+大部分,24,ok,0.9216,51,moc_G1D4P1.json,moc:G1D4P1,
+你們,24,ok,0.9118,34,moc_G1D4P2.json,moc:G1D4P2,
+會議,24,ok,0.9792,48,moc_G1D4P3.json,moc:G1D4P3,
+世界,24,ok,0.9825,57,moc_G3D16P4.json,moc:G3D16P4,
+整理,24,ok,0.9118,34,moc_G3D2P3.json,moc:G3D2P3,
+年,24,ok,1.0,52,moc_G4D15P1.json,moc:G4D15P1,
+分享,24,ok,0.8281,64,moc_G4D6P1.json,moc:G4D6P1,
+變,24,ok,0.8974,39,moc_I4P1_L.json,moc:corpus-gapfill,
+爬山,23,ok,0.9167,48,moc_G2D2P1.json,moc:G2D2P1,爬山_A:poor:0.301 爬山_B:poor:0.5488
+跑,23,ok,0.6316,19,moc_G4D11P3.json,moc:G4D11P3,跑_B:poor:0.431 跑_A:severe:0.0233
+風景,23,ok,0.9556,45,moc_G1D3P2.json,moc:G1D3P2,
+地震,23,ok,0.9483,58,moc_G2D11P1.json,moc:G2D11P1,
+好不好,23,ok,1.0,48,moc_G2D3P1.json,moc:G2D3P1,
+咖啡店,23,ok,1.0,65,moc_G3C5_L.json,moc:G3C5,
+出門,23,ok,1.0,35,moc_G3D2P3.json,moc:G3D2P3,
+帶去,23,ok,0.9655,87,moc_G3D2P3.json,moc:G3D2P3,
+壓力,23,ok,0.8563,174,signtube_壓力.json,signtube:手語天地-2026-09,
+文字,23,ok,0.8871,62,moc_G3D8P2.json,moc:G3D8P2,
+技術,23,ok,0.8846,26,moc_G3D8P2.json,moc:G3D8P2,
+忙,23,ok,1.0,23,moc_G4D11P1.json,moc:G4D11P1,
+第一個,23,ok,1.0,19,moc_G4D12P1.json,moc:G4D12P1,
+內容,23,ok,0.8095,21,moc_G4D12P2.json,moc:G4D12P2,
+很多,23,ok,0.8229,96,moc_G4D1P1.json,moc:G4D1P1,
+AI,23,ok,0.9623,53,moc_G4D8P3.json,moc:G4D8P3,
+味道,23,ok,0.9839,62,twtsl2_味道.json,twtsl:rescan-2026-09,
+差,23,ok,0.9946,185,twtsl2_差.json,twtsl:rescan-2026-09,
+最後,23,ok,1.0,210,twtsl2_最後.json,twtsl:rescan-2026-09,
+經驗過,23,ok,0.9333,165,twtsl2_經驗過.json,twtsl:rescan-2026-09,
+懂,22,ok,0.8889,36,moc_G1D2.json,moc:G1D2,懂_N:poor:0.5699 懂_S:poor:0.4308
+或,22,ok,0.875,16,moc_G2D3P2.json,moc:G2D3P2,或_A:severe:0.0 或_B:severe:0.1905
+忽然,22,ok,0.9032,31,moc_G2D2P1.json,moc:G2D2P1,忽然_A:severe:0.1163 忽然_B:poor:0.3605
+主管,22,ok,0.7711,83,moc_G3D9P3.json,moc:G3D9P3,主管_A:poor:0.44 主管_B:severe:0.2991
+忍耐,22,ok,1.0,53,moc_G1D13P3.json,moc:G1D13P3,
+意思,22,ok,0.8235,34,moc_G1D4P2.json,moc:G1D4P2,
+太太,22,ok,0.8636,22,moc_G1D5P1.json,moc:G1D5P1,
+等候,22,ok,0.9365,63,moc_G1D5P1.json,moc:G1D5P1,
+銀行,22,ok,0.9762,42,moc_G1D6P1.json,moc:G1D6P1,
+越來越多,22,ok,0.8108,37,moc_G2D5P2.json,moc:G2D5P2,
+知識,22,ok,0.863,73,moc_G3D4P4.json,moc:G3D4P4,
+食物,22,ok,1.0,51,moc_G3D1P1.json,moc:G3D1P1,
+麵包,22,ok,0.9143,35,moc_G3D1P2.json,moc:G3D1P2,
+危險,22,ok,1.0,55,moc_G3D3P1.json,moc:G3D3P1,
+過,22,ok,0.775,40,moc_G3D9P2.json,moc:G3D9P2,
+好奇,22,ok,0.9651,86,moc_G4D3P2.json,moc:G4D3P2,
+國中,22,ok,0.9062,32,moc_G4D4P1.json,moc:G4D4P1,
+環境,22,ok,1.0,37,moc_G4D4P3.json,moc:G4D4P3,
+叫,22,ok,0.9947,189,twtsl2_叫.json,twtsl:rescan-2026-09,
+計程車,22,ok,0.8119,101,twtsl2_計程車.json,twtsl:rescan-2026-09,
+魚,22,ok,1.0,158,twtsl2_魚.json,twtsl:rescan-2026-09,
+糖果,21,ok,0.7778,18,moc_G2D9P1.json,moc:G2D9P1,糖果_A:poor:0.3371 糖果_B:poor:0.3714 糖果_C:severe:0.2294
+社會,21,ok,0.7015,67,2587_社會.json,twtsl:2587,社會_S:poor:0.4265 社會_N:ok:0.7015
+房子,21,ok,0.9326,89,moc_G1D3P2.json,moc:G1D3P2,
+配合,21,ok,1.0,37,moc_G2D7P3.json,moc:G2D7P3,
+拿,21,ok,1.0,38,moc_G2D3P1.json,moc:G2D3P1,
+水果,21,ok,1.0,28,moc_G2D4P2.json,moc:G2D4P2,
+租,21,ok,1.0,50,moc_G2D8P2.json,moc:G2D8P2,
+附近,21,ok,0.7778,36,moc_G3D5P1.json,moc:G3D5P1,
+大女兒,21,ok,1.0,44,moc_G3D2P1.json,moc:G3D2P1,
+一個月,21,ok,0.7143,35,moc_G4D12P1.json,moc:G4D12P1,
+各種,21,ok,0.7045,44,moc_G4D8P3.json,moc:G4D8P3,
+人去,21,ok,1.0,34,moc_G4D9P1.json,moc:G4D9P1,
+2009,21,ok,1.0,64,moc_I2P1_L.json,moc:I2P1,
+美國手語,21,ok,1.0,52,moc_I5P1_L.json,moc:I5P1,
+採訪,21,ok,0.876,121,twtsl2_採訪.json,twtsl:rescan-2026-09,
+遲到,20,ok,0.75,48,moc_G1D15P3.json,moc:G1D15P3,遲到_A:severe:0.2925 遲到_B:severe:0.1591
+好吃,20,ok,0.9891,92,moc_G2D4P2.json,moc:G2D4P2,好吃_B:severe:0.0 好吃_A:severe:0.0932
+紀錄,20,ok,0.7353,34,moc_G3D8P2.json,moc:G3D8P2,紀錄_B:severe:0.0693 紀錄_A:severe:0.1346
+壞,20,ok,0.68,100,moc_G1D15P1.json,moc:G1D15P1,
+電話,20,ok,0.9143,35,moc_G1D4P1.json,moc:G1D4P1,
+經驗,20,ok,0.9756,41,moc_G1D6P1.json,moc:G1D6P1,
+骨頭,20,ok,1.0,26,moc_G2D2P3.json,moc:G2D2P3,
+正,20,ok,1.0,48,moc_G2D3P1.json,moc:G2D3P1,
+候選人,20,ok,1.0,95,moc_G2D3P1.json,moc:G2D3P1,
+團體,20,ok,0.92,25,moc_G2D3P2.json,moc:G2D3P2,
+小女兒,20,ok,1.0,41,moc_G3D2P1.json,moc:G3D2P1,
+警察,20,ok,0.9189,37,moc_G3D6P4.json,moc:G3D6P4,
+小說,20,ok,1.0,20,moc_G4D11P4.json,moc:G4D11P4,
+邀請,20,ok,1.0,43,moc_G4D14P1.json,moc:G4D14P1,
+接近,20,ok,1.0,44,moc_G4C41_R.json,moc:corpus-gapfill,
+安排,20,ok,0.6531,49,moc_G4D16P3.json,moc:G4D16P3,
+面試,20,ok,1.0,52,moc_G4D8P1.json,moc:G4D8P1,
+沒問題,20,ok,0.7835,97,moc_G4D8P3.json,moc:G4D8P3,
+高中,20,ok,1.0,41,moc_G4D4P1.json,moc:G4D4P1,
+相處,20,ok,1.0,40,moc_G4D4P3.json,moc:G4D4P3,
+慢慢,20,ok,0.6,30,moc_G4D9P2.json,moc:G4D9P2,
+體育,20,ok,0.98,200,twtsl2_體育.json,twtsl:rescan-2026-09,
+車,19,ok,0.7965,113,twtsl2_車.json,twtsl:rescan-2026-09,車_A:severe:0.0072 車_B:severe:0.047 車_S:severe:0.1721
+車_A,19,(無主鍵),,,,,車_A_N:severe:0.0072
+車_B,19,(無主鍵),,,,,車_B_N:severe:0.047
+認識,19,ok,0.8889,45,moc_G1D4P1.json,moc:G1D4P1,認識_B:severe:0.2621 認識_A:poor:0.4308
+前,19,ok,0.9375,48,moc_G1D10P3.json,moc:G1D10P3,
+下一個,19,ok,1.0,55,moc_G1D3P2.json,moc:G1D3P2,
+派,19,ok,0.875,32,moc_G1D4P1.json,moc:G1D4P1,
+限制,19,ok,1.0,30,moc_G1D4P2.json,moc:G1D4P2,
+免費,19,ok,0.902,51,moc_G1D5P1.json,moc:G1D5P1,
+證明,19,ok,1.0,14,moc_G2D1P3.json,moc:G2D1P3,
+飯,19,ok,0.9688,32,moc_G2D14P2.json,moc:G2D14P2,
+陪伴,19,ok,1.0,19,moc_G2D5P1.json,moc:G2D5P1,
+鄰居,19,ok,0.931,58,moc_G3D2P4.json,moc:G3D2P4,
+臺北,19,ok,1.0,37,moc_G4D4P3.json,moc:G4D4P3,
+遇到,19,ok,0.9091,55,moc_G4D4P3.json,moc:G4D4P3,
+幫我,19,ok,0.8442,77,twtsl2_幫我.json,twtsl:rescan-2026-09,
+技巧,19,ok,0.8716,109,twtsl2_技巧.json,twtsl:rescan-2026-09,
+整天,18,ok,0.6154,26,moc_G4D11P3.json,moc:G4D11P3,整天_B:poor:0.3171 整天_A:severe:0.1368
+沒關係,18,ok,0.8125,48,moc_G1D7P2.json,moc:G1D7P2,沒關係_A:poor:0.3966 沒關係_B:severe:0.1786
+貴,18,ok,0.9831,59,gs0911_貴.json,unknown-d:綠幕-2026-09-11,貴_A:severe:0.2824 貴_B:poor:0.4103
+拍攝,18,ok,0.925,40,moc_G3D8P2.json,moc:G3D8P2,拍攝_A:severe:0.0571 拍攝_B:poor:0.407 拍攝_C:severe:0.0353
+加入,18,ok,0.915,200,twtsl2_加入.json,twtsl:rescan-2026-09,加入_A:poor:0.5529 加入_B:ok:0.7217
+不用,18,ok,0.6026,156,twtsl2_不用.json,twtsl:rescan-2026-09,不用_N:poor:0.3191 不用_S:severe:0.2333
+父母,18,ok,0.9062,32,moc_G1D16P1.json,moc:G1D16P1,父母_A:poor:0.4486 父母_B:poor:0.5214
+日本,18,ok,0.9231,39,moc_G1D1P2.json,moc:G1D1P2,
+自然,18,ok,0.9375,32,moc_G1D11P2.json,moc:G1D11P2,
+出,18,ok,0.7826,23,moc_G1D12P1.json,moc:G1D12P1,
+回答,18,ok,0.9286,42,moc_G1D4P2.json,moc:G1D4P2,
+複製,18,ok,0.6667,30,moc_G2D10P3.json,moc:G2D10P3,
+招來,18,ok,0.9231,13,moc_G2D11P2.json,moc:G2D11P2,
+老人,18,ok,0.9688,32,moc_G2D5P1.json,moc:G2D5P1,
+挑選,18,ok,0.9483,58,moc_G3D1P3.json,moc:G3D1P3,
+隨便,18,ok,1.0,30,moc_G3D2P3.json,moc:G3D2P3,
+提,18,ok,0.9,30,moc_G4D15P2.json,moc:G4D15P2,
+賣,18,ok,0.7456,114,moc_G4D1P3.json,moc:G4D1P3,
+刷牙,18,ok,0.8333,42,moc_G4D6P1.json,moc:G4D6P1,
+主要,18,ok,0.871,31,moc_G4D4P1.json,moc:G4D4P1,
+讀唇,18,ok,0.92,25,moc_G4D4P2.json,moc:G4D4P2,
+中午,18,ok,0.9902,205,twtsl2_中午.json,twtsl:rescan-2026-09,
+受傷,18,ok,0.7928,111,twtsl2_受傷.json,twtsl:rescan-2026-09,
+大概,18,ok,0.9917,241,twtsl2_大概.json,twtsl:rescan-2026-09,
+影片,18,ok,0.6768,99,twtsl2_影片.json,twtsl:rescan-2026-09,
+每,18,ok,0.6697,109,twtsl2_每.json,twtsl:rescan-2026-09,
+難過,18,ok,0.8762,105,twtsl2_難過.json,twtsl:rescan-2026-09,
+緊張,17,ok,1.0,38,moc_G2D16P2.json,moc:G2D16P2,緊張_A:poor:0.4014 緊張_B:poor:0.4754
+夜市,17,ok,0.898,98,moc_G3D7P1.json,moc:G3D7P1,夜市_A:poor:0.4338 夜市_B:poor:0.3401 夜市_C:poor:0.3867 夜市_D:severe:0.1709 夜市_E:poor:0.4436
+天氣,17,ok,1.0,58,moc_G2D4P2.json,moc:G2D4P2,天氣_A:severe:0.2063 天氣_B:severe:0.1885
+颱風,17,ok,0.7808,73,moc_G1D11P1.json,moc:G1D11P1,
+商店,17,ok,0.9778,45,moc_G1D12P2.json,moc:G1D12P2,
+請,17,ok,0.9167,72,gs0911_請.json,unknown-d:綠幕-2026-09-11,
+妳,17,ok,0.9714,70,moc_G1D4P2.json,moc:G1D4P2,
+自助,17,ok,0.8933,75,moc_G1D4P3.json,moc:G1D4P3,
+門,17,ok,1.0,29,moc_G1D7P1.json,moc:G1D7P1,
+資料,17,ok,1.0,27,moc_G2C21_R.json,moc:corpus-gapfill,
+問題,17,ok,1.0,34,moc_G3D14P1.json,moc:G3D14P1,
+新鮮,17,ok,1.0,68,moc_G3D15P2.json,moc:corpus-gapfill,
+聽不見,17,ok,0.7447,94,moc_G3D4P1.json,moc:G3D4P1,
+帶走,17,ok,0.8533,75,moc_G3D2P3.json,moc:G3D2P3,
+她們兩個,17,ok,0.9474,38,moc_G3D7P1.json,moc:G3D7P1,
+歷史,17,ok,0.6222,45,moc_G3D8P1.json,moc:G3D8P1,
+故事,17,ok,0.8182,55,moc_G3D8P2.json,moc:G3D8P2,
+接觸,17,ok,1.0,15,moc_G4D11P2.json,moc:G4D11P2,
+從小到大,17,ok,0.8889,99,moc_G4D1P1.json,moc:G4D1P1,
+算了,17,ok,0.8396,106,moc_G4D1P1.json,moc:G4D1P1,
+長大,17,ok,0.8846,26,moc_G4D2P1.json,moc:G4D2P1,
+窗戶,17,ok,0.9268,41,moc_G4D2P1.json,moc:G4D2P1,
+依舊,17,ok,0.7692,26,moc_G4D5P2.json,moc:corpus-gapfill,
+小時候,17,ok,0.9512,123,moc_G4D3P1.json,moc:G4D3P1,
+不管,17,ok,0.7576,33,moc_G4D4P1.json,moc:G4D4P1,
+終於,17,ok,0.9697,99,moc_G4D4P3.json,moc:G4D4P3,
+下車,17,ok,0.8214,84,twtsl2_下車.json,twtsl:rescan-2026-09,
+付錢,17,ok,1.0,276,twtsl2_付錢.json,twtsl:rescan-2026-09,
+完成,17,ok,0.6129,93,twtsl2_完成.json,twtsl:rescan-2026-09,
+期間,17,ok,0.7943,175,twtsl2_期間.json,twtsl:rescan-2026-09,
+森林,17,ok,0.7899,257,twtsl2_森林.json,twtsl:rescan-2026-09,
+煮飯,17,ok,0.9297,185,twtsl2_煮飯.json,twtsl:rescan-2026-09,
+見面,16,ok,1.0,44,moc_G4D4P1.json,moc:G4D4P1,見面_A:poor:0.4058 見面_B:poor:0.5333
+圖書館,16,ok,0.7887,71,moc_G3D2P3.json,moc:G3D2P3,圖書館_B:severe:0.0833
+炎熱,16,ok,0.9608,51,moc_G1C29_L.json,moc:corpus-gapfill,
+Line,16,ok,1.0,35,moc_G1C3_L.json,moc:G1C3,
+好像,16,ok,1.0,32,moc_G1D1P2.json,moc:G1D1P2,
+打羽球,16,ok,1.0,82,moc_G1D13P1.json,moc:G1D13P1,
+滿,16,ok,0.878,41,moc_G1D5P1.json,moc:G1D5P1,
+減少,16,ok,0.9778,45,moc_G2D11P3.json,moc:G2D11P3,
+藥,16,ok,1.0,16,moc_G2D6P3.json,moc:G2D6P3,
+總統,16,ok,0.9516,62,moc_G2D3P1.json,moc:G2D3P1,
+不清楚,16,ok,1.0,55,moc_G2D3P1.json,moc:G2D3P1,
+顧慮,16,ok,1.0,45,moc_G2D3P1.json,moc:G2D3P1,
+特殊教育,16,ok,0.871,31,moc_G3C21_L.json,moc:G3C21,
+關心,16,ok,1.0,63,moc_G3D3P5.json,moc:G3D3P5,
+相信,16,ok,0.9623,53,moc_G3D3P5.json,moc:G3D3P5,
+飲料,16,ok,0.9851,67,moc_G3D1P1.json,moc:G3D1P1,
+福利,16,ok,1.0,21,moc_G4D2P1.json,moc:G4D2P1,
+早餐,16,ok,0.7424,66,moc_G4D6P1.json,moc:G4D6P1,
+聽障奧運,16,ok,0.8901,91,moc_I2P1_L.json,moc:I2P1,
+高立德大學,16,ok,0.871,31,moc_I5P1_L.json,moc:I5P1,
+上網,16,ok,0.9412,85,twtsl2_上網.json,twtsl:rescan-2026-09,
+女兒,16,ok,0.8462,252,desk0912_女兒.json,signtube:手語天地-2026-09,
+得到,16,ok,0.7742,93,twtsl2_得到.json,twtsl:rescan-2026-09,
+差不多,16,ok,0.6493,268,twtsl2_差不多.json,twtsl:rescan-2026-09,
+生氣,15,ok,0.8621,58,moc_G1D15P2.json,moc:G1D15P2,生氣_A:poor:0.4112 生氣_B:poor:0.5652
+不小心,15,ok,0.8824,34,moc_G2D2P1.json,moc:G2D2P1,不小心_A:severe:0.2188 不小心_B:severe:0.0267
+便宜,15,ok,0.9459,37,moc_G4D5P1.json,moc:G4D5P1,便宜_A:poor:0.3276 便宜_B:severe:0.2614
+號碼,15,ok,0.8725,102,twtsl2_號碼.json,twtsl:rescan-2026-09,號碼_A:poor:0.315 號碼_B:severe:0.0943
+紅,15,ok,0.9106,179,twtsl2_紅.json,twtsl:rescan-2026-09,紅_N:severe:0.1485 紅_S:severe:0.1754
+排隊,15,ok,0.9,100,moc_G1D1P1.json,moc:G1D1P1,
+送,15,ok,0.6968,155,moc_G1D12P3.json,moc:G1D12P3,
+右肩,15,ok,0.8718,39,moc_G1D13P1.json,moc:G1D13P1,
+一年,15,ok,1.0,50,moc_G1D9P2.json,moc:G1D9P2,
+畫,15,ok,1.0,44,moc_G1D3P3.json,moc:G1D3P3,
+介紹,15,ok,1.0,58,moc_G1D6P2.json,moc:G1D6P2,
+治療,15,ok,1.0,31,moc_G2D1P1.json,moc:G2D1P1,
+漸減,15,ok,1.0,79,moc_G2D1P2.json,moc:G2D1P2,
+只好,15,ok,0.9565,23,moc_G2D3P2.json,moc:G2D3P2,
+冷,15,ok,0.9167,12,moc_G2D4P1.json,moc:G2D4P1,
+床,15,ok,0.8,25,moc_G3D11.json,moc:G3D11,
+結婚,15,ok,0.7895,19,moc_G3D12P2.json,moc:G3D12P2,
+心情,15,ok,1.0,85,moc_G3D15P2.json,moc:G3D15P2,
+藝術,15,ok,1.0,49,moc_G3D16P2.json,moc:G3D16P2,
+衛生紙,15,ok,1.0,76,moc_G3D1P2.json,moc:G3D1P2,
+醬油,15,ok,0.984,125,moc_G3D1P2.json,moc:G3D1P2,
+牛奶,15,ok,0.8125,96,moc_G3D1P2.json,moc:G3D1P2,
+下課,15,ok,0.7667,30,moc_G3D2P2.json,moc:G3D2P2,
+一整天,15,ok,0.8431,51,moc_G3D2P3.json,moc:G3D2P3,
+散步,15,ok,0.9057,106,moc_G3D7P1.json,moc:G3D7P1,
+增加,15,ok,0.7692,65,moc_G3D8P2.json,moc:G3D8P2,
+喝酒,15,ok,1.0,17,moc_G4D10P5.json,moc:G4D10P5,
+後,15,ok,1.0,32,moc_G4D12P3.json,moc:G4D12P3,
+規定,15,ok,1.0,47,moc_G4D14P3.json,moc:G4D14P3,
+海,15,ok,0.9574,47,moc_G4D1P1.json,moc:G4D1P1,
+每次,15,ok,0.8919,37,moc_G4D8P1.json,moc:G4D8P1,
+認真,15,ok,0.8767,73,moc_G4D3P1.json,moc:G4D3P1,
+豐富,15,ok,0.9551,89,moc_G4D3P2.json,moc:G4D3P2,
+動作,15,ok,0.7719,114,twtsl2_動作.json,twtsl:rescan-2026-09,
+好幾次,15,ok,0.8387,62,twtsl2_好幾次.json,twtsl:rescan-2026-09,
+病,15,ok,0.8595,121,twtsl2_病.json,twtsl:rescan-2026-09,
+買賣,15,ok,0.9498,279,twtsl2_買賣.json,twtsl:rescan-2026-09,
+高興,15,ok,0.8418,158,twtsl2_高興.json,twtsl:rescan-2026-09,
+飛機,15,ok,0.9809,366,twtsl2_飛機.json,twtsl:rescan-2026-09,
+騎腳踏車,14,ok,1.0,69,moc_G3D3P1.json,moc:G3D3P1,騎腳踏車_A:severe:0.0417
+蛋,14,ok,1.0,37,moc_G4D1P2.json,moc:G4D1P2,蛋_A:poor:0.4228 蛋_B:poor:0.4859 蛋_C:poor:0.3942
+誤會,14,ok,0.8614,101,twtsl2_誤會.json,twtsl:rescan-2026-09,誤會_A:severe:0.0435 誤會_B:severe:0.2133
+研究,14,ok,0.94,50,moc_G3D4P2.json,moc:G3D4P2,研究_A:severe:0.1705 研究_B:severe:0.0 研究_C:severe:0.0192
+試試看,14,ok,0.6667,54,twtsl2_試試看.json,twtsl:rescan-2026-09,試試看_N:severe:0.0328 試試看_S:severe:0.0
+需要,14,ok,0.9286,56,moc_G3D9P2.json,moc:G3D9P2,需要_N:poor:0.4535 需要_S:severe:0.0
+班級,14,ok,0.8889,36,moc_G4D7P1.json,moc:G4D7P1,班級_A:poor:0.504 班級_B:poor:0.5385
+國,14,ok,0.9565,23,moc_G1D12P1.json,moc:G1D12P1,
+文書,14,ok,0.8154,65,moc_G1D6P1.json,moc:G1D6P1,
+另外,14,ok,0.8214,28,moc_G2D2P1.json,moc:G2D2P1,
+恢復,14,ok,0.9167,24,moc_G2D2P3.json,moc:G2D2P3,
+問答,14,ok,1.0,44,moc_G2D3P1.json,moc:G2D3P1,
+雕像,14,ok,0.9907,107,moc_G3D16P1.json,moc:G3D16P1,
+以為,14,ok,1.0,30,moc_G3D2P1.json,moc:G3D2P1,
+班,14,ok,1.0,38,moc_G3D2P2.json,moc:G3D2P2,
+強,14,ok,1.0,46,moc_G3D2P2.json,moc:G3D2P2,
+一大疊,14,ok,0.7333,30,moc_G4D11P3.json,moc:G4D11P3,
+早,14,ok,1.0,30,moc_G4C21_R.json,moc:G4C21,
+就業服務員,14,ok,0.8235,85,moc_G4D12P3.json,moc:G4D12P3,
+導覽,14,ok,1.0,56,moc_G4C6_L.json,moc:G4C6,
+信,14,ok,0.8421,19,moc_G4D9P1.json,moc:G4D9P1,
+紙,14,ok,0.9254,67,moc_G4D6P3.json,moc:G4D6P3,
+洗,14,ok,0.88,25,moc_G4D6P4.json,moc:G4D6P4,
+唸書,14,ok,0.913,46,moc_G4D7P2.json,moc:G4D7P2,
+對於,14,ok,0.6757,74,twtsl2_對於.json,twtsl:rescan-2026-09,
+找到,14,ok,0.8674,279,twtsl2_找到.json,twtsl:rescan-2026-09,
+拍照,13,ok,0.7692,26,moc_G1D3P3.json,moc:G1D3P3,拍照_A:poor:0.495 拍照_B:severe:0.0
+車禍,13,ok,1.0,58,moc_G2D1P1.json,moc:G2D1P1,車禍_A:poor:0.3269 車禍_B:poor:0.4559
+容易,13,ok,1.0,59,moc_G4D7P5.json,moc:G4D7P5,容易_C:severe:0.1954 容易_A:severe:0.0 容易_B:poor:0.301
+油,13,ok,0.85,120,twtsl2_油.json,twtsl:rescan-2026-09,油_N:severe:0.0 油_S:severe:0.0286
+睡,13,ok,1.0,43,moc_G1C26_R.json,moc:corpus-gapfill,睡_A:severe:0.0 睡_B:severe:0.0957 睡_C:severe:0.0
+尷尬,13,ok,1.0,84,moc_G1D16P2.json,moc:G1D16P2,
+看起來,13,ok,0.9841,63,moc_G1D13P1.json,moc:G1D13P1,
+接著,13,ok,0.9286,42,moc_G1D4P2.json,moc:G1D4P2,
+代表,13,ok,0.9242,66,moc_G1D4P2.json,moc:G1D4P2,
+遠,13,ok,1.0,68,moc_G1D7P2.json,moc:G1D7P2,
+APP,13,ok,0.925,40,moc_G2D11P2.json,moc:G2D11P2,
+聽力,13,ok,1.0,87,moc_G2D1P1.json,moc:G2D1P1,
+比如,13,ok,0.9885,87,moc_G2D7P2.json,moc:G2D7P2,
+輕,13,ok,1.0,31,moc_G2D2P3.json,moc:G2D2P3,
+翻譯員,13,ok,0.9444,36,moc_G2D3P2.json,moc:G2D3P2,
+掛號,13,ok,0.8837,43,moc_G2D5P1.json,moc:G2D5P1,
+汽車,13,ok,1.0,38,moc_G3D3P2.json,moc:G3D3P2,
+放入,13,ok,0.7571,70,moc_G3D4P3.json,moc:G3D4P3,
+讓,13,ok,0.9394,33,moc_G3D6P2.json,moc:G3D6P2,
+任何事物,13,ok,1.0,33,moc_G3D2P2.json,moc:G3D2P2,
+安靜,13,ok,0.7385,65,moc_G3D2P3.json,moc:G3D2P3,
+表演,13,ok,1.0,15,moc_G4D11P1.json,moc:G4D11P1,
+大開眼界,13,ok,0.75,24,moc_G4D11P2.json,moc:G4D11P2,
+房間,13,ok,0.6078,51,moc_G4D11P2.json,moc:G4D11P2,
+三十,13,ok,0.8571,14,moc_G4D11P3.json,moc:G4D11P3,
+高三,13,ok,1.0,31,moc_G4D12P1.json,moc:G4D12P1,
+親戚,13,ok,1.0,32,moc_G4D1P3.json,moc:G4D1P3,
+交流,13,ok,0.8367,49,moc_G4D8P1.json,moc:G4D8P1,
+口語,13,ok,0.9286,28,moc_G4D8P3.json,moc:G4D8P3,
+面對面,13,ok,1.0,35,moc_G4D8P3.json,moc:G4D8P3,
+第四,13,ok,0.9778,45,moc_G4D6P2.json,moc:G4D6P2,
+笑,13,ok,1.0,26,moc_G4D3P2.json,moc:G4D3P2,
+只有,13,ok,1.0,17,moc_G4D4P2.json,moc:G4D4P2,
+髒,13,ok,1.0,34,moc_G4D5P1.json,moc:G4D5P1,
+放,13,ok,0.9605,76,moc_G4D5P1.json,moc:G4D5P1,
+一竅不通,13,ok,0.75,28,moc_G4D9P2.json,moc:G4D9P2,
+聾人文化,13,ok,0.8689,61,moc_I5P2_L.json,moc:I5P2,
+行政,13,ok,0.8287,251,signtube_行政.json,signtube:手語天地-2026-09,
+今年,13,ok,0.8165,109,twtsl2_今年.json,twtsl:rescan-2026-09,
+埃及,13,ok,0.9539,282,twtsl2_埃及.json,twtsl:rescan-2026-09,
+洗衣機,13,ok,1.0,101,twtsl2_洗衣機.json,twtsl:rescan-2026-09,
+車子,13,ok,0.8319,113,twtsl2_車子.json,twtsl:rescan-2026-09,
+關係,13,ok,0.9926,135,twtsl2_關係.json,twtsl:rescan-2026-09,
+洗澡,12,ok,0.8333,18,moc_G4D6P4.json,moc:G4D6P4,洗澡_A:severe:0.0526 洗澡_B:poor:0.4125
+抓,12,ok,0.8571,35,moc_G4D11P2.json,moc:G4D11P2,抓_A:poor:0.3034 抓_B:severe:0.0308
+聞,12,ok,0.8676,68,twtsl2_聞.json,twtsl:rescan-2026-09,聞_B:severe:0.0 聞_A:severe:0.0517
+興趣,12,ok,0.8571,35,moc_G3D2P1.json,moc:G3D2P1,興趣_N:poor:0.3761 興趣_S:poor:0.3396
+記錄,12,ok,0.7917,48,moc_G1D2.json,moc:G1D2,記錄_B:severe:0.0693 記錄_A:severe:0.1346
+厲害,12,ok,0.7037,81,twtsl2_厲害.json,twtsl:rescan-2026-09,厲害_B:severe:0.0725 厲害_A:severe:0.0505
+支持,12,ok,0.7895,19,moc_G2D5P2.json,moc:G2D5P2,支持_A:severe:0.1571 支持_B:severe:0.0152
+聽障,12,ok,0.8571,14,moc_G2D3P2.json,moc:G2D3P2,聽障_A:poor:0.4222 聽障_B:severe:0.011
+一半,12,ok,1.0,29,moc_G2D3P2.json,moc:G2D3P2,一半_A:severe:0.2326 一半_B:severe:0.125
+果,12,ok,0.907,43,moc_G1C32_L.json,moc:G1C32,
+一律,12,ok,0.8723,47,moc_G1D16P2.json,moc:G1D16P2,
+花,12,ok,1.0,39,moc_G1D1P2.json,moc:G1D1P2,
+這裡,12,ok,0.9608,51,moc_G1D1P2.json,moc:G1D1P2,
+男人,12,ok,1.0,27,moc_G1D15P1.json,moc:G1D15P1,
+回來,12,ok,0.8095,21,moc_G1D3P1.json,moc:G1D3P1,
+借,12,ok,0.9286,14,moc_G1D3P1.json,moc:G1D3P1,
+參觀,12,ok,1.0,16,moc_G1D3P3.json,moc:G1D3P3,
+越來越少,12,ok,0.8913,46,moc_G1D4P2.json,moc:G1D4P2,
+手,12,ok,0.8387,31,moc_G1D8P2.json,moc:G1D8P2,
+個人,12,ok,1.0,23,moc_G2C21_R.json,moc:corpus-gapfill,
+告訴我,12,ok,1.0,30,moc_G2D11P1.json,moc:G2D11P1,
+大約,12,ok,1.0,26,moc_G2D6P1.json,moc:G2D6P1,
+講述,12,ok,0.8833,60,moc_G2D7P2.json,moc:G2D7P2,
+幾點,12,ok,0.7742,93,moc_G2D13P2.json,moc:G2D13P2,
+斷掉,12,ok,1.0,19,moc_G2D2P3.json,moc:G2D2P3,
+辯論,12,ok,1.0,109,moc_G2D3P1.json,moc:G2D3P1,
+能力,12,ok,1.0,61,moc_G2D3P1.json,moc:G2D3P1,
+平板,12,ok,0.6136,44,moc_G2D9P1.json,moc:G2D9P1,
+打架,12,ok,1.0,19,moc_G2D9P1.json,moc:G2D9P1,
+二十四小時,12,ok,1.0,32,moc_G3C26_L.json,moc:G3C26,
+外公,12,ok,0.6286,35,moc_G3D12P1.json,moc:G3D12P1,
+計劃,12,ok,0.8421,38,moc_G3D10P1.json,moc:G3D10P1,
+收藏,12,ok,0.8953,86,moc_G3D16P2.json,moc:G3D16P2,
+搭車,12,ok,0.8254,63,moc_G3D3P3.json,moc:G3D3P3,
+跑馬燈,12,ok,1.0,53,moc_G3D3P3.json,moc:G3D3P3,
+重視,12,ok,1.0,47,moc_G3D3P5.json,moc:G3D3P5,
+平安,12,ok,0.9179,134,moc_G3D3P5.json,moc:G3D3P5,
+除外,12,ok,0.9459,74,moc_G3D4P4.json,moc:G3D4P4,
+民眾,12,ok,0.9608,51,moc_G3D1P1.json,moc:G3D1P1,
+按時,12,ok,0.866,97,moc_G3D2P3.json,moc:G3D2P3,
+交通,12,ok,1.0,55,moc_G3D3P1.json,moc:G3D3P1,
+一星期,12,ok,0.6618,68,moc_G3D9P2.json,moc:G3D9P2,
+清潔,12,ok,0.9091,22,moc_G4D2P1.json,moc:G4D2P1,
+對話,12,ok,1.0,45,moc_G4D8P3.json,moc:G4D8P3,
+機車,12,ok,1.0,47,moc_G4D6P1.json,moc:G4D6P1,
+想到,12,ok,0.9756,41,moc_G4D3P1.json,moc:G4D3P1,
+詞彙,12,ok,1.0,50,moc_I5P1_L.json,moc:corpus-gapfill,
+中華民國,12,ok,0.9833,60,moc_I4P5_L.json,moc:I4P5,
+躺著,12,ok,1.0,24,moc_I3P2_L.json,moc:I3P2,
+先生,12,ok,0.9493,138,twtsl2_先生.json,twtsl:rescan-2026-09,
+六個月,12,ok,0.8739,119,twtsl2_六個月.json,twtsl:rescan-2026-09,
+客人,12,ok,0.7658,111,twtsl2_客人.json,twtsl:rescan-2026-09,
+火車站,12,ok,0.6967,366,twtsl2_火車站.json,twtsl:rescan-2026-09,
+牙齒,12,ok,0.8969,262,twtsl2_牙齒.json,twtsl:rescan-2026-09,
+玩具,12,ok,0.703,394,twtsl2_玩具.json,twtsl:rescan-2026-09,
+蘋果,12,ok,0.7228,267,twtsl2_蘋果.json,twtsl:rescan-2026-09,
+轉,12,ok,1.0,116,twtsl2_轉.json,twtsl:rescan-2026-09,
+騙,12,ok,0.9833,120,twtsl2_騙.json,twtsl:rescan-2026-09,
+香,12,ok,0.9924,264,twtsl2_香.json,twtsl:rescan-2026-09,
+冬天,11,ok,1.0,30,moc_G4D1P1.json,moc:G4D1P1,冬天_A:severe:0.0341 冬天_B:poor:0.4273
+工廠,11,ok,0.7143,35,moc_G3D9P1.json,moc:G3D9P1,工廠_A:severe:0.0083 工廠_B:severe:0.1068
+傳真,11,ok,0.7609,46,moc_G1D4P1.json,moc:G1D4P1,傳真_A:poor:0.3605 傳真_B:poor:0.5
+未來,11,ok,0.881,42,moc_G4D8P3.json,moc:G4D8P3,未來_A:severe:0.1111 未來_B:severe:0.2872
+猜,11,ok,1.0,22,moc_G1D16P3.json,moc:G1D16P3,猜_A:poor:0.4414 猜_B:severe:0.0
+個性,11,ok,1.0,42,moc_G3D2P1.json,moc:G3D2P1,個性_A:severe:0.199 個性_B:severe:0.2586
+持續,11,ok,0.8542,48,moc_G1D14P3.json,moc:G1D14P3,持續_A:poor:0.4308
+陽光運動公園,11,ok,0.9586,145,moc_G1D1P1.json,moc:G1D1P1,
+六點,11,ok,0.7215,79,moc_G1D10P1.json,moc:G1D10P1,
+百貨公司,11,ok,0.9091,66,moc_G1D12P1.json,moc:G1D12P1,
+三年,11,ok,0.9615,26,moc_G2C11_R.json,moc:corpus-gapfill,
+有一次,11,ok,0.8077,26,moc_G1D3P1.json,moc:G1D3P1,
+選擇,11,ok,1.0,21,moc_G1D3P1.json,moc:G1D3P1,
+聯繫,11,ok,0.8776,49,moc_G1D4P2.json,moc:G1D4P2,
+它,11,ok,1.0,33,moc_G1D4P2.json,moc:G1D4P2,
+輕鬆,11,ok,0.9565,92,moc_G1D8P2.json,moc:G1D8P2,
+報紙,11,ok,0.619,21,moc_G2D10P2.json,moc:G2D10P2,
+醒,11,ok,0.875,40,moc_G2D11P1.json,moc:G2D11P1,
+固定,11,ok,1.0,17,moc_G2D11P2.json,moc:G2D11P2,
+回,11,ok,1.0,24,moc_G2D1P1.json,moc:G2D1P1,
+爬,11,ok,0.6735,49,moc_G2D6P1.json,moc:G2D6P1,
+直,11,ok,1.0,19,moc_G2D6P2.json,moc:G2D6P2,
+聽打,11,ok,1.0,51,moc_G2D7P2.json,moc:G2D7P2,
+服藥,11,ok,0.7714,35,moc_G2D2P3.json,moc:G2D2P3,
+推,11,ok,0.697,33,moc_G2D5P1.json,moc:G2D5P1,
+答應,11,ok,0.6531,49,moc_G2D9P2.json,moc:G2D9P2,
+瑞典,11,ok,1.0,61,moc_G2C45_L.json,moc:corpus-gapfill,
+暑假,11,ok,0.6491,57,moc_G3D12P1.json,moc:G3D12P1,
+外國,11,ok,0.8235,51,moc_G3D16P2.json,moc:G3D16P2,
+雙胞胎,11,ok,0.9483,58,moc_G3D2P1.json,moc:G3D2P1,
+倒,11,ok,1.0,24,moc_G4D1P2.json,moc:G4D1P2,
+觀摩,11,ok,0.9737,38,moc_G4D8P2.json,moc:G4D8P2,
+珍惜,11,ok,0.913,46,moc_G4D5P2.json,moc:G4D5P2,
+廁所,11,ok,1.0,48,moc_G4D6P2.json,moc:G4D6P2,
+規律,11,ok,0.7073,41,moc_G4D6P4.json,moc:G4D6P4,
+桌子,11,ok,0.7473,91,moc_G4D2P2.json,moc:G4D2P2,
+起初,11,ok,0.9355,31,moc_G4D3P1.json,moc:G4D3P1,
+街頭藝人,11,ok,0.9123,57,moc_I1P3_L.json,moc:I1P3,
+杯子,11,ok,1.0,43,moc_I2P2_L.json,moc:corpus-gapfill,
+深刻,11,ok,0.8378,37,moc_I3P2_L.json,moc:I3P2,
+主,11,ok,1.0,274,twtsl2_主.json,twtsl:rescan-2026-09,
+兄弟,11,ok,0.9965,282,twtsl2_兄弟.json,twtsl:rescan-2026-09,
+國家,11,ok,0.971,241,twtsl2_國家.json,twtsl:rescan-2026-09,
+字典,11,ok,1.0,310,twtsl2_字典.json,twtsl:rescan-2026-09,
+幸福,11,ok,0.9,130,twtsl2_幸福.json,twtsl:rescan-2026-09,
+拖地,11,ok,0.7724,312,twtsl2_拖地.json,twtsl:rescan-2026-09,
+歐洲,11,ok,0.8077,52,twtsl2_歐洲.json,twtsl:rescan-2026-09,
+繪畫,11,ok,0.9623,265,twtsl2_繪畫.json,twtsl:rescan-2026-09,
+碩士,11,ok,0.88,200,twtsl2_碩士.json,twtsl:rescan-2026-09,
+風,11,ok,0.8309,207,twtsl2_風.json,twtsl:rescan-2026-09,
+地址,10,ok,0.9574,47,moc_G4D13P3.json,moc:G4D13P3,地址_A:severe:0.0 地址_B:poor:0.3385 地址_C:poor:0.3167 地址_D:poor:0.4667
+自行車,10,ok,0.8413,63,twtsl2_自行車.json,twtsl:rescan-2026-09,自行車_A:severe:0.0417 自行車_B:severe:0.05
+不夠,10,ok,0.8953,86,moc_G2D7P4.json,moc:G2D7P4,不夠_B:severe:0.1667 不夠_A:severe:0.0078 不夠_C:severe:0.25
+一小時,10,ok,0.9412,17,moc_G3D12P1.json,moc:G3D12P1,一小時_A:severe:0.0 一小時_B:severe:0.0261 一小時_C:severe:0.1643
+罵,10,ok,1.0,34,moc_G3D2P2.json,moc:G3D2P2,罵_A:severe:0.0593 罵_B:severe:0.068
+鹽,10,ok,0.8125,16,moc_G4D5P2.json,moc:G4D5P2,鹽_N:poor:0.5876 鹽_S:severe:0.1062
+聰明,10,ok,1.0,47,moc_G2D3P1.json,moc:G2D3P1,聰明_A:poor:0.4286 聰明_B:severe:0.2235
+高,10,ok,0.8889,9,moc_G2D4P1.json,moc:G2D4P1,高_A:poor:0.4603 高_B:poor:0.4943
+輪流,10,ok,0.8519,27,moc_G4D12P2.json,moc:G4D12P2,輪流_B:poor:0.405 輪流_C:poor:0.582 輪流_A:poor:0.3451
+在家,10,ok,1.0,67,moc_G1C10_R.json,moc:G1C10,
+午睡,10,ok,1.0,70,moc_G1C26_L.json,moc:G1C26,
+VRS,10,ok,1.0,93,moc_G1D14P2.json,moc:G1D14P2,
+妻子,10,ok,0.76,25,moc_G1D15P1.json,moc:G1D15P1,
+穿上,10,ok,0.8689,61,moc_G1D11P1.json,moc:G1D11P1,
+違法,10,ok,0.7097,31,moc_G1D11P2.json,moc:G1D11P2,
+漢堡,10,ok,0.8,30,moc_G1D2.json,moc:G1D2,
+瀏覽,10,ok,1.0,15,moc_G1D3P1.json,moc:G1D3P1,
+不可以,10,ok,0.9375,64,moc_G1D4P2.json,moc:G1D4P2,
+愛,10,ok,1.0,28,moc_G1D4P2.json,moc:G1D4P2,
+日期,10,ok,1.0,51,moc_G1D4P3.json,moc:G1D4P3,
+到處,10,ok,0.9744,39,moc_G1C6_L.json,moc:corpus-gapfill,
+石頭,10,ok,0.9545,22,moc_G2D11P2.json,moc:G2D11P2,
+搭船,10,ok,0.9275,69,moc_G2D16P1.json,moc:G2D16P1,
+碰面,10,ok,0.96,50,moc_G2D1P2.json,moc:G2D1P2,
+前幾天,10,ok,0.96,50,moc_G2D6P1.json,moc:G2D6P1,
+宣傳,10,ok,0.9559,68,moc_G2D7P4.json,moc:G2D7P4,
+預防,10,ok,1.0,28,moc_G2D13P2.json,moc:G2D13P2,
+政見,10,ok,1.0,47,moc_G2D3P1.json,moc:G2D3P1,
+退步,10,ok,1.0,38,moc_G2D3P1.json,moc:G2D3P1,
+一下子,10,ok,0.9167,24,moc_G2D4P1.json,moc:G2D4P1,
+爭奪,10,ok,0.9394,33,moc_G2D9P1.json,moc:G2D9P1,
+本土語言,10,ok,0.9688,96,moc_G3C10_L.json,moc:G3C10,
+環島,10,ok,1.0,46,moc_G3D10P1.json,moc:G3D10P1,
+目標,10,ok,1.0,45,moc_G3D10P1.json,moc:G3D10P1,
+建築物,10,ok,0.9394,66,moc_G3D16P1.json,moc:G3D16P1,
+每一個,10,ok,0.7458,59,moc_G3D16P2.json,moc:G3D16P2,
+安裝,10,ok,1.0,32,moc_G3D3P3.json,moc:G3D3P3,
+購物,10,ok,0.9819,166,moc_G3D1P2.json,moc:G3D1P2,
+請求,10,ok,0.7778,45,moc_G3D2P1.json,moc:G3D2P1,
+作業,10,ok,0.9667,60,moc_G3D2P3.json,moc:G3D2P3,
+旁邊,10,ok,0.9605,76,moc_G3D3P1.json,moc:G3D3P1,
+渴望,10,ok,1.0,57,moc_G3D7P1.json,moc:G3D7P1,
+了解,10,ok,0.9394,99,moc_G3D8P4.json,moc:G3D8P4,
+顯眼,10,ok,0.9406,101,moc_G3D8P5.json,moc:G3D8P5,
+接電話,10,ok,0.9867,75,moc_G3C38_R.json,moc:G3C38,
+品,10,ok,0.8947,19,moc_G3D9P2.json,moc:G3D9P2,
+穩定,10,ok,0.9706,68,moc_G3D9P3.json,moc:G3D9P3,
+人來,10,ok,1.0,63,moc_G4C25_L.json,moc:G4C25,
+漫畫,10,ok,0.7222,36,moc_G4D11P2.json,moc:G4D11P2,
+數學,10,ok,1.0,22,moc_G4D12P1.json,moc:G4D12P1,
+會員,10,ok,1.0,36,moc_G4D13P2.json,moc:G4D13P2,
+宴席,10,ok,1.0,81,moc_G4C41_R.json,moc:G4C41,
+八點,10,ok,1.0,37,moc_G4D6P2.json,moc:G4D6P2,
+打掃,10,ok,1.0,26,moc_G4D6P2.json,moc:G4D6P2,
+宣布,10,ok,1.0,31,moc_G4D3P2.json,moc:G4D3P2,
+有趣,10,ok,1.0,54,moc_G4D3P3.json,moc:G4D3P3,
+念書,10,ok,0.9245,53,moc_G4D4P1.json,moc:G4D4P1,
+不適合,10,ok,0.6875,64,moc_I3P1_L.json,moc:I3P1,
+國際手語,10,ok,0.6753,77,moc_I4P6_L.json,moc:I4P6,
+美術系,10,ok,1.0,48,moc_I4P2_L.json,moc:I4P2,
+交付,10,ok,0.9924,263,twtsl2_交付.json,twtsl:rescan-2026-09,
+修改,10,ok,0.8155,103,twtsl2_修改.json,twtsl:rescan-2026-09,
+健身,10,ok,0.9225,142,twtsl2_健身.json,twtsl:rescan-2026-09,
+打敗,10,ok,0.7358,106,twtsl2_打敗.json,twtsl:rescan-2026-09,
+收集,10,ok,0.7742,93,twtsl2_收集.json,twtsl:rescan-2026-09,
+李,10,ok,0.8643,140,twtsl2_李.json,twtsl:rescan-2026-09,
+米,10,ok,0.8739,119,twtsl2_米.json,twtsl:rescan-2026-09,
+立刻,10,ok,0.6311,244,twtsl2_立刻.json,twtsl:rescan-2026-09,
+競爭,10,ok,1.0,297,twtsl2_競爭.json,twtsl:rescan-2026-09,
+臭,10,ok,0.8459,266,twtsl2_臭.json,twtsl:rescan-2026-09,
+變化,10,ok,0.8028,426,twtsl2_變化.json,twtsl:rescan-2026-09,
+逛街,10,ok,0.7321,586,twtsl2_逛街.json,twtsl:rescan-2026-09,
+黑,10,ok,0.8341,223,twtsl2_黑.json,twtsl:rescan-2026-09,
+一點,8,ok,0.9582,239,twtsl2_一點.json,twtsl:rescan-2026-09,
+對不起,7,ok,1.0,36,moc_I4P8_R.json,moc:corpus-gapfill,
+早安,4,ok,0.6556,90,moc_G1D10P1.json,moc:G1D10P1,
+看醫生,2,ok,0.8033,61,gs0911_看醫生.json,unknown-d:綠幕-2026-09-11,
+晚安,1,ok,0.7853,177,slw_晚安.json,slwords:6847bcf06524f5d7f32d8f81,
+再見,1,ok,0.9775,222,twtsl2_再見.json,twtsl:rescan-2026-09,
+餓,1,ok,1.0,63,gs0911_餓.json,unknown-d:綠幕-2026-09-11,
+星期幾,1,ok,0.9697,66,gs0911_星期幾.json,unknown-d:綠幕-2026-09-11,

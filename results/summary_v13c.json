@@ -1,0 +1,38 @@
+{
+  "BLEU-4": 73.2,
+  "ROUGE-L": 83.28,
+  "ExactMatch%": 69.7,
+  "InVocab%": 95.95,
+  "InVocabRef%": 100.0,
+  "InVocabGap": -4.05,
+  "InVocab%(raw)": 95.95,
+  "n": 33,
+  "n_groups": 33,
+  "Reference4Grams": 5,
+  "Hypothesis4Grams": 4,
+  "TokenPrecision": 0.8485,
+  "TokenRecall": 0.8283,
+  "TokenF1": 0.8328,
+  "GER": 0.2152,
+  "AvgEditDistance": 0.52,
+  "ErrorTypes": {
+    "正確": 23,
+    "Gloss替換錯誤": 6,
+    "完全錯誤": 2,
+    "多餘Gloss": 1,
+    "漏Gloss": 1
+  },
+  "ErrorTypes%": {
+    "正確": 69.7,
+    "Gloss替換錯誤": 18.18,
+    "完全錯誤": 6.06,
+    "多餘Gloss": 3.03,
+    "漏Gloss": 3.03
+  },
+  "OOVBasis": "gloss_master ∪ train（17791 詞）",
+  "ValidJSON%": 100.0,
+  "QuestionAcc%": 96.97,
+  "NegationAcc%": 100.0,
+  "NonmanualNonNone%": 33.33,
+  "WithContext%": 0.0
+}

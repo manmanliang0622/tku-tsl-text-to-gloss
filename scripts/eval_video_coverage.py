@@ -16,10 +16,12 @@
 
 用法（lexicon.json 在學校主機上，先抓下來）:
 
-    scp -P 2288 b310ai@163.13.202.125:'~/0813/recordings/lexicon.json' data/video/
+    scp tku-gpu:'~/0813/recordings/lexicon.json' data/video/
     python scripts/eval_video_coverage.py
 
-輸出：console 報表 + data/video/video_gap.json（逐詞缺口，可直接排補片順序）
+輸出：console 報表
+      data/video/video_gap.json（逐詞缺口，可直接排補片順序）
+      data/video/video_gap_with_textbook.json（加計 test_textbook＋資料集歸屬）
 """
 from __future__ import annotations
 
@@ -43,6 +45,19 @@ _VARIANT_CHARS = str.maketrans({"妳": "你", "臺": "台", "她": "他", "牠":
 _DIGIT_SIGN = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"]
 
 
+def fold(gloss: str) -> str:
+    """外語詞形折疊：去括號註記、去內部空白、轉小寫。
+
+    語料寫 `BB call`，動作庫的鍵是 `BBCall`——差一個空白就查不到，
+    2026-08-21 人工校訂把 `BB/call` 併成一個詞之後反而判成缺片。空白在
+    拉丁字母詞裡不是詞界（詞本身就可能內含空白），只是同一個詞的兩種
+    寫法，折疊時一併去掉。只用在含 ASCII 字母的詞：中文鍵去空白會把
+    詞尾帶空白的重複收錄併成一條，那是資料清理的事，不歸這裡管。
+    """
+    bare = re.sub(r"\s*[（(][^)）]*[)）]\s*", "", gloss).strip().lower()
+    return re.sub(r"\s+", "", bare)
+
+
 def norm(gloss: str) -> str:
     """去掉語料庫的標註記號，還原成可查詢的詞形。
 
@@ -61,6 +76,44 @@ def norm(gloss: str) -> str:
     return gloss.strip().strip(_PUNCT)
 
 
+def parse_token(gloss: str) -> tuple[list[str], bool]:
+    """把一個 Gloss token 拆成 (可查詢的詞段, 是否重複貌)。
+
+    2026-08-31 新增（教授審查意見 3.1）。`norm()` 只回傳「第一段」，因為它的
+    用途是「這個詞查不查得到影片」。但建訓練資料時那樣做等於**把資訊刪掉**：
+
+      買++    →  norm 給 買          重複貌不見了
+      樹+見   →  norm 給 樹          「見」整個消失
+
+    實測 train 有 478 列帶 `++`、447 列帶複合 `+`，第二段被直接刪除 664 次，
+    刪掉的多是 手機(58)／這(51)／杯子(26)／腳(20) 這類分類詞或指涉對象。
+
+    複合到底是一個手語還是兩個？查過了：384 個複合 token 裡，**整串本身是
+    動作庫鍵的有 0 個**，而拆開後每段都查得到的有 275 個（71.6%）。所以
+    `X+Y` 在播放層面就是**兩個連續的手語**，不是一個複合詞。攤平是對的，
+    刪掉第二段是錯的。（複合這個語言學單位本身仍值得記錄，由呼叫端存成
+    compounds 索引群組，不在這裡處理。）
+
+    `++` 依語料庫標記慣例是**重複貌**（見 scrape_tslcorpus_full.py 的
+    `clean_token`），是體貌標記而不是次數。實測 345 個 `++` 與 1 個 `+++`，
+    沒有任何資訊指出要重複幾次，所以這裡只回布林，**不編造 repeat=2 這種
+    數字**——那等於替標註者宣稱他沒寫的事。要播幾次由虛擬人端決定。
+
+    解析順序很重要：括號註記要先處理再拆 `+`，否則 `(包+包)交換` 會被拆錯。
+    """
+    g = str(gloss).strip()
+    inner = re.fullmatch(r"\((.+)\)", g)
+    if inner:                                   # (手勢) → 手勢，別整串刪掉
+        g = inner.group(1)
+    g = g.strip().strip(_PUNCT)
+    g = re.sub(r"\([^)]*\)", "", g)             # 告訴(他) → 告訴；(包+包)交換 → 交換
+    redup = bool(re.search(r"\++$", g))
+    g = re.sub(r"\++$", "", g)
+    segs = [x.strip().strip(_PUNCT) for x in g.split("+")]
+    segs = [x for x in segs if x]
+    return segs, redup
+
+
 class Library:
     """影片庫 + 各層別名，回答「這個 gloss 演不演得出來」。"""
 
@@ -72,10 +125,11 @@ class Library:
             for base in (_VAR.sub("", key).rstrip("_"), _ADMIN.sub("", key)):
                 if base and base != key:
                     self.alias[base].append(key)
-        # 含 ASCII 字母的鍵:大小寫 + 括號註記折疊(LINE (通訊軟體) → line)
+        # 含 ASCII 字母的鍵:大小寫 + 括號註記 + 內部空白折疊
+        # (LINE (通訊軟體) → line、BBCall/BB call → bbcall)
         self.folded: dict[str, str] = {}
         for key in sorted(self.keys):
-            bare = re.sub(r"\s*[（(][^)）]*[)）]\s*", "", key).strip().lower()
+            bare = fold(key)
             if bare and re.search(r"[a-z]", bare):
                 self.folded.setdefault(bare, key)
 
@@ -98,7 +152,7 @@ class Library:
                 return "T5", "/".join(_DIGIT_SIGN[int(d)] for d in n)
         # 大小寫與括號註記折疊:語料庫寫 Line,詞庫是 LINE (通訊軟體)
         if n and re.search(r"[A-Za-z]", n):
-            hit = self.folded.get(n.lower())
+            hit = self.folded.get(fold(n))
             if hit:
                 return "T6", hit
         return "T7", None
@@ -138,18 +192,24 @@ def load_jsonl(path: Path) -> list[dict]:
     return [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
 
 
-def load_datasets() -> dict[str, list[list[str]]]:
-    """回傳 資料集名 → [gloss 序列]。splits 的 output 是 JSON 字串。"""
+SPLITS = ["train", "dev", "test", "test_corpus", "test_papers"]
+
+
+def load_datasets(splits: list[str] | None = None) -> dict[str, list[list[str]]]:
+    """回傳 資料集名 → [gloss 序列]。
+
+    讀 `data/splits/*.jsonl` 的 gloss_text（以 / 分隔），**不讀
+    `splits_json`**：那份格式把 gloss 用空白串起來，含空白的詞
+    （`BB call`、`QR code`）會被空白切成兩半。2026-08-21 人工校訂
+    才剛把 `BB/call` 併成一個詞，從 splits_json 讀等於當場拆回去，
+    同一批句子還會在缺口表上重複計數一次。
+    """
     data: dict[str, list[list[str]]] = {}
-    for name in ["train", "dev", "test", "test_corpus", "test_papers"]:
-        rows = load_jsonl(BASE / "data" / "splits_json" / f"{name}.jsonl")
+    for name in (splits if splits is not None else SPLITS):
+        rows = load_jsonl(BASE / "data" / "splits" / f"{name}.jsonl")
         seqs = []
         for r in rows:
-            try:
-                gloss = json.loads(r["output"])["gloss"]
-            except (KeyError, ValueError):
-                continue
-            seq = [t for t in re.split(r"\s+", gloss.strip()) if t]
+            seq = [t.strip() for t in str(r.get("gloss_text", "")).split("/") if t.strip()]
             if seq:
                 seqs.append(seq)
         if seqs:
@@ -160,6 +220,26 @@ def load_datasets() -> dict[str, list[list[str]]]:
         if seqs:
             data[name] = seqs
     return data
+
+
+def gap_by_dataset(lib: Library, data: dict[str, list[list[str]]]) -> dict[str, dict]:
+    """缺詞 → {出現次數, 出現在哪些資料集}。
+
+    補片排序不能只看總次數：只出現在 train 的詞補了不影響評測分數，
+    落在 dev/test*/test_textbook 的才會直接反映在數字上。
+    """
+    count: collections.Counter = collections.Counter()
+    where: dict[str, set[str]] = collections.defaultdict(set)
+    for name, seqs in data.items():
+        for seq in seqs:
+            for g in seq:
+                if lib.tier(g)[0] != "T7":
+                    continue
+                n = norm(g)
+                if n:
+                    count[n] += 1
+                    where[n].add(name)
+    return {w: {"count": c, "datasets": sorted(where[w])} for w, c in count.most_common()}
 
 
 def load_fill_sources(twtsl_dir: Path, moe_path: Path) -> tuple[set[str], set[str]]:
@@ -199,11 +279,14 @@ def main() -> int:
     ap.add_argument("--twtsl", type=Path, default=DEFAULT_TWTSL)
     ap.add_argument("--moe", type=Path, default=DEFAULT_MOE)
     ap.add_argument("--out", type=Path, default=BASE / "data" / "video" / "video_gap.json")
+    ap.add_argument("--out-textbook", type=Path,
+                    default=BASE / "data" / "video" / "video_gap_with_textbook.json",
+                    help="加計 test_textbook 的逐詞缺口＋資料集歸屬")
     args = ap.parse_args()
 
     if not args.lexicon.is_file():
         print(f"找不到 {args.lexicon}\n"
-              f"先抓下來：scp -P 2288 b310ai@163.13.202.125:"
+              f"先抓下來：scp tku-gpu:"
               f"'~/0813/recordings/lexicon.json' {args.lexicon.parent}/")
         return 1
 
@@ -300,6 +383,15 @@ def main() -> int:
           "greedy": lib.greedy(w)[0]} for w, c in gap.most_common()],
         ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"\n逐詞缺口 → {args.out.relative_to(BASE)}（{len(gap)} 詞）")
+
+    # test_textbook 不進 video_gap.json（補片工作表沿用那份的口徑），
+    # 但它是實際評測集，排補片順序時要看得到，故另出一份含歸屬的。
+    gap_tb = gap_by_dataset(lib, load_datasets(SPLITS + ["test_textbook"])
+                            | {k: v for k, v in data.items() if k not in SPLITS})
+    args.out_textbook.write_text(
+        json.dumps(gap_tb, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"含 test_textbook 的缺口＋資料集歸屬 → "
+          f"{args.out_textbook.relative_to(BASE)}（{len(gap_tb)} 詞）")
     return 0
 
 

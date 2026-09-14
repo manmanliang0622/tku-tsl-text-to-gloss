@@ -24,9 +24,18 @@ dict_alias——那些詞在動作庫裡是**不同的影片**，判等於放寬
               「這幾個中文詞可以用同一個手語打」。教授指出的
               `今天 → 現在` 就在這一組。
   moe_alias   教育部 `moe_vocab_clean.jsonl` 的 aliases，只有 9 筆，聊備一格。
+  manual      人工判定，`data/signs/synonym_manual.jsonl`。目前來源是影片待辦
+              清單（`影片待辦清單＿1.xlsx`）補片時逐列寫的備註，兩種關係：
+              `same_sign`（備註寫「找『X』」——這個詞的補片直接用 X 那支，
+              播出來一定是同一個動作）與 `equals`（備註寫「等於『A』『B』」
+              ——同一個手語可以打這幾個中文詞）。強度介於 same_clip 與
+              dict_alias 之間：比辭典別名可信（是看著影片判的），但 same_sign
+              要等該片真的入庫才等同 same_clip。
+              `compound`（「幾時」＝什麼＋時間）與 `play_as` 不是同義關係，
+              留在檔裡備查但不建組；標了 `suspect` 的（疑似填錯列）同樣跳過。
 
 **不做遞移閉包**：A 同 B（same_clip）、B 同 C（dict_alias）不推出 A 同 C。
-兩種關係的強度不同，串起來會把弱關係傳染給強關係。一個詞可以同時屬於多組，
+各種關係的強度不同，串起來會把弱關係傳染給強關係。一個詞可以同時屬於多組，
 下游自己決定要採信到哪一層。
 
 用法：
@@ -47,6 +56,7 @@ SIGNS = BASE / "data" / "signs"
 INVENTORY = SIGNS / "sign_inventory.jsonl"
 TWTSL_WORDS = BASE / "data" / "twtsl" / "twtsl_words.jsonl"
 MOE_VOCAB = BASE / "data" / "moe" / "moe_vocab_clean.jsonl"
+MANUAL = SIGNS / "synonym_manual.jsonl"
 OUT = SIGNS / "synonym_groups.json"
 
 
@@ -116,6 +126,26 @@ def build_groups():
             "evidence": {"dataset": "moe_vocab_clean.jsonl", "headword": head},
         })
 
+    n_moe = len(groups) - n_clip - n_dict
+
+    # ---- manual：人工判定（目前來自補片備註）----
+    n_skipped = 0
+    for e in load_jsonl(MANUAL):
+        rel = str(e.get("relation") or "")
+        members = [str(m).strip() for m in (e.get("members") or []) if str(m).strip()]
+        if rel not in ("same_sign", "equals") or len(members) < 2 or e.get("suspect"):
+            n_skipped += 1
+            continue
+        groups.append({
+            "id": f"SYN_H{len(groups) - n_clip - n_dict - n_moe + 1:05d}",
+            "source": "manual",
+            "relation": rel,
+            "members": members,
+            "in_library": [m for m in members if m in in_library],
+            "evidence": {"dataset": "synonym_manual.jsonl", "headword": e.get("headword"),
+                         "note": e.get("note"), "origin": e.get("source")},
+        })
+
     # ---- 查詢索引：詞面 → 所屬組 ----
     index = collections.defaultdict(list)
     for g in groups:
@@ -132,6 +162,7 @@ def build_groups():
         "library_signs_with_synonym": len(covered),
         "library_signs_with_synonym_pct": round(len(covered) / len(rows) * 100, 1),
         "index_keys": len(index),
+        "manual_skipped": n_skipped,
     }
     return groups, dict(index), stats
 
@@ -143,7 +174,7 @@ def main() -> int:
 
     groups, index, stats = build_groups()
     print(json.dumps(stats, ensure_ascii=False, indent=2))
-    for src in ("same_clip", "dict_alias", "moe_alias"):
+    for src in ("same_clip", "dict_alias", "moe_alias", "manual"):
         sample = [g for g in groups if g["source"] == src][:3]
         for g in sample:
             print(f"  [{src}] {g['id']}: {' / '.join(g['members'])}")

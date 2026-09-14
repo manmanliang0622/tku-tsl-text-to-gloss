@@ -1,0 +1,209 @@
+{
+  "lexicon_entries": 17113,
+  "signs": 17113,
+  "distinct_signs": 17110,
+  "duplicates": {
+    "TSL_訪談_2": "TSL_訪談",
+    "TSL_許久_2": "TSL_許久",
+    "TSL_抹黑_2": "TSL_抹黑"
+  },
+  "superseded": {
+    "TSL_事情_2": "TSL_事情",
+    "TSL_傾聽_2": "TSL_傾聽",
+    "TSL_共同_2": "TSL_共同",
+    "TSL_求救_2": "TSL_求救",
+    "TSL_軟弱_2": "TSL_軟弱"
+  },
+  "id_scheme": "semantic",
+  "ids_changed_vs_previous": 16628,
+  "new_signs_this_run": 478,
+  "index_keys": 17204,
+  "alias_keys_added": 52,
+  "clean_keys_added": 39,
+  "index_keys_repointed_from_duplicate": 8,
+  "gloss_dirty": {
+    "control_chars": 2,
+    "outer_space": 45,
+    "inner_space": 21,
+    "slash": 2
+  },
+  "name_key_collisions": [
+    {
+      "gloss_clean": "訪談",
+      "members": [
+        {
+          "gloss": "訪談",
+          "name_key": "訪談",
+          "source": "moe_signdict",
+          "recording": "moe_02_0925.json",
+          "duration": 1.96
+        },
+        {
+          "gloss": "\b訪談",
+          "name_key": "訪談_2",
+          "source": "moe_signdict",
+          "recording": "moe_12_1218.json",
+          "duration": 1.96
+        }
+      ],
+      "verified_duplicate": true
+    },
+    {
+      "gloss_clean": "許久",
+      "members": [
+        {
+          "gloss": "許久",
+          "name_key": "許久",
+          "source": "moe_signdict",
+          "recording": "moe_01_0339.json",
+          "duration": 2.96
+        },
+        {
+          "gloss": "\b許久",
+          "name_key": "許久_2",
+          "source": "moe_signdict",
+          "recording": "moe_12_1219.json",
+          "duration": 2.96
+        }
+      ],
+      "verified_duplicate": true
+    },
+    {
+      "gloss_clean": "事情",
+      "members": [
+        {
+          "gloss": "事情",
+          "name_key": "事情",
+          "source": "other",
+          "recording": "twtsl2_事.json",
+          "duration": 3.062
+        },
+        {
+          "gloss": " 事情",
+          "name_key": "事情_2",
+          "source": "moe_signdict",
+          "recording": "moe_04_0090.json",
+          "duration": 6.8
+        }
+      ],
+      "verified_duplicate": false
+    },
+    {
+      "gloss_clean": "傾聽",
+      "members": [
+        {
+          "gloss": "傾聽",
+          "name_key": "傾聽",
+          "source": "other",
+          "recording": "twtsl2_傾聽.json",
+          "duration": 4.01
+        },
+        {
+          "gloss": "傾聽 ",
+          "name_key": "傾聽_2",
+          "source": "moe_signdict",
+          "recording": "moe_05_0022.json",
+          "duration": 3.0
+        }
+      ],
+      "verified_duplicate": false
+    },
+    {
+      "gloss_clean": "共同",
+      "members": [
+        {
+          "gloss": "共同",
+          "name_key": "共同",
+          "source": "other",
+          "recording": "2248_一同.json",
+          "duration": 3.267
+        },
+        {
+          "gloss": "共同 ",
+          "name_key": "共同_2",
+          "source": "moe_signdict",
+          "recording": "moe_12_0041.json",
+          "duration": 3.0
+        }
+      ],
+      "verified_duplicate": false
+    },
+    {
+      "gloss_clean": "抹黑",
+      "members": [
+        {
+          "gloss": "抹黑",
+          "name_key": "抹黑",
+          "source": "moe_signdict",
+          "recording": "moe_13_0773.json",
+          "duration": 3.737
+        },
+        {
+          "gloss": "抹黑 ",
+          "name_key": "抹黑_2",
+          "source": "moe_signdict",
+          "recording": "moe_12_0711.json",
+          "duration": 3.737
+        }
+      ],
+      "verified_duplicate": true
+    },
+    {
+      "gloss_clean": "求救",
+      "members": [
+        {
+          "gloss": "求救",
+          "name_key": "求救",
+          "source": "other",
+          "recording": "slw_求救.json",
+          "duration": 2.903
+        },
+        {
+          "gloss": "求救 ",
+          "name_key": "求救_2",
+          "source": "moe_signdict",
+          "recording": "moe_04_0780.json",
+          "duration": 2.96
+        }
+      ],
+      "verified_duplicate": false
+    },
+    {
+      "gloss_clean": "軟弱",
+      "members": [
+        {
+          "gloss": "軟弱",
+          "name_key": "軟弱",
+          "source": "other",
+          "recording": "2417_弱.json",
+          "duration": 3.833
+        },
+        {
+          "gloss": "軟弱 ",
+          "name_key": "軟弱_2",
+          "source": "moe_signdict",
+          "recording": "moe_13_1548.json",
+          "duration": 2.96
+        }
+      ],
+      "verified_duplicate": false
+    }
+  ],
+  "by_source": {
+    "moe_signdict": 7517,
+    "other": 4364,
+    "moc_corpus": 3353,
+    "tsl_placenames": 846,
+    "tsl_familynames": 565,
+    "tasli": 468
+  },
+  "by_gloss_len": {
+    "2": 9797,
+    "4": 3006,
+    "3": 2170,
+    "1": 1029,
+    "6": 560,
+    "5": 551
+  },
+  "missing_timing": 0
+}

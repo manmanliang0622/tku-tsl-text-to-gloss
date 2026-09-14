@@ -26,6 +26,11 @@
 ## 2. 學校 VM 與安全界線
 
 - 訓練機：Ubuntu 22.04、NVIDIA GeForce RTX 4060 Ti 16GB；SSH alias 為 `tku-gpu`。
+  **這個 alias 要自己設，不會隨 clone 而來**——本 repo 各處（含 `MODEL_CARD`、
+  `data_preflight.py`、`check_bundle_deps.py --deploy-check`）都以它稱呼訓練機，
+  沒設就會 `Could not resolve hostname`。位址、埠與帳號見 `git show a6e648e`
+  （2026-08-30 把它們從公開 repo 移除的那個 commit），在 `~/.ssh/config` 設成
+  `Host tku-gpu` 即可。
 - 連線位址、帳號與憑證不寫入 public repo；SSH 已固定主機金鑰，不使用 `StrictHostKeyChecking=no`。
 - VM repo：`/home/b310ai/tku-tsl-text-to-gloss`。
 - 管理者重開機後，核心模組、磁碟驅動與 NVML 均為 `580.173.02`；PyTorch `2.7.1+cu126`，CUDA 可用。
@@ -34,6 +39,85 @@
 - VM 沒有 git push 認證；採「VM 執行 → 小型結果與 bundle 帶回本機 → 由有認證的機器推送」。
 
 ## 3. 教師審核資料與切分
+
+> ⚠️ **2026-08-27 訂正：現行切分指令（取代本節以下所有切分指令）**
+>
+> 本節底下兩條指令都**不再重現現行切分**，照著跑會換掉整個資料集——實測
+> `--use-all` 那條產出 train 4,645／dev 410／test_corpus 586，與現行的
+> 8,915／663／166 完全不同。現行 `data/splits/` 由這條產生，已用 id 多重集
+> 逐份比對確認可重現：
+>
+> ```bash
+> python3 scripts/split_data.py --use-all --length-balance --no-papers \
+>   --textbook-as-test --corpus-test-ratio 0.12 --corpus-test-min-len 6 --seed 42
+> ```
+>
+> | split | 2026-08-31 修正前 | **修正後（現行）** |
+> |---|---:|---:|
+> | train | 8,915（相異句對 5,321） | **9,064**（相異句對 5,400） |
+> | dev | 663 | **548** |
+> | 核心 test | 33 | 33（位元完全相同） |
+> | `test_corpus` | 166 | 166（位元完全相同） |
+> | `test_textbook` | 423 | 423（位元完全相同） |
+>
+> **2026-08-31 修正（教授審查意見 2.4）**：去洩漏與去重改用表面形式正規化
+> （NFKC＋去標點＋臺/台等異體字），並把「同一句中文的所有列」合併成不可分割
+> 的 cluster。抓到的實際洩漏：核心 33 句有 3 句去標點後在 train
+> （`我住在台北。`／`我知道`／`我不知道`），dev 與 train 有 6 句**原字串完全
+> 相同**（去重鍵是 `(chinese, gloss_text)`，同句中文配不同 Gloss 就兩邊都留）。
+> 三個測試集位元不變，**只有 train／dev 改變**。舊切分凍結在
+> `data/splits_v17/`（歷史數字對帳用，不要更新它）。
+> 驗證：`python3 tests/test_split_normalization.py`。
+>
+> - **`--no-papers` 是關鍵**：現行切分**不含**中正論文例句（manifest 的
+>   `counts.test_papers` 為 0、`train_composition` 無 `paper` 來源）。
+>   `data/splits/test_papers.jsonl`（143 句）是更早一輪的殘檔，這輪沒有重產——
+>   拿它做評估前先確認你要的是哪一版。
+> - `--textbook-as-test`：2026-08-22 起以臺灣手語教材 423 句作第三個測試集，
+>   取代論文例句。需先跑 `scripts/build_textbook_testset.py`。
+> - 下游要跟著重跑，且 `--splits` 必須列出 `test_textbook`，否則那份會留舊檔：
+>   `build_json_targets.py`、`build_script_dataset.py`（含
+>   `--out data/splits_script_k40sem --k 40 --n-sem 8`，v17 上線用的那份）。
+> - ⚠️ **`data/splits_script*/` 目前全部是舊切分產生的，已過期。** 重建前先讀
+>   `scripts/build_script_dataset.py` 的 schema 說明：預設已改為 **v2**
+>   （旗標欄位 `needs_review` → `candidate_coverage_risk`），且候選池預設
+>   **排除品質判定為 severe 的影片**。兩者都改變訓練分布，**必須重訓才生效**。
+> - ⚠️ **切分記錄新增 `clauses` 欄位**（2026-08-31）：`clause_breaks` 現在靠它
+>   產生，舊切分沒有這個欄位，用舊 `data/splits/` 重建 splits_script 會讓
+>   `clause_breaks` 又變回全空。重建前務必先重跑 `split_data.py`。
+>   **2026-09-08 起 min-coverage 預設豁免「整詞缺但單字都有」的 OOV**（教「不要
+>   拆字」的例子由 19 回到 58 列）。要重建 v19／v20ctx 那份完全一樣的資料，
+>   加 `--no-exempt-whole-word-gaps`。
+  **v21 資料已建好**（2026-09-08，本機 `data/splits_script_v21/`，VM
+  `~/tsl-v18/data/splits_script_v21/`）：與 v19 的唯一差異是 train 多 39 列
+  （5,545→5,584，`coverage_stats.json` 的 `whole_word_gap_rows`=58），dev／test／
+  test_corpus／test_textbook 與 v19 **逐位元相同**——盲測若有差異只能歸因於那 39 列。
+  **v21 已於 2026-09-09 訓完**（`~/outputs/qlora_e4b_v21script/checkpoint-349`，
+  門檻 0.001814）：拆字零改善、OOV 旗標反而變弱，但 **9/14 盲測 88 題 v21 勝 69%
+  （p=0.004）、語意 +0.40、漏詞備註 19→4——建議部署 v21**，見
+  `results/v21_vs_v19_report.md` 第六節。
+  **v21 已於 2026-09-14 11:22 上線**（`scripts/vm_deploy_v21.sh`，在 VM 上以
+  `~/deploy_v21.sh` 執行）：換了 checkpoint（v21 checkpoint-349）、
+  `candidate_config.json`、`serve_model.py`（門檻 0.001814）、`script_schema.py`、
+  `bundle_server.py` 的 `EXPECTED_MODEL`。上線前備份在 `~/deploy-bak-v21-0914-1120`，
+  `model_service/checkpoint.old` 現在是 v19。**回滾**：把備份的五個檔複製回去
+  （checkpoint 整個目錄），再砍 `[b]undle_server.py`＋`[s]erve_model.py`，看門狗接回。
+  驗收：/health 報 `qlora_e4b_v21script`、`model_identity_ok: true`；核心 3 句線上輸出
+  與離線推論逐字相同；log 印「候選參數與訓練時一致」。
+  重開機前的驅動不匹配（9/12 unattended-upgrade 升到 580.178、核心模組 580.173）
+  已由 9/14 重開機解決：kernel 6.8.0-138、驅動 580.178.04。
+  重訓起跑順序（v21 第一次就 OOM 的教訓）：`touch training.lock` →
+  砍父程序 `pkill -f "[b]undle_server.py --host 127.0.0.1 --port 8084"` → 砍
+  `pkill -f "[s]erve_model.py"`（只砍子程序沒用，bundle_server 秒級重生它）→
+  等 `pgrep serve_model` 為空 → `setsid nohup ~/run_v21.sh &`。腳本起訓前已加守衛。
+- ⚠️ **prompt 的 `context` 鍵只在切分開了 `--context` 時存在**（2026-09-08）。
+  兩端都經 `script_schema.user_prompt` 組裝：訓練端看 manifest 的
+  `context_sentences`，服務端看 `SERVE_CONTEXT_SENTENCES`，啟動閘門雙向對帳。
+  曾寫成「鍵永遠存在、沒前文放空字串」，無前文的重建資料因此與 v19 差一個鍵，
+  而線上 v19 是沒這個鍵訓的。`tests/test_prompt_shape.py` 守著這條。
+>   要重建 v17 那份完全一樣的資料：
+>   `--schema-version tsl-script-v1`，並在 `CandidateRetriever` 傳
+>   `exclude_unusable=False`。
 
 > ⚠️ **2026-08-05 政策變更（使用者決策，取代本節與 §5 的審核界線）**
 >

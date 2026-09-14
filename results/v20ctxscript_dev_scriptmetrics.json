@@ -1,0 +1,82 @@
+{
+  "BLEU-4": 32.31,
+  "ROUGE-L": 69.4,
+  "ExactMatch%": 32.12,
+  "n": 548,
+  "n_groups": 548,
+  "Reference4Grams": 514,
+  "Hypothesis4Grams": 671,
+  "ValidJSON%": 99.64,
+  "ConstraintViolation%_rows": 0.0,
+  "ConstraintViolation%_ids": 0.0,
+  "UnknownSignID": 0,
+  "ValidSignID%": 100.0,
+  "AssetAvailable%": 100.0,
+  "QualityPlayable%": 100.0,
+  "QualityDetail": {
+    "ids_with_quality_data": 2222,
+    "unusable": 0,
+    "degraded": 74,
+    "ok": 2148,
+    "source": "data/signs/sign_inventory.jsonl 的 asset_class（來自 0813 quality_scan/entries_final.csv 的 tier）"
+  },
+  "CompositionSuccess%": null,
+  "Playable%": 100.0,
+  "CandidateCoverageRisk": {
+    "precision": 0.7952,
+    "recall": 0.25,
+    "f1": 0.3804,
+    "tp": 66,
+    "fp": 17,
+    "fn": 198,
+    "tn": 267,
+    "ref_positive_rate": 0.4818,
+    "decision": "greedy（模型輸出的 true/false）"
+  },
+  "CandidateCoverageRisk_calibrated": {
+    "precision": 0.6546,
+    "recall": 0.8902,
+    "f1": 0.7544,
+    "tp": 235,
+    "fp": 124,
+    "fn": 29,
+    "tn": 160,
+    "threshold": 0.053402,
+    "rows_with_prob": 546,
+    "rows_fallback_to_greedy": 2,
+    "decision": "p_needs_review >= 0.053402（門檻在 dev 上選定）"
+  },
+  "StructureFields": {
+    "clause_breaks": {
+      "n": 548,
+      "ref_nonempty": 4,
+      "hyp_nonempty": 0,
+      "exact_match%": 99.27,
+      "exact_match_on_nonempty%": 0.0
+    },
+    "compounds": {
+      "n": 548,
+      "ref_nonempty": 20,
+      "hyp_nonempty": 0,
+      "exact_match%": 96.35,
+      "exact_match_on_nonempty%": 0.0
+    },
+    "reduplicated": {
+      "n": 548,
+      "ref_nonempty": 16,
+      "hyp_nonempty": 0,
+      "exact_match%": 97.08,
+      "exact_match_on_nonempty%": 0.0
+    }
+  },
+  "_ref_scope": "上方 BLEU-4／ROUGE-L／ExactMatch%% 是對**候選內參考**算的（撈不到的詞不在參考裡），回答『有沒有從候選裡挑對』；Full_reference 那組才是含檢索缺口的系統整體水準。",
+  "Full_reference": {
+    "BLEU-4": 27.76,
+    "ROUGE-L": 63.9,
+    "ExactMatch%": 28.65,
+    "ref_tokens_full": 2371,
+    "ref_tokens_in_candidates": 1951,
+    "ref_tokens_dropped%": 17.71,
+    "rows_matched": 548
+  }
+}

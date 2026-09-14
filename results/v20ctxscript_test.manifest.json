@@ -1,0 +1,19 @@
+{
+  "tag": "v20ctxscript",
+  "split": "test",
+  "n_rows": 33,
+  "git_commit": "633c1dcce93f31cbb993338f0cf6a58d60260fda",
+  "adapter": "/home/b310ai/outputs/qlora_e4b_v20ctxscript/checkpoint-347",
+  "adapter_sha256": "557afdd7037a7b8b4a3628a157e496ad4b62ca418dfa04ce53cd50f45153642b",
+  "data_dir": "/home/b310ai/tsl-v18/data/splits_script_v20ctx",
+  "data_sha256": "8415194e5850fc65ce84a4a59f8481b0a3ef07c07fa81037031b7122a79f31c5",
+  "constrained_decode": true,
+  "max_new": 256,
+  "max_len_ctx": 768,
+  "limit": null,
+  "command": "scripts/infer_script_model.py --adapter /home/b310ai/outputs/qlora_e4b_v20ctxscript/checkpoint-347 --data /home/b310ai/tsl-v18/data/splits_script_v20ctx --split dev test test_corpus test_textbook --tag v20ctxscript",
+  "constraint_guards": {
+    "MAX_RUN": 6,
+    "MAX_SIGNS": 18
+  }
+}

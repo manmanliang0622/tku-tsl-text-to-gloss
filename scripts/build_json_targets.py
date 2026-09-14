@@ -42,15 +42,37 @@ TIME_HINTS = ("以前", "以後", "之前", "之後", "期間", "時候", "昨�
 # 「二十幾年」等被誤標為 wh 疑問句。實測訓練資料 42 句含「幾」，其中 31 句（74%）
 # 並非疑問句 → 標籤錯誤率極高，模型只是忠實照學。
 # 改法：①「幾」需排除已知非疑問固定用法；②疑問標點／語氣詞為強訊號。
+#
+# WH 判定（2026-08-13 第二次修正，同一類 bug、規模大 6.5 倍）：
+# 上一版仍把中文與 gloss 串成 `combined` 一起搜尋，於是**只出現在 gloss 裡**的
+# 疑問詞也會觸發。自然手語的「什麼」大量作為**話題引入／填補標記**，不是疑問詞：
+#
+#     我會注意政見發表的內容  → 政見/演講/什麼/我/注意/會
+#     老師用紙張跟我筆談      → 老師/用/什麼/用/紙/寫/筆談
+#
+# 實測 train+dev 相異句：gloss 含「什麼」的 288 句中，中文根本不是問句的有 159 句。
+# 全部被標成 question_type=wh，並連帶配上 `nonmanual: 疑問表情搭配句末疑問詞`
+# ——等於教模型在陳述句上挑眉毛。汙染也擴散到 test_corpus（24 個疑問標籤中 10 個可疑）。
+#
+# 修法依據位置證據（TSL 疑問詞置句末）：
+#     「什麼」在 gloss 句末 → 78% 中文確為問句
+#     「什麼」在 gloss 句中 → 只有 21%
+# 故：**中文出現 WH 詞即可判定；只在 gloss 出現時，必須位於句末。**
+# 三種判準實測誤判數：現行 202、只看中文 0（但召回略低）、本修法 31。
 WH_HINTS = ("誰", "什麼", "哪裡", "哪個", "哪一", "為什麼", "怎麼", "多少")
 WH_AMBIGUOUS = ("幾",)          # 需排除固定用法後才算疑問
 NON_WH_PATTERNS = re.compile(
     r"前幾|好幾|這幾|那幾|上幾|下幾|幾乎|十幾|廿幾|\d+\s*幾|幾百|幾千|幾萬|零星幾")
 QUESTION_MARKS = re.compile(r"[?？]")
 YESNO_HINTS = ("嗎", "是不是", "是否", "有沒有", "可不可以")
+# 句末的是非問標記（gloss 專用）：語料庫用「有沒有／好不好」收尾表是非問，
+# 但它們也可能出現在句中作一般用法（「困難 有沒有 不管」＝不管有無困難）。
+YESNO_TAIL = ("嗎", "是不是", "有沒有", "可不可以", "好不好", "會嗎", "是?")
 NEGATION_HINTS = ("不", "沒有", "沒", "無法", "不要", "不能", "沒辦法")
-# 句末常見的情態／否定詞：取「主要動詞」時要先剔除（本專案語料實測）
-TAIL_NON_VERBS = {"要", "想", "可以", "不", "不要", "沒有", "會", "能", "有", "了"}
+# 句末常見的情態／否定詞：取「主要動詞」時要先剔除（本專案語料實測）。
+# 2026-08-13 併入 WH 詞：疑問詞不是動詞，但實測有 197 句主要動詞被抽成「什麼」。
+TAIL_NON_VERBS = ({"要", "想", "可以", "不", "不要", "沒有", "會", "能", "有", "了"}
+                  | set(WH_HINTS) | set(YESNO_TAIL))
 
 
 def norm_gloss(gloss_text):
@@ -66,17 +88,24 @@ def infer_time(tokens):
 
 
 def infer_question_type(chinese, tokens):
-    """判斷疑問類型。見 WH_HINTS 上方註解說明「幾」的誤判問題與修正依據。"""
-    combined = chinese + "".join(tokens)
-    has_mark = bool(QUESTION_MARKS.search(chinese))
-    has_yesno = any(h in combined for h in YESNO_HINTS)
+    """判斷疑問類型。見 WH_HINTS 上方兩段註解（「幾」與「什麼」兩次誤判修正）。
 
-    # 明確的 WH 詞
-    if any(h in combined for h in WH_HINTS):
+    關鍵原則：**中文是句子是不是問句的真值來源，gloss 是我們要標註的目標。**
+    拿 gloss 裡的詞回頭判定句型，等於用答案推題目，而手語的話題標記與疑問詞
+    大量同形，這樣一定出錯。只在 gloss 出現的疑問詞，必須位於句末才採信。
+    """
+    tail = tokens[-1] if tokens else ""
+    has_mark = bool(QUESTION_MARKS.search(chinese))
+    # 是非問：中文有語氣詞，或 gloss 以是非問標記收尾
+    has_yesno = (any(h in chinese for h in YESNO_HINTS)
+                 or any(tail.startswith(h) for h in YESNO_TAIL))
+
+    # 明確的 WH 詞：中文出現即可；只在 gloss 出現時須位於句末
+    if any(h in chinese for h in WH_HINTS) or any(h == tail for h in WH_HINTS):
         return "wh"
     # 「幾」：先剔除固定用法，再看是否有疑問標點／語氣詞佐證
-    if any(h in combined for h in WH_AMBIGUOUS):
-        stripped = NON_WH_PATTERNS.sub("", combined)
+    if any(h in chinese for h in WH_AMBIGUOUS) or tail.startswith("幾"):
+        stripped = NON_WH_PATTERNS.sub("", chinese + tail)
         if any(h in stripped for h in WH_AMBIGUOUS) and (has_mark or has_yesno):
             return "wh"
     if has_yesno:

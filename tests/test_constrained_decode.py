@@ -49,7 +49,33 @@ CANDS = ["TSL_二十", "TSL_三十", "TSL_我", "TSL_你"]
 PIECES = sorted({
     '"', ",", " ", "[", "]", "{", "}", ":", "TSL_", "二十", "三十", "我", "你",
     '"sign_ids"', '", "', '"]',
-} | set("TSL_二十三我你") | set(string.ascii_letters) | set("_"))
+} | set("TSL_二十三我你") | set(string.ascii_letters) | set("_")
+    # v3 的 compounds／reduplicated 是索引陣列，測那兩個欄位需要數字
+    | set(string.digits))
+
+
+def test_v3_fields_do_not_reengage_constraint():
+    """schema v3 在 sign_ids 之後多了 compounds／reduplicated 兩個索引陣列。
+
+    這是刻意的設計選擇——用索引陣列而不是巢狀物件，就是為了讓約束解碼
+    完全不必改：它只管 `"sign_ids": [...]` 內的字串常值，陣列一關閉就整步
+    放行。這裡把它釘住，尤其是 compounds 的 `[[` 巢狀括號不會讓狀態機
+    誤判成又進了 sign_ids 陣列。
+    """
+    tok = FakeTok(PIECES)
+    total = len(tok.pieces)
+    for prefix, want_free in [
+        ('"sign_ids": ["TSL_', False),                      # 陣列內：受約束
+        ('"sign_ids": ["TSL_我"], "compounds": [[', True),   # 巢狀括號：放行
+        ('"sign_ids": ["TSL_我"], "compounds": [[0, 1]], "reduplicated": [', True),
+        ('"sign_ids": ["TSL_我"], "compounds": [], "reduplicated": [1], "oov_items": ["', True),
+    ]:
+        got = allowed_after(prefix)
+        free = len(got) == total
+        assert free == want_free, (
+            f"前綴 {prefix!r}：預期{'全放行' if want_free else '受約束'}，"
+            f"實得 {len(got)}/{total}")
+    print("✓ v3 的 compounds／reduplicated 不會重新觸發約束（巢狀括號也安全）")
 
 
 def allowed_after(prefix, cands=CANDS):

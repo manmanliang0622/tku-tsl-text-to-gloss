@@ -1,7 +1,7 @@
 {
   "note": "主要看『可播放率』；EM 不會因 fallback 提高，指拼標記本就不與參考字面相同",
-  "vocab_size": 7138,
-  "renderable_size": 3758,
+  "vocab_size": 13663,
+  "renderable_size": 10829,
   "tiers": {
     "seen": {
       "修復前": {
@@ -15,20 +15,20 @@
         "AvgEditDistance": 1.47,
         "ErrorTypes": {
           "正確": 42,
-          "Gloss替換錯誤": 29,
-          "OOV/未知Gloss": 13,
-          "漏Gloss": 12,
-          "多餘Gloss": 4
+          "Gloss替換錯誤": 32,
+          "漏Gloss": 14,
+          "OOV/未知Gloss": 7,
+          "多餘Gloss": 5
         },
         "ErrorTypes%": {
           "正確": 42.0,
-          "Gloss替換錯誤": 29.0,
-          "OOV/未知Gloss": 13.0,
-          "漏Gloss": 12.0,
-          "多餘Gloss": 4.0
+          "Gloss替換錯誤": 32.0,
+          "漏Gloss": 14.0,
+          "OOV/未知Gloss": 7.0,
+          "多餘Gloss": 5.0
         },
         "BLEU-4": 68.86,
-        "可播放率%": 75.12,
+        "可播放率%": 82.65,
         "指拼標記率%": 0.0
       },
       "修復後": {
@@ -42,28 +42,28 @@
         "AvgEditDistance": 1.44,
         "ErrorTypes": {
           "正確": 42,
-          "Gloss替換錯誤": 31,
-          "漏Gloss": 13,
-          "OOV/未知Gloss": 10,
-          "多餘Gloss": 4
+          "Gloss替換錯誤": 34,
+          "漏Gloss": 16,
+          "多餘Gloss": 5,
+          "OOV/未知Gloss": 3
         },
         "ErrorTypes%": {
           "正確": 42.0,
-          "Gloss替換錯誤": 31.0,
-          "漏Gloss": 13.0,
-          "OOV/未知Gloss": 10.0,
-          "多餘Gloss": 4.0
+          "Gloss替換錯誤": 34.0,
+          "漏Gloss": 16.0,
+          "多餘Gloss": 5.0,
+          "OOV/未知Gloss": 3.0
         },
         "BLEU-4": 69.3,
-        "可播放率%": 75.12,
-        "指拼標記率%": 1.96
+        "可播放率%": 82.65,
+        "指拼標記率%": 0.82
       },
-      "有改動的句子": 13,
+      "有改動的句子": 7,
       "規則使用": {
-        "keep": 591,
+        "keep": 598,
         "normalize": 3,
         "contained": 5,
-        "fingerspell": 12
+        "fingerspell": 5
       }
     },
     "paraphrase": {
@@ -77,25 +77,25 @@
         "GER_sentence_avg": 0.3296,
         "AvgEditDistance": 2.02,
         "ErrorTypes": {
-          "Gloss替換錯誤": 32,
+          "Gloss替換錯誤": 34,
           "正確": 28,
-          "OOV/未知Gloss": 16,
-          "漏Gloss": 10,
-          "多餘Gloss": 8,
+          "漏Gloss": 12,
+          "OOV/未知Gloss": 11,
+          "多餘Gloss": 9,
           "語序錯誤": 5,
           "完全錯誤": 1
         },
         "ErrorTypes%": {
-          "Gloss替換錯誤": 32.0,
+          "Gloss替換錯誤": 34.0,
           "正確": 28.0,
-          "OOV/未知Gloss": 16.0,
-          "漏Gloss": 10.0,
-          "多餘Gloss": 8.0,
+          "漏Gloss": 12.0,
+          "OOV/未知Gloss": 11.0,
+          "多餘Gloss": 9.0,
           "語序錯誤": 5.0,
           "完全錯誤": 1.0
         },
         "BLEU-4": 56.69,
-        "可播放率%": 74.79,
+        "可播放率%": 81.55,
         "指拼標記率%": 0.0
       },
       "修復後": {
@@ -108,31 +108,31 @@
         "GER_sentence_avg": 0.3211,
         "AvgEditDistance": 1.97,
         "ErrorTypes": {
-          "Gloss替換錯誤": 37,
+          "Gloss替換錯誤": 39,
           "正確": 29,
-          "漏Gloss": 11,
-          "OOV/未知Gloss": 9,
-          "多餘Gloss": 8,
+          "漏Gloss": 14,
+          "多餘Gloss": 9,
           "語序錯誤": 5,
+          "OOV/未知Gloss": 3,
           "完全錯誤": 1
         },
         "ErrorTypes%": {
-          "Gloss替換錯誤": 37.0,
+          "Gloss替換錯誤": 39.0,
           "正確": 29.0,
-          "漏Gloss": 11.0,
-          "OOV/未知Gloss": 9.0,
-          "多餘Gloss": 8.0,
+          "漏Gloss": 14.0,
+          "多餘Gloss": 9.0,
           "語序錯誤": 5.0,
+          "OOV/未知Gloss": 3.0,
           "完全錯誤": 1.0
         },
         "BLEU-4": 57.49,
-        "可播放率%": 74.71,
-        "指拼標記率%": 1.81
+        "可播放率%": 81.61,
+        "指拼標記率%": 0.82
       },
-      "有改動的句子": 17,
+      "有改動的句子": 12,
       "規則使用": {
-        "keep": 583,
-        "fingerspell": 11,
+        "keep": 589,
+        "fingerspell": 5,
         "contained": 7,
         "normalize": 3,
         "split": 2,
@@ -150,61 +150,61 @@
         "GER_sentence_avg": 0.5428,
         "AvgEditDistance": 3.29,
         "ErrorTypes": {
-          "Gloss替換錯誤": 34,
-          "OOV/未知Gloss": 25,
+          "Gloss替換錯誤": 39,
+          "OOV/未知Gloss": 19,
           "漏Gloss": 15,
           "正確": 13,
-          "多餘Gloss": 8,
+          "多餘Gloss": 9,
           "語序錯誤": 5
         },
         "ErrorTypes%": {
-          "Gloss替換錯誤": 34.0,
-          "OOV/未知Gloss": 25.0,
+          "Gloss替換錯誤": 39.0,
+          "OOV/未知Gloss": 19.0,
           "漏Gloss": 15.0,
           "正確": 13.0,
-          "多餘Gloss": 8.0,
+          "多餘Gloss": 9.0,
           "語序錯誤": 5.0
         },
         "BLEU-4": 20.24,
-        "可播放率%": 79.89,
+        "可播放率%": 85.47,
         "指拼標記率%": 0.0
       },
       "修復後": {
         "n": 100,
         "ExactMatch%": 13.0,
-        "TokenPrecision": 0.6933,
-        "TokenRecall": 0.6612,
-        "TokenF1": 0.6652,
-        "GER": 0.5697,
-        "GER_sentence_avg": 0.5404,
-        "AvgEditDistance": 3.27,
+        "TokenPrecision": 0.6941,
+        "TokenRecall": 0.6622,
+        "TokenF1": 0.6661,
+        "GER": 0.5679,
+        "GER_sentence_avg": 0.5394,
+        "AvgEditDistance": 3.26,
         "ErrorTypes": {
-          "Gloss替換錯誤": 40,
-          "OOV/未知Gloss": 18,
+          "Gloss替換錯誤": 44,
           "漏Gloss": 16,
+          "OOV/未知Gloss": 13,
           "正確": 13,
-          "多餘Gloss": 8,
+          "多餘Gloss": 9,
           "語序錯誤": 5
         },
         "ErrorTypes%": {
-          "Gloss替換錯誤": 40.0,
-          "OOV/未知Gloss": 18.0,
+          "Gloss替換錯誤": 44.0,
           "漏Gloss": 16.0,
+          "OOV/未知Gloss": 13.0,
           "正確": 13.0,
-          "多餘Gloss": 8.0,
+          "多餘Gloss": 9.0,
           "語序錯誤": 5.0
         },
-        "BLEU-4": 20.34,
-        "可播放率%": 80.82,
-        "指拼標記率%": 3.54
+        "BLEU-4": 20.49,
+        "可播放率%": 86.59,
+        "指拼標記率%": 2.42
       },
-      "有改動的句子": 25,
+      "有改動的句子": 19,
       "規則使用": {
-        "keep": 509,
-        "fingerspell": 19,
-        "extend": 4,
-        "normalize": 1,
-        "contained": 4
+        "keep": 516,
+        "fingerspell": 13,
+        "extend": 2,
+        "contained": 5,
+        "normalize": 1
       }
     }
   }

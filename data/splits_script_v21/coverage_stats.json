@@ -1,0 +1,908 @@
+{
+  "k": 60,
+  "n_syn": 0,
+  "n_sem": 0,
+  "n_core": 30,
+  "distractor_ratio": 0.2,
+  "pin_core": 0,
+  "candidate_config": {
+    "k": 60,
+    "n_examples": 8,
+    "distractor_ratio": 0.2,
+    "n_align": 12,
+    "n_core": 30,
+    "n_syn": 0,
+    "n_sem": 0,
+    "pin_core": 0,
+    "exclude_unusable": true,
+    "semantic_loaded": false,
+    "context_sentences": 0,
+    "cross_fitting": "leave-one-group-out",
+    "schema_version": "tsl-script-v3"
+  },
+  "splits": {
+    "train": {
+      "sentences": 5584,
+      "token_recall": 0.9317,
+      "sentence_fully_covered": 0.6821,
+      "candidate_coverage_risk_rate": 0.3179,
+      "oov_tokens": 2020,
+      "oov_not_in_library": 122,
+      "oov_unusable_asset": 90,
+      "oov_retrieval_miss": 1808,
+      "top_missing_unusable_asset": [
+        [
+          "宜蘭",
+          24
+        ],
+        [
+          "彰化",
+          24
+        ],
+        [
+          "證明",
+          8
+        ],
+        [
+          "優點",
+          4
+        ],
+        [
+          "文",
+          4
+        ],
+        [
+          "男生",
+          4
+        ],
+        [
+          "參觀",
+          4
+        ],
+        [
+          "消遣",
+          4
+        ],
+        [
+          "從",
+          4
+        ],
+        [
+          "靠岸",
+          2
+        ],
+        [
+          "拜託",
+          2
+        ],
+        [
+          "心跳",
+          2
+        ],
+        [
+          "石膏",
+          2
+        ],
+        [
+          "合適",
+          2
+        ]
+      ],
+      "dropped_low_coverage": 3480,
+      "min_coverage": 0.8,
+      "whole_word_gap_exempt": true,
+      "whole_word_gap_rows": 58,
+      "compound_units": 182,
+      "compound_rows": 137,
+      "reduplicated_signs": 209,
+      "reduplicated_rows": 192,
+      "clause_breaks": {
+        "rows_with_breaks": 47,
+        "rows_with_breaks_pct": 0.84,
+        "reasons": {
+          "no_annotation": 5537,
+          "ok": 47
+        }
+      },
+      "top_missing": [
+        [
+          "宜蘭",
+          24
+        ],
+        [
+          "彰化",
+          24
+        ],
+        [
+          "種類",
+          22
+        ],
+        [
+          "為什麼",
+          22
+        ],
+        [
+          "是",
+          20
+        ],
+        [
+          "這兩個",
+          18
+        ],
+        [
+          "但是",
+          18
+        ],
+        [
+          "讀書",
+          16
+        ],
+        [
+          "完",
+          16
+        ],
+        [
+          "針對",
+          16
+        ],
+        [
+          "見",
+          15
+        ],
+        [
+          "像",
+          14
+        ],
+        [
+          "一點點",
+          14
+        ],
+        [
+          "以後",
+          12
+        ],
+        [
+          "設立",
+          12
+        ]
+      ],
+      "top_missing_not_in_library": [
+        [
+          "相信我",
+          6
+        ],
+        [
+          "最高",
+          4
+        ],
+        [
+          "汽車撞人",
+          4
+        ],
+        [
+          "平躺",
+          4
+        ],
+        [
+          "左翻",
+          4
+        ],
+        [
+          "右翻",
+          4
+        ],
+        [
+          "十字路口代形詞",
+          4
+        ],
+        [
+          "指揮",
+          4
+        ],
+        [
+          "黃斑",
+          4
+        ],
+        [
+          "信封的左上方",
+          4
+        ],
+        [
+          "送我",
+          3
+        ],
+        [
+          "刮刀",
+          2
+        ],
+        [
+          "解說",
+          2
+        ],
+        [
+          "幫你",
+          2
+        ],
+        [
+          "搬來",
+          2
+        ]
+      ],
+      "candidate_config": {
+        "k": 60,
+        "n_examples": 8,
+        "distractor_ratio": 0.2,
+        "n_align": 12,
+        "n_core": 30,
+        "n_syn": 0,
+        "n_sem": 0,
+        "pin_core": 0,
+        "exclude_unusable": true,
+        "semantic_loaded": false,
+        "context_sentences": 0,
+        "cross_fitting": "leave-one-group-out",
+        "schema_version": "tsl-script-v3"
+      }
+    },
+    "dev": {
+      "sentences": 548,
+      "token_recall": 0.8075,
+      "sentence_fully_covered": 0.5182,
+      "candidate_coverage_risk_rate": 0.4818,
+      "oov_tokens": 465,
+      "oov_not_in_library": 21,
+      "oov_unusable_asset": 13,
+      "oov_retrieval_miss": 431,
+      "top_missing_unusable_asset": [
+        [
+          "彰化",
+          4
+        ],
+        [
+          "勝於",
+          3
+        ],
+        [
+          "宜蘭",
+          2
+        ],
+        [
+          "電鍋",
+          1
+        ],
+        [
+          "證明",
+          1
+        ],
+        [
+          "高",
+          1
+        ],
+        [
+          "累積",
+          1
+        ]
+      ],
+      "dropped_low_coverage": 0,
+      "min_coverage": 0.8,
+      "whole_word_gap_exempt": true,
+      "whole_word_gap_rows": 7,
+      "compound_units": 23,
+      "compound_rows": 20,
+      "reduplicated_signs": 16,
+      "reduplicated_rows": 16,
+      "clause_breaks": {
+        "rows_with_breaks": 4,
+        "rows_with_breaks_pct": 0.73,
+        "reasons": {
+          "no_annotation": 544,
+          "ok": 4
+        }
+      },
+      "top_missing": [
+        [
+          "一樣",
+          6
+        ],
+        [
+          "讀書",
+          6
+        ],
+        [
+          "見",
+          6
+        ],
+        [
+          "特殊教育",
+          6
+        ],
+        [
+          "杯子",
+          6
+        ],
+        [
+          "第二",
+          5
+        ],
+        [
+          "第一",
+          5
+        ],
+        [
+          "對",
+          4
+        ],
+        [
+          "彰化",
+          4
+        ],
+        [
+          "各式各樣",
+          4
+        ],
+        [
+          "第三",
+          4
+        ],
+        [
+          "接近",
+          4
+        ],
+        [
+          "OK",
+          4
+        ],
+        [
+          "是",
+          4
+        ],
+        [
+          "搭乘",
+          3
+        ]
+      ],
+      "top_missing_not_in_library": [
+        [
+          "單子",
+          2
+        ],
+        [
+          "右轉",
+          1
+        ],
+        [
+          "繞圈",
+          1
+        ],
+        [
+          "蛋放進去電鍋",
+          1
+        ],
+        [
+          "噴沖",
+          1
+        ],
+        [
+          "掃地機掃地",
+          1
+        ],
+        [
+          "設計稿",
+          1
+        ],
+        [
+          "掩埋",
+          1
+        ],
+        [
+          "逐字看",
+          1
+        ],
+        [
+          "看自己",
+          1
+        ],
+        [
+          "收錄",
+          1
+        ],
+        [
+          "考試S",
+          1
+        ],
+        [
+          "到處爬",
+          1
+        ],
+        [
+          "顆",
+          1
+        ],
+        [
+          "闔上",
+          1
+        ]
+      ],
+      "candidate_config": {
+        "k": 60,
+        "n_examples": 8,
+        "distractor_ratio": 0.2,
+        "n_align": 12,
+        "n_core": 30,
+        "n_syn": 0,
+        "n_sem": 0,
+        "pin_core": 0,
+        "exclude_unusable": true,
+        "semantic_loaded": false,
+        "context_sentences": 0,
+        "cross_fitting": "leave-one-group-out",
+        "schema_version": "tsl-script-v3"
+      }
+    },
+    "test": {
+      "sentences": 33,
+      "token_recall": 0.9747,
+      "sentence_fully_covered": 0.9394,
+      "candidate_coverage_risk_rate": 0.0606,
+      "oov_tokens": 2,
+      "oov_not_in_library": 0,
+      "oov_unusable_asset": 1,
+      "oov_retrieval_miss": 1,
+      "top_missing_unusable_asset": [
+        [
+          "宜蘭",
+          1
+        ]
+      ],
+      "dropped_low_coverage": 0,
+      "min_coverage": 0.8,
+      "whole_word_gap_exempt": true,
+      "whole_word_gap_rows": 0,
+      "compound_units": 0,
+      "compound_rows": 0,
+      "reduplicated_signs": 0,
+      "reduplicated_rows": 0,
+      "clause_breaks": {
+        "rows_with_breaks": 0,
+        "rows_with_breaks_pct": 0.0,
+        "reasons": {
+          "no_annotation": 33
+        }
+      },
+      "top_missing": [
+        [
+          "宜蘭",
+          1
+        ],
+        [
+          "很",
+          1
+        ]
+      ],
+      "top_missing_not_in_library": [],
+      "candidate_config": {
+        "k": 60,
+        "n_examples": 8,
+        "distractor_ratio": 0.2,
+        "n_align": 12,
+        "n_core": 30,
+        "n_syn": 0,
+        "n_sem": 0,
+        "pin_core": 0,
+        "exclude_unusable": true,
+        "semantic_loaded": false,
+        "context_sentences": 0,
+        "cross_fitting": "leave-one-group-out",
+        "schema_version": "tsl-script-v3"
+      }
+    },
+    "test_corpus": {
+      "sentences": 166,
+      "token_recall": 0.7151,
+      "sentence_fully_covered": 0.1687,
+      "candidate_coverage_risk_rate": 0.8313,
+      "oov_tokens": 365,
+      "oov_not_in_library": 15,
+      "oov_unusable_asset": 7,
+      "oov_retrieval_miss": 343,
+      "top_missing_unusable_asset": [
+        [
+          "證明",
+          3
+        ],
+        [
+          "參觀",
+          1
+        ],
+        [
+          "高",
+          1
+        ],
+        [
+          "天花板",
+          1
+        ],
+        [
+          "煙",
+          1
+        ]
+      ],
+      "dropped_low_coverage": 0,
+      "min_coverage": 0.8,
+      "whole_word_gap_exempt": true,
+      "whole_word_gap_rows": 6,
+      "compound_units": 2,
+      "compound_rows": 2,
+      "reduplicated_signs": 11,
+      "reduplicated_rows": 9,
+      "clause_breaks": {
+        "rows_with_breaks": 0,
+        "rows_with_breaks_pct": 0.0,
+        "reasons": {
+          "no_annotation": 166
+        }
+      },
+      "top_missing": [
+        [
+          "看見",
+          7
+        ],
+        [
+          "讀書",
+          5
+        ],
+        [
+          "是",
+          4
+        ],
+        [
+          "宣布",
+          4
+        ],
+        [
+          "他們",
+          4
+        ],
+        [
+          "電視",
+          4
+        ],
+        [
+          "見",
+          3
+        ],
+        [
+          "一樣",
+          3
+        ],
+        [
+          "證明",
+          3
+        ],
+        [
+          "服務",
+          3
+        ],
+        [
+          "很",
+          3
+        ],
+        [
+          "機車",
+          3
+        ],
+        [
+          "像",
+          3
+        ],
+        [
+          "馬上",
+          3
+        ],
+        [
+          "時間",
+          3
+        ]
+      ],
+      "top_missing_not_in_library": [
+        [
+          "切段",
+          2
+        ],
+        [
+          "剖開",
+          1
+        ],
+        [
+          "臺灣南部",
+          1
+        ],
+        [
+          "豪雨",
+          1
+        ],
+        [
+          "暴風",
+          1
+        ],
+        [
+          "移至一旁",
+          1
+        ],
+        [
+          "舉起",
+          1
+        ],
+        [
+          "手心",
+          1
+        ],
+        [
+          "讀取",
+          1
+        ],
+        [
+          "開啟畫面",
+          1
+        ],
+        [
+          "顯示文字",
+          1
+        ],
+        [
+          "閃光燈",
+          1
+        ],
+        [
+          "敲鑼",
+          1
+        ],
+        [
+          "處處",
+          1
+        ]
+      ],
+      "candidate_config": {
+        "k": 60,
+        "n_examples": 8,
+        "distractor_ratio": 0.2,
+        "n_align": 12,
+        "n_core": 30,
+        "n_syn": 0,
+        "n_sem": 0,
+        "pin_core": 0,
+        "exclude_unusable": true,
+        "semantic_loaded": false,
+        "context_sentences": 0,
+        "cross_fitting": "leave-one-group-out",
+        "schema_version": "tsl-script-v3"
+      }
+    },
+    "test_textbook": {
+      "sentences": 423,
+      "token_recall": 0.7905,
+      "sentence_fully_covered": 0.4444,
+      "candidate_coverage_risk_rate": 0.5556,
+      "oov_tokens": 413,
+      "oov_not_in_library": 174,
+      "oov_unusable_asset": 26,
+      "oov_retrieval_miss": 213,
+      "top_missing_unusable_asset": [
+        [
+          "參觀",
+          4
+        ],
+        [
+          "櫻花",
+          2
+        ],
+        [
+          "高",
+          2
+        ],
+        [
+          "墳墓",
+          2
+        ],
+        [
+          "姊妹",
+          1
+        ],
+        [
+          "男生",
+          1
+        ],
+        [
+          "單純",
+          1
+        ],
+        [
+          "土地",
+          1
+        ],
+        [
+          "破壞",
+          1
+        ],
+        [
+          "光了",
+          1
+        ],
+        [
+          "願望",
+          1
+        ],
+        [
+          "青蛙",
+          1
+        ],
+        [
+          "女",
+          1
+        ],
+        [
+          "百",
+          1
+        ],
+        [
+          "企鵝",
+          1
+        ]
+      ],
+      "dropped_low_coverage": 0,
+      "min_coverage": 0.8,
+      "whole_word_gap_exempt": true,
+      "whole_word_gap_rows": 61,
+      "compound_units": 1,
+      "compound_rows": 1,
+      "reduplicated_signs": 9,
+      "reduplicated_rows": 9,
+      "clause_breaks": {
+        "rows_with_breaks": 0,
+        "rows_with_breaks_pct": 0.0,
+        "reasons": {
+          "no_annotation": 423
+        }
+      },
+      "top_missing": [
+        [
+          "是",
+          8
+        ],
+        [
+          "有沒有",
+          8
+        ],
+        [
+          "欣賞",
+          8
+        ],
+        [
+          "我們兩個",
+          7
+        ],
+        [
+          "完",
+          7
+        ],
+        [
+          "這兩個",
+          7
+        ],
+        [
+          "島上",
+          5
+        ],
+        [
+          "一樣",
+          4
+        ],
+        [
+          "看見",
+          4
+        ],
+        [
+          "參觀",
+          4
+        ],
+        [
+          "走遍世界各地",
+          4
+        ],
+        [
+          "你們兩個",
+          4
+        ],
+        [
+          "以後",
+          4
+        ],
+        [
+          "情形",
+          4
+        ],
+        [
+          "算",
+          4
+        ]
+      ],
+      "top_missing_not_in_library": [
+        [
+          "島上",
+          5
+        ],
+        [
+          "走遍世界各地",
+          4
+        ],
+        [
+          "聽障奧林匹克運動會",
+          4
+        ],
+        [
+          "哪",
+          3
+        ],
+        [
+          "技擊類運動",
+          3
+        ],
+        [
+          "雞肉",
+          3
+        ],
+        [
+          "鐵路",
+          3
+        ],
+        [
+          "父",
+          2
+        ],
+        [
+          "母",
+          2
+        ],
+        [
+          "解說",
+          2
+        ],
+        [
+          "調香師",
+          2
+        ],
+        [
+          "荒島",
+          2
+        ],
+        [
+          "潛水",
+          2
+        ],
+        [
+          "不確定",
+          2
+        ],
+        [
+          "牛肉",
+          2
+        ]
+      ],
+      "candidate_config": {
+        "k": 60,
+        "n_examples": 8,
+        "distractor_ratio": 0.2,
+        "n_align": 12,
+        "n_core": 30,
+        "n_syn": 0,
+        "n_sem": 0,
+        "pin_core": 0,
+        "exclude_unusable": true,
+        "semantic_loaded": false,
+        "context_sentences": 0,
+        "cross_fitting": "leave-one-group-out",
+        "schema_version": "tsl-script-v3"
+      }
+    }
+  }
+}

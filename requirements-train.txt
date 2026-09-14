@@ -1,0 +1,33 @@
+# QLoRA 訓練與模型推論環境（學校 GPU 主機 tku-gpu）。
+#
+# ⚠️ **本檔尚未鎖版本。** 精確版本必須從實際跑訓練的那台機器匯出：
+#
+#   ssh tku-gpu 'source ~/unsloth_venv/bin/activate && pip freeze' \
+#     > requirements-train.lock.txt
+#
+# 在 lock 檔補上之前，「乾淨 clone 可完整重現訓練」這句話**不能宣稱**
+# （教授審查意見 5.2）。以下只列出程式實際 import 的套件與已知的版本約束。
+#
+# ── 已知約束（都是實際踩過的坑，不要自行放寬）──────────────────────
+#
+# 1. torchao：unsloth venv 裡是 0.12.0，而 peft 的 torchao 分派器要求 >0.16.0。
+#    因此 infer_script_model.py 一律用 unsloth 的 FastModel 載入，
+#    **不可**改成 transformers + PeftModel（2026-08-21 實測直接 ImportError）。
+#    見 scripts/infer_script_model.py 的載入段註解。
+#
+# 2. Gemma 4 的 tokenizer 是多模態 Processor：呼叫時必須指名 `text=`，
+#    第一個位置參數是 images。見同檔註解。
+#
+# 3. device_map 只要含 "cpu" 就會掉進 offload，實測慢 580 倍；
+#    推論一律用 {"": 0}。
+#
+# ── 程式實際 import 的套件 ────────────────────────────────────────
+unsloth
+torch
+transformers
+peft
+trl
+datasets
+accelerate
+bitsandbytes
+numpy

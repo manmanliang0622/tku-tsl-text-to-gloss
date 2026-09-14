@@ -1,25 +1,34 @@
 #!/usr/bin/env python3
-"""中文 → TSL Gloss 推論 API（供前端 /手語前端優化 測試用）。
+"""中文 → 臺灣手語腳本（tsl-script-v1）推論 API。
 
 僅用標準函式庫的 http.server，避免在共用機安裝額外套件。
-模型只載入一次常駐記憶體；每次請求做一次 greedy 生成。
+模型只載入一次常駐記憶體；每次請求做一次 greedy 生成——`--target script`
+時預設帶約束解碼，把 sign_ids 鎖在該句候選清單內（見「約束解碼」段）。
 
-啟動（VM 上）：
-  python3 scripts/serve_model.py --adapter outputs/qlora_e4b_v6_all/checkpoint-XXX --port 8018
-
-前端（Mac）經 SSH 通道連入：
-  ssh -p 2288 -N -L 8018:localhost:8018 b310ai@<VM>
+線上（0821_bundle）由 bundle_server.py 以子行程啟動，實際參數見其 model_cmd()：
+  .venv/bin/python3 model_service/scripts/serve_model.py \
+    --base model_service/base_model --adapter model_service/checkpoint \
+    --target script --max-new 256 --port 8878
+現行模型：qlora_e4b_v17script_k40sem／checkpoint-558（2026-08-27 上線）。
 
 API：
-  GET  /health              → {"status":"ok","adapter":...}
-  POST /translate           → body {"text":"我要喝水","context":"前一句（選填）"}
-                              回 {"chinese":...,"gloss":["我","水","喝","要"],
-                                  "gloss_text":"我/水/喝/要","seconds":1.2}
+  GET  /health              → {"status":"ok","adapter":...,"model":...,"target":...}
+  POST /translate           → body {"text":"我想喝水"}
+                              回 {"chinese":...,"sign_ids":["TSL_我","TSL_想","TSL_水","TSL_喝"],
+                                  "gloss":["我","想","水","喝"],"gloss_text":"我/想/水/喝",
+                                  "candidate_coverage_risk":false,
+                                  "candidate_coverage_risk_prob":0.026,
+                                  "needs_review":false,   # 相容別名，同值
+                                  "dropped_ids":[],"candidates_k":40,
+                                  "schema_version":"tsl-script-v1","raw":"{...}","seconds":6.1}
+  舊的 --target gloss／json 模式仍保留（歷史 adapter 用），欄位見 translate()。
+  訓練配方與格式說明見封包 README「語言模型」一節。
 
 CORS：前端以 file:// 開啟時 Origin 為 null，故一律回 Access-Control-Allow-Origin: *
 （本服務只在 SSH 通道內對本機開放，不對外網暴露）。
 """
 import argparse
+import os
 import json
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -29,12 +38,109 @@ import torch
 from transformers import AutoTokenizer, BitsAndBytesConfig
 
 import prompt_common as pc
+import script_schema
+
+# ── 部署相依 ─────────────────────────────────────────────────────────
+# 部署到 0821_bundle 時，這些 scripts/ 底下的模組**必須一起帶**，
+# 少一個 serve_model 就起不來（或在請求進來時才炸）。
+#
+# 這不是備忘錄而是契約：scripts/check_bundle_deps.py 會用 AST 算出
+# serve_model 的遞移本地相依，與這份清單對帳，不一致就讓 CI 紅。
+# 2026-08-31 的教訓——commit 279d35c 一次加了 constrained_decode 與
+# script_schema 兩個相依，但註解只提到一個、數量還寫錯成「第四個相依」，
+# 那版部署上去會啟動即死。註解不會失敗，清單會。
+BUNDLE_MODULES = (
+    "comitative",          # 伴隨句雙數收攏（缺檔會 warn 後停用，不擋啟動）
+    "constrained_decode",  # 約束解碼；缺檔**故意**讓服務起不來，見下方說明
+    "eval_video_coverage",  # sign_candidates 的 gloss 正規化（fold／norm）
+    "gloss_fallback",
+    "phrasebook",          # 常用語句整句對照（缺檔會 warn 後停用，不擋啟動）
+    "prompt_common",
+    "rag_retrieve",
+    "script_schema",       # schema 常數與旗標欄位名；模組層 import，缺檔最先炸
+    "sign_candidates",
+    "train_qlora",         # load_model／can_fit_ple_on_gpu
+)
 
 BASE = Path(__file__).resolve().parent.parent
 
 STATE = {"model": None, "tokenizer": None, "adapter": None, "model_name": None, "max_new": 64,
          "target": "gloss", "retriever": None, "rag_k": 0, "rag_min": 0.05,
-         "json_targets": {}}
+         "json_targets": {}, "cand_retriever": None, "id2gloss": {}, "k": 60,
+         "phrasebook": {}}
+
+# ---- 手語腳本格式 ---------------------------------------------------------
+# **這台服務目前載入的 checkpoint 是用哪個 schema 訓練的。**
+# v19（部署中）＝ tsl-script-v3，旗標欄位 candidate_coverage_risk。
+# 換上 v2 訓練的 checkpoint 時，這一行要跟著改，否則 system prompt 與訓練
+# 不一致——2026-08-20 就因為推論端 prompt 與訓練不同，33 句 test 的 EM 與
+# ValidJSON 全部掛零，看起來像模型壞掉，其實模型是好的。
+DEPLOYED_SCHEMA = script_schema.V3
+# 服務端能提供幾句前文。0＝API 目前不帶前文。用 --context 訓的 checkpoint
+# 要上線，得先讓前端傳上一句並把這裡改成 1，否則啟動對帳會擋。
+SERVE_CONTEXT_SENTENCES = 0
+
+# ── 候選參數契約（教授審查意見 2.1）─────────────────────────────────────
+# 這台服務**必須**用與訓練時完全相同的候選參數，否則模型看到的候選分布
+# 與訓練時不同（training-serving skew）。v17 就是這樣：訓練資料用
+# n_sem=8 建，服務沒載向量模型、實際走 n_sem=0，每句約 8 個候選相異，
+# 參考詞可及率由 100% 掉到 99.0/98.5%。當時這件事只寫在模型卡的
+# 「已知限制」，沒有任何機制擋住。
+#
+# 現在改成契約：build_script_dataset 會把候選參數寫成 candidate_config.json，
+# 部署 checkpoint 時一起帶到 model_service/ 底下。啟動時比對，不一致就吵。
+# 找不到檔案時只警告不擋——舊 checkpoint 沒有這份，擋掉會讓服務起不來。
+CANDIDATE_CONFIG_PATH = Path(__file__).resolve().parent.parent / "candidate_config.json"
+
+
+def _verify_candidate_config(retr) -> None:
+    """比對服務端實際的候選參數與訓練時的存證。"""
+    if not CANDIDATE_CONFIG_PATH.exists():
+        print(f"[serve] ⚠ 找不到 {CANDIDATE_CONFIG_PATH.name}——無法驗證候選參數與"
+              f"訓練時一致。部署新 checkpoint 時請把它一起帶上。", flush=True)
+        return
+    trained = json.loads(CANDIDATE_CONFIG_PATH.read_text(encoding="utf-8"))
+    live = retr.config(k=STATE["k"])
+    diffs = []
+    for key in retr.CONFIG_KEYS:
+        if key in trained and trained[key] != live.get(key):
+            diffs.append(f"{key}: 訓練={trained[key]!r} 服務={live.get(key)!r}")
+    # 語義通道是最常見的那個坑：訓練端有、服務端載不起來
+    # 前文脈絡：prompt 有沒有 context 鍵由這個開關決定，兩邊不同就是 skew——
+    # 訓練有、服務沒有（模型看到的分布不同），或訓練沒有、服務多送一個鍵，都擋。
+    # 現階段 API 沒有前文來源，所以 context>0 訓的 checkpoint 一律上不去。
+    trained_ctx = int(trained.get("context_sentences", 0) or 0)
+    if bool(trained_ctx) != bool(SERVE_CONTEXT_SENTENCES):
+        diffs.append(f"context_sentences: 訓練={trained_ctx} 服務={SERVE_CONTEXT_SENTENCES}"
+                     f"——prompt 的 context 鍵存不存在由它決定；服務端要開前文得先讓前端傳上一句")
+    if trained.get("n_sem", 0) and not live.get("semantic_loaded"):
+        diffs.append(f"n_sem={trained['n_sem']} 但服務端沒有載入向量模型"
+                     f"（semantic_loaded=False）")
+    if diffs:
+        raise SystemExit(
+            "[serve] ✗ 候選參數與訓練時不一致，模型看到的候選分布會與訓練時不同：\n  "
+            + "\n  ".join(diffs)
+            + "\n  這正是 v17 的 training-serving skew。要嘛改服務端參數，"
+              "要嘛用服務端能重現的參數重建訓練資料並重訓。\n"
+              "  確定要在不一致的狀態下服務，設 ALLOW_CANDIDATE_SKEW=1。")
+    print(f"[serve] 候選參數與訓練時一致（{CANDIDATE_CONFIG_PATH.name}）", flush=True)
+
+# 2026-08-31：原本這裡硬寫一份 system 字串，再用 ast 讀 build_script_dataset.py
+# 的 SYSTEM 字面值比對，防兩份複本漂移。現在兩邊都從 script_schema 取同一份，
+# 複本消失、比對也就不需要了（審查意見 4.3 的「共用模組」同樣適用於 prompt）。
+SCRIPT_SYSTEM = script_schema.SYSTEM_BY_SCHEMA[DEPLOYED_SCHEMA]
+
+# 門檻只能在 dev 上重選，不要看 test 的數字調。選法用
+# scripts/nr_threshold.py（tku-tsl-text-to-gloss）重跑即可。
+#
+# 2026-08-27 改選法：舊規則「recall>=0.7 下最大化 precision」偏保守，
+# 在 v17 dev 上選到 0.095349（P0.693/R0.710/F1 0.702）。改成直接最大化
+# F1 選到 0.039707（P0.617/R0.928/F1 0.741），且在兩個測試集同向更好
+# （corpus F1 0.827→0.905、textbook 0.653→0.702），所以不是過擬合 dev。
+# 關鍵是漏放行大幅減少：dev 93→23、corpus 35→9、textbook 89→31——
+# 這個旗標的錯誤本來就不對稱（漏放行會讓錯句直接送去給虛擬人比出來，
+# 誤攔只是多一次人看），所以偏 recall 是對的方向。
+NEEDS_REVIEW_THRESHOLD = 0.001814  # v21 在 dev 上最大化 F1（2026-09-09，P 0.65／R 0.92／F1 0.7642；v19 是 0.067544）
 
 
 def load(base_model, adapter, ple_on_gpu=None):
@@ -117,7 +223,202 @@ def _apply_fallback(toks):
     return fixed, unknown
 
 
+def _load_script_assets():
+    """候選檢索器與 sign_id→gloss 對照。訓練與上線**必須共用同一支檢索器**，
+    否則模型學到的候選分布與線上不同，約束就失效了。"""
+    if STATE["cand_retriever"] is not None:
+        return
+    from sign_candidates import CandidateRetriever
+    STATE["cand_retriever"] = CandidateRetriever()
+    if os.environ.get("ALLOW_CANDIDATE_SKEW") != "1":
+        _verify_candidate_config(STATE["cand_retriever"])
+    STATE["id2gloss"] = {r["sign_id"]: r.get("gloss_clean") or r["gloss"]
+                         for r in STATE["cand_retriever"].by_id.values()}
+    print(f"[serve] 候選檢索器就緒（{len(STATE['id2gloss'])} 個 sign_id）", flush=True)
+    if PHRASEBOOK and phrasebook is not None:
+        table, skipped = phrasebook.load(STATE["cand_retriever"])
+        STATE["phrasebook"] = table
+        print(f"[serve] 常用語句對照 {len(table)} 句；略過 {len(skipped)} 句："
+              + "；".join(f"{i} {why}" for i, why in skipped), flush=True)
+
+
+def _needs_review_prob(tok, seq, scores):
+    """覆蓋風險旗標那個位置給 true 的機率（只在 true/false 之間正規化）。"""
+    text = ""
+    for i, tid in enumerate(seq.tolist()):
+        piece = tok.decode([tid])
+        low = piece.strip().lower()
+        if any(k in text for k in script_schema.FLAG_KEYS) and low[:4] in ("true", "fals"):
+            if i >= len(scores):
+                return None
+            probs = torch.softmax(scores[i][0].float(), dim=-1)
+            top = torch.topk(probs, 50)
+            pt = pf = 0.0
+            for val, idx in zip(top.values.tolist(), top.indices.tolist()):
+                w = tok.decode([idx]).strip().lower()
+                if w.startswith("true"):
+                    pt += val
+                elif w.startswith("fals"):
+                    pf += val
+            return (pt / (pt + pf)) if (pt + pf) > 0 else None
+        text += piece
+    return None
+
+
+
+# ── 約束解碼 ─────────────────────────────────────────────────────────
+# 解碼時就把 sign_ids 陣列內的字串鎖在候選清單上，而不是生成後才過濾。
+# 文字級狀態機：每步解碼已生成文字，游標在字串常值內時，只允許「能接成
+# 某個候選 id」的 token；比對不到（模型用合併 token 帶進怪字首）就整步
+# 放行，交回 translate_script 既有的事後過濾兜底——寧可漏擋，不可擋出
+# 破 JSON。CONSTRAINED_DECODE=0 可整個關掉。
+#
+# 2026-08-27 追加退化守衛（MAX_RUN / MAX_SIGNS）。動機：greedy 解碼在離線
+# 8 句上崩壞，最嚴重的 TB0296 參考只有 1 個詞、模型吐出 32 個（TSL_二十
+# 連續 27 次）。原本的約束擋不住——重複的 id 本身就在候選清單裡，合法。
+# **不要改用 no_repeat_ngram_size**：它是 token 級的，而元素分隔符 '", "'
+# 每個元素都重複，n-gram 封鎖會直接吐出破 JSON；而且重複在臺灣手語裡是
+# 合法的（重疊表複數／強調），參考答案有 5–10% 的句子重複用詞。
+# 兩個上限取參考答案實測極值，10,200 句參考驗證過零排除。
+# 與 tku-tsl-text-to-gloss/scripts/constrained_decode.py 同一套邏輯，改動要同步。
+CONSTRAINED_DECODE = os.environ.get("CONSTRAINED_DECODE", "1") != "0"
+# 伴隨句雙數收攏規則（見 comitative.py）。COMITATIVE_DUAL=0 可關掉。
+# 只作用在線上服務；離線評估腳本刻意不套，讓 v17 之前的指標保持可比。
+COMITATIVE_DUAL = os.environ.get("COMITATIVE_DUAL", "1") != "0"
+# 部署到 0821_bundle 時 comitative.py **必須一起帶**（見上方 BUNDLE_MODULES）。這裡在載入時就吵，不要等到請求進來
+# 才每次 import 失敗——那會變成「服務看起來正常、規則靜默失效」。
+try:
+    import comitative
+except ImportError:                      # noqa: BLE001 - 缺檔不該讓整個服務起不來
+    comitative = None
+    print("[serve] ⚠ 找不到 comitative.py，伴隨句雙數收攏規則停用（部署時漏帶？）",
+          flush=True)
+# 常用語句整句對照（2026-09-14，見 phrasebook.py）。PHRASEBOOK=0 可關掉。
+# 同 comitative：只作用在線上服務，缺檔 warn 後停用。
+PHRASEBOOK = os.environ.get("PHRASEBOOK", "1") != "0"
+try:
+    import phrasebook
+except ImportError:                      # noqa: BLE001 - 缺檔不該讓整個服務起不來
+    phrasebook = None
+    print("[serve] ⚠ 找不到 phrasebook.py，常用語句整句對照停用（部署時漏帶？）",
+          flush=True)
+# 2026-08-31：原本這裡有一份與 scripts/constrained_decode.py 逐行相同的副本，
+# 靠 tests/test_serve_parity.py 守著不漂移。改成直接 import 同一份實作——
+# 教授審查意見 4.3 要求「離線推論與服務端 import 同一份」。副本消失，
+# 漂移的可能性也跟著消失。
+#
+# ⚠️ 部署到 0821_bundle 時 constrained_decode.py **必須一起帶**（見上方 BUNDLE_MODULES）。
+# 這裡刻意**不**做 try/except 兜底：約束解碼是「輸出 ID 一定在候選內」這條
+# 保證的來源，靜默停用會讓服務看起來正常、實際卻退回 v14 那種 4.22% 違反率。
+# 缺檔就讓服務起不來，比帶病上線好。
+try:
+    from constrained_decode import constrained_prefix_fn as _constrained_prefix_fn
+    from constrained_decode import MAX_RUN, MAX_SIGNS      # noqa: F401  供健康檢查回報
+except ImportError as e:                 # noqa: BLE001
+    raise SystemExit(
+        "[serve] ✗ 找不到 constrained_decode.py——約束解碼是輸出正確性的保證，"
+        "不允許靜默停用。請把 scripts/constrained_decode.py 一起部署到 "
+        "model_service/scripts/ 後再啟動。") from e
+
+def translate_script(text, context=""):
+    """tsl-script-v1：跑候選檢索 → 模型從候選挑 sign_id → 對回 gloss 與影片。"""
+    _load_script_assets()
+    hit = phrasebook.lookup(STATE["phrasebook"], text) if STATE["phrasebook"] else None
+    if hit:
+        toks = [STATE["id2gloss"][i] for i in hit["sign_ids"]]
+        return {
+            "chinese": text, "gloss": toks, "gloss_text": "/".join(toks), "glosses": toks,
+            "sign_ids": list(hit["sign_ids"]),
+            "comitative_dual": False,
+            # 標準答案每個詞都驗過演得出來，沒有覆蓋風險；不經模型所以沒有機率
+            "candidate_coverage_risk": False,
+            "candidate_coverage_risk_prob": None,
+            "candidate_coverage_risk_model": None,
+            "needs_review": False,
+            "needs_review_prob": None,
+            "needs_review_model": None,
+            "oov_items": [], "dropped_ids": [], "candidates_k": 0,
+            "schema_version": DEPLOYED_SCHEMA,
+            "source": "phrasebook", "phrasebook_id": hit["id"],
+            "model": STATE["model_name"], "raw": "", "seconds": 0.0,
+        }
+    tok, model = STATE["tokenizer"], STATE["model"]
+    retr = STATE["cand_retriever"]
+    cands = retr.candidates(text, k=STATE["k"])
+    # context 鍵只在 SERVE_CONTEXT_SENTENCES>0 時存在，與訓練端（manifest 的
+    # context_sentences）同一條規則；形狀由 script_schema.user_prompt 統一組裝。
+    # 目前 API 未傳前文；要用前文的 checkpoint 上線時，前端得把上一句帶進來，
+    # 且 _verify_candidate_config 會擋 context_sentences 與這裡不一致的 checkpoint。
+    user = script_schema.user_prompt(
+        text, [c["sign_id"] for c in cands],
+        context=str(context or "") if SERVE_CONTEXT_SENTENCES else None)
+    msgs = [{"role": "system", "content": SCRIPT_SYSTEM},
+            {"role": "user", "content": json.dumps(user, ensure_ascii=False)}]
+    inputs = tok.apply_chat_template(msgs, add_generation_prompt=True,
+                                     return_tensors="pt", return_dict=True).to(model.device)
+    t0 = time.time()
+    with torch.no_grad():
+        prefix_fn = (_constrained_prefix_fn(tok, inputs["input_ids"].shape[1],
+                                            [c["sign_id"] for c in cands])
+                     if CONSTRAINED_DECODE else None)
+        out = model.generate(**inputs, max_new_tokens=STATE["max_new"], do_sample=False,
+                             prefix_allowed_tokens_fn=prefix_fn,
+                             return_dict_in_generate=True, output_scores=True)
+    seq = out.sequences[0][inputs["input_ids"].shape[1]:]
+    gen = tok.decode(seq, skip_special_tokens=True)
+    secs = round(time.time() - t0, 2)
+
+    obj = _parse_json_output(gen) or {}
+    cand_ids = {c["sign_id"] for c in cands}
+    raw_ids = [str(x) for x in (obj.get("sign_ids") or [])]
+    # 約束在**服務端**強制執行，不只在訓練目標裡。實測 v14 在 test_corpus 仍有
+    # 0.7% 的 ID 落在候選外，其中還有總表查無的幻覺 ID（語義 ID 讓「造一個
+    # 看起來合理的 ID」變容易）。這一行是新格式可播放率的最後保證。
+    sign_ids = [i for i in raw_ids if i in cand_ids and i in STATE["id2gloss"]]
+    dropped = [i for i in raw_ids if i not in sign_ids]
+
+    p_nr = _needs_review_prob(tok, seq, out.scores)
+    model_nr = script_schema.read_flag(obj)     # v1／v2 欄位名都收
+    needs_review = (p_nr >= NEEDS_REVIEW_THRESHOLD) if p_nr is not None else model_nr
+
+    toks = [STATE["id2gloss"][i] for i in sign_ids]
+
+    # 伴隨句雙數收攏（2026-08-31）：「我跟X…」補「我們兩個」。
+    # 為什麼在解碼後補而不是修候選：`我跟媽媽去吃飯` 的 k=40 候選裡根本沒有
+    # 「我們兩個」，約束解碼不可能吐出它；而加候選通道在固定 k 之下是零和的，
+    # 本專案已有三個否定結果（見 sign_candidates.candidates）。詳見 comitative.py。
+    if COMITATIVE_DUAL and comitative is not None:
+        sign_ids, toks, dual_added = comitative.apply_ids(
+            text, sign_ids, toks, STATE["cand_retriever"].index, max_signs=MAX_SIGNS)
+    else:
+        dual_added = False
+
+    return {
+        "chinese": text, "gloss": toks, "gloss_text": "/".join(toks), "glosses": toks,
+        "sign_ids": sign_ids,
+        "comitative_dual": dual_added,
+        # 2026-08-31 正名（審查意見 4.2）：這個旗標只反映「參考詞有沒有全部
+        # 進候選」＝檢索覆蓋率風險，偵測不到選錯詞、語序錯、重複遺失、語意
+        # 不自然。needs_review* 三個鍵**保留為相容別名**（前端在用），
+        # 新的取用端請改讀 candidate_coverage_risk*。
+        "candidate_coverage_risk": needs_review,
+        "candidate_coverage_risk_prob": round(p_nr, 6) if p_nr is not None else None,
+        "candidate_coverage_risk_model": model_nr,
+        "needs_review": needs_review,
+        "needs_review_prob": round(p_nr, 6) if p_nr is not None else None,
+        "needs_review_model": model_nr,
+        "oov_items": obj.get("oov_items") or [],
+        "dropped_ids": dropped,
+        "candidates_k": len(cands),
+        "schema_version": obj.get("schema_version", DEPLOYED_SCHEMA),
+        "source": "gemma", "model": STATE["model_name"],
+        "raw": gen.strip(), "seconds": secs,
+    }
+
+
 def translate(text, context=""):
+    if STATE["target"] == "script":
+        return translate_script(text, context)
     tok, model = STATE["tokenizer"], STATE["model"]
     ex_pairs, ex_info = _rag_examples(text)
     # v12 以段落前文訓練；呼叫端若提供 context，推論必須用同一格式送入。
@@ -191,10 +492,24 @@ class Handler(BaseHTTPRequestHandler):
         try:
             n = int(self.headers.get("Content-Length", 0))
             data = json.loads(self.rfile.read(n) or b"{}")
-            text = (data.get("text") or "").strip()
-            context = (data.get("context") or "").strip()
+            text_value = data.get("text")
+            context_value = data.get("context", "")
+            if not isinstance(text_value, str):
+                self._send(400, {"error": "text must be a string"})
+                return
+            if not isinstance(context_value, str):
+                self._send(400, {"error": "context must be a string"})
+                return
+            text = text_value.strip()
+            context = context_value.strip()
             if not text:
                 self._send(400, {"error": "text 不可為空"})
+                return
+            if len(text) > 500:
+                self._send(400, {"error": "text must not exceed 500 characters"})
+                return
+            if len(context) > 1000:
+                self._send(400, {"error": "context must not exceed 1000 characters"})
                 return
             if STATE["model"] is None:
                 self._send(503, {"error": "模型尚未載入完成"})
@@ -215,7 +530,7 @@ def main():
     ap.add_argument("--max-new", type=int, default=64)
     ap.add_argument("--model-name", default=None,
                     help="API 顯示名稱；預設由 adapter 的上層目錄推斷")
-    ap.add_argument("--target", choices=["gloss", "json"], default="gloss",
+    ap.add_argument("--target", choices=["gloss", "json", "script"], default="gloss",
                     help="模型的輸出格式；json 版會另外回傳 question_type/negation/nonmanual")
     ap.add_argument("--rag", type=int, default=0,
                     help="推理時檢索 N 筆訓練集相似例句放進 prompt（0=關閉）。"

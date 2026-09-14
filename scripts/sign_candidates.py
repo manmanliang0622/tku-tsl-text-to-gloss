@@ -32,7 +32,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from eval_video_coverage import norm  # noqa: E402  複用既有 gloss 正規化
+from eval_video_coverage import fold, norm  # noqa: E402  複用既有 gloss 正規化
 
 BASE = Path(__file__).resolve().parent.parent
 INVENTORY = BASE / "data" / "signs" / "sign_inventory.jsonl"
@@ -50,8 +50,13 @@ def strip_punct(text: str) -> str:
 class CandidateRetriever:
     """從中文句子檢索候選手語。載入一次重複使用（線上服務常駐）。"""
 
+    # 影片品質判定為「演不出動作」的 asset_class。判定來源見
+    # build_sign_inventory.TIER_TO_CLASS（0813 quality_scan 的 tier）。
+    UNUSABLE_CLASSES = {"unusable_quality"}
+
     def __init__(self, inventory: Path = INVENTORY, index: Path = INDEX,
-                 use_examples: bool = True, synonyms: Path = SYNONYMS):
+                 use_examples: bool = True, synonyms: Path = SYNONYMS,
+                 exclude_unusable: bool = True):
         all_rows = [json.loads(l) for l in
                     inventory.read_text(encoding="utf-8").splitlines() if l.strip()]
         # 已驗證的重複收錄（build_sign_inventory.DUPLICATE_OF）不進候選：
@@ -60,9 +65,37 @@ class CandidateRetriever:
         # superseded_by＝同詞有更準確的另一支影片（品質實測後選定），同樣不進候選
         self.rows = [r for r in all_rows
                      if "duplicate_of" not in r and "superseded_by" not in r]
+
+        # 2026-08-31（教授審查意見 4.1）：品質判定為 severe／no_hands_raised 的
+        # 影片不進候選。「總表有這個 ID」不等於「虛擬人演得出這個手語」——
+        # 動作庫 17,085 支裡有 39.8% 是 severe（幾乎整段偵測不到舉手動作），
+        # 讓它們留在候選等於允許模型輸出一個播出來沒有動作的腳本。
+        #
+        # 實測代價（train，2026-08-31）：參考 token 只有 2.35% 落在這類資產上，
+        # 但 11.5% 的句子至少含一個——那些句子的 candidate_coverage_risk 會
+        # 轉成 true。這不是變差，是本來就該標出來的缺口，之前被品質常數蓋掉了。
+        # ⚠️ 開關預設為 True 會改變候選分布＝改變訓練資料，**必須重訓才生效**。
+        # 要重建 v17 的候選請傳 exclude_unusable=False。
+        self.exclude_unusable = exclude_unusable
+        self.excluded_unusable = 0
+        if exclude_unusable:
+            before = len(self.rows)
+            self.rows = [r for r in self.rows
+                         if r.get("asset_class") not in self.UNUSABLE_CLASSES]
+            self.excluded_unusable = before - len(self.rows)
         self.by_gloss = {r["gloss"]: r for r in self.rows}
         self.index: dict[str, str] = json.loads(index.read_text(encoding="utf-8"))
         self.by_id = {r["sign_id"]: r for r in all_rows}
+        # 折疊後詞形 → sign_id：外語詞的大小寫與內部空白不是詞的一部分。
+        # 語料寫 `BB call`／`QR code`，總表的鍵是 `BBCall`／`QR Code`，
+        # 不折疊就會把庫裡明明有影片的詞判成 OOV，訓練標的被寫成
+        # needs_review=true（實測 splits_script 有 8 句受害）。
+        # 只折含 ASCII 字母的鍵；中文鍵去空白會併掉帶空白的重複收錄。
+        self._folded: dict[str, str] = {}
+        for gloss, sid in sorted(self.index.items()):
+            f = fold(gloss)
+            if f and re.search(r"[a-z]", f):
+                self._folded.setdefault(f, sid)
         self.max_len = max(len(g) for g in self.by_gloss)
         # 字元 → 含該字元的 gloss，供干擾項檢索
         self.by_char: dict[str, list[str]] = {}
@@ -119,15 +152,73 @@ class CandidateRetriever:
         path = BASE / "data" / "splits" / "train.jsonl"
         if not path.exists():
             return
-        for line in path.read_text(encoding="utf-8").splitlines():
-            if not line.strip():
+        self._all_ex = [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines()
+                        if l.strip()]
+        self.refit_examples()
+
+    # 候選生成的完整參數集。**訓練、離線評估、線上服務必須用同一組**，
+    # 否則模型看到的候選分布與上線時不同（training-serving skew）。
+    # 教授審查意見 2.1：v17 訓練用 n_sem=8，線上服務沒載向量模型、實際
+    # 走 n_sem=0，兩邊每句約 8 個候選相異。
+    CONFIG_KEYS = ("k", "n_examples", "distractor_ratio", "n_align", "n_core",
+                   "n_syn", "n_sem", "pin_core", "exclude_unusable")
+
+    def config(self, **overrides) -> dict:
+        """回傳這個 retriever 實際會用的候選參數（含 candidates() 的預設值）。
+
+        寫進資料集的 candidate_config.json，也供服務端與部署 checkpoint 對帳。
+        """
+        import inspect
+        defaults = {k: v.default for k, v in
+                    inspect.signature(self.candidates).parameters.items()
+                    if v.default is not inspect.Parameter.empty}
+        cfg = {k: defaults.get(k) for k in self.CONFIG_KEYS}
+        cfg["exclude_unusable"] = self.exclude_unusable
+        cfg["semantic_loaded"] = getattr(self, "semantic", None) is not None
+        cfg.update({k: v for k, v in overrides.items() if k in self.CONFIG_KEYS})
+        return cfg
+
+    def has_examples(self) -> bool:
+        """有沒有載到訓練句（沒有的話 cross-fitting 沒意義）。"""
+        return bool(getattr(self, "_all_ex", None))
+
+    def refit_examples(self, exclude_groups: set | None = None,
+                       exclude_ids: set | None = None) -> int:
+        """重建三張由訓練句衍生的表，可排除指定的資料。回傳實際採用的句數。
+
+        2026-08-31（教授審查意見 2.2）。這三張表——例句遷移的 `_ex_rows`、
+        詞對齊表 `_align`、高頻核心詞 `_core`——原本一律用**完整 train** 建，
+        於是替 train 句產生候選時，表裡already含有那句自己的答案：
+
+          - `_align` 數的是「中文片段 c 出現時 gloss g 也出現」的共現，
+            該句自己的 (c, g) 對就在裡面
+          - `_core` 是 train 全體 gloss 的前 30 高頻，該句也投了票
+
+        `candidates(exclude_id=...)` 只擋掉例句遷移把同一句撈回來，擋不到
+        這兩張統計表。教授抽 20 筆做 leave-group-out 實測：詞涵蓋率
+        92.86%→88.10%、整句可拼出 80%→70%，7/20 筆候選集合改變——
+        不是理論上的疑慮。
+
+        **排除的單位是 group 不是 id**：長度平衡會把同一句複製 2–4 份，
+        只排 id 會讓副本留在表裡；而且同一段對話／同一個詞條底下的句子
+        高度相似，只排自己等於沒排。用 group 才是真正的 leave-group-out。
+        """
+        rows = getattr(self, "_all_ex", None)
+        if rows is None:
+            return 0
+        self._ex_rows, self._ex_bg = [], []
+        for r in rows:
+            if not (r.get("chinese") and r.get("gloss_text")):
                 continue
-            r = json.loads(line)
-            if r.get("chinese") and r.get("gloss_text"):
-                self._ex_rows.append(r)
-                self._ex_bg.append(self._bigrams(r["chinese"]))
+            if exclude_groups and r.get("group") in exclude_groups:
+                continue
+            if exclude_ids and r.get("id") in exclude_ids:
+                continue
+            self._ex_rows.append(r)
+            self._ex_bg.append(self._bigrams(r["chinese"]))
         self._build_align()
         self._build_core()
+        return len(self._ex_rows)
 
     def _build_core(self, size: int = 30) -> None:
         """高頻核心手語，每題都放進候選。
@@ -183,7 +274,11 @@ class CandidateRetriever:
                 continue
             scored = [(g, (n / total) * (1.0 / (1.0 + gfreq[g] ** 0.5)))
                       for g, n in bucket.items() if n >= 2]
-            scored.sort(key=lambda x: -x[1])
+            # 同分時**必須**用 gloss 當第二鍵：bucket 的鍵序來自上面 `for c in frags`
+            # 迭代 set 的順序，而那個順序隨 PYTHONHASHSEED 每個行程都不同。只按分數
+            # 排會讓同分者保持那個任意順序，_align 表因此每次跑都不一樣——2026-08-30
+            # 實測同一條建資料指令連跑兩次，40 句裡有 2 句候選清單不同。
+            scored.sort(key=lambda x: (-x[1], x[0]))
             if scored:
                 self._align[c] = scored[:8]
 
@@ -204,6 +299,11 @@ class CandidateRetriever:
         for form in (g, strip_punct(g), norm(g)):
             if form and form in self.index:
                 return self.index[form]
+        for form in (g, norm(g)):                 # 外語：折大小寫與內部空白
+            if form and re.search(r"[A-Za-z]", form):
+                sid = self._folded.get(fold(form))
+                if sid:
+                    return sid
         return None
 
     def _literal(self, text: str) -> list[str]:
@@ -310,7 +410,7 @@ class CandidateRetriever:
     def candidates(self, text: str, k: int = 20, n_examples: int = 8,
                    distractor_ratio: float = 0.2, n_align: int = 12,
                    n_core: int = 30, exclude_id=None, n_syn: int = 0,
-                   pin_core: int = 0) -> list[dict]:
+                   n_sem: int = 0, pin_core: int = 0) -> list[dict]:
         """回傳 [{sign_id, gloss}]，長度上限 k。順序穩定（可重現）。
 
         五個通道依序填：字面命中 → 例句遷移 → 詞對齊 → 高頻核心 →
@@ -323,6 +423,14 @@ class CandidateRetriever:
         把那些高價值候選擠掉了；dev 的例句遷移較不準，擠掉的損失才較小。
         留著是因為表與通道有其他用途（見 build_synonym_groups.py），
         且 k 若拉高到候選不再稀缺時值得重測。
+
+        **n_sem 預設 0＝語義通道關閉**（2026-08-23）。啟用需先設
+        `self.semantic = semantic_channel.SemanticRanker(self.rows)`，
+        建資料端（Mac）才裝得起向量模型；線上服務不載入、行為不變。
+        插在詞對齊之後、核心詞之前：它撈的是「學到了→學習」這類語義對應，
+        價值高於核心詞的尾端（dev 實測核心第 21–30 名只命中 3.1% token）。
+        **v17 的訓練資料（splits_script_k40sem）就是用這個通道建的**，
+        拿掉它就無法重新產生 v17 的訓練集——這是它留著的主要理由。
 
         **pin_core 預設 0＝關閉，實測淨負，留著只為記錄這個否定結果。**
         動機：2026-08-27 的診斷發現高頻核心排在第五順位，k=40 時經常整批被
@@ -366,6 +474,15 @@ class CandidateRetriever:
         add([g for g in literal if len(g) == 1])
         add(self._from_examples(text, n_examples, exclude_id=exclude_id))
         add(self._from_align(text, n_align))
+        if n_sem and getattr(self, "semantic", None) is not None:
+            got = 0
+            for g in self.semantic.rank(text):
+                if got >= n_sem:
+                    break
+                if g not in seen and g in self.by_gloss:
+                    seen.add(g)
+                    ordered.append(g)
+                    got += 1
         add(self._core[:n_core])
         room = max(0, k - len(ordered))
         if room:

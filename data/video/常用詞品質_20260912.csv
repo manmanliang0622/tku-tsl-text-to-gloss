@@ -1,4 +1,4 @@
-word,usage,in_sentences,tier,why,act,jit,frames,recording,source,alias_of
+﻿word,usage,in_sentences,tier,why,act,jit,frames,recording,source,alias_of
 我_A,2899,,poor,poor 偵測率低,0.3654,0.0226,52,1049_我_A.json,twtsl:1049,
 我_B,2899,,poor,poor 偵測率低,0.4886,0.01518,88,1050_我_B.json,twtsl:1050,
 去_A,1528,,severe,severe 抓不到手,0.2667,0.02794,75,0886_去_A.json,twtsl:886,

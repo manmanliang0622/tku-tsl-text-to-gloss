@@ -1,4 +1,4 @@
-word,usage,main_tier,main_act,main_frames,main_recording,main_source,variants
+﻿word,usage,main_tier,main_act,main_frames,main_recording,main_source,variants
 他,761,ok,0.9702,31,desk0912_他.json,signtube:手語天地-2026-09,他_B:severe:0.2816 他_A:poor:0.3
 很,134,ok,0.9946,58,desk0912_很.json,desk0912:混合來源-2026-09-12,
 看,132,ok,1.0,118,desk0912_看.json,desk0912:混合來源-2026-09-12,看_N:poor:0.3305 看_S:poor:0.5

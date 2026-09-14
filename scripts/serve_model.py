@@ -138,7 +138,7 @@ SCRIPT_SYSTEM = script_schema.SYSTEM_BY_SCHEMA[DEPLOYED_SCHEMA]
 # 關鍵是漏放行大幅減少：dev 93→23、corpus 35→9、textbook 89→31——
 # 這個旗標的錯誤本來就不對稱（漏放行會讓錯句直接送去給虛擬人比出來，
 # 誤攔只是多一次人看），所以偏 recall 是對的方向。
-NEEDS_REVIEW_THRESHOLD = 0.067544  # v19 新 dev 上最大化 F1（2026-09-04，F1 0.7181）
+NEEDS_REVIEW_THRESHOLD = 0.001814  # v21 在 dev 上最大化 F1（2026-09-09，P 0.65／R 0.92／F1 0.7642；v19 是 0.067544）
 
 
 def load(base_model, adapter, ple_on_gpu=None):

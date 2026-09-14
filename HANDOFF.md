@@ -96,9 +96,16 @@
   門檻 0.001814）：拆字零改善、OOV 旗標反而變弱，但 **9/14 盲測 88 題 v21 勝 69%
   （p=0.004）、語意 +0.40、漏詞備註 19→4——建議部署 v21**，見
   `results/v21_vs_v19_report.md` 第六節。
-  ⚠ **部署前 VM 要先重開機**：9/12 unattended-upgrade 把 NVIDIA 使用者函式庫升到
-  580.178 而核心模組仍是 580.173，`nvidia-smi` 報 Driver/library version mismatch；
-  線上 v19 靠升級前的 CUDA context 撐著，任何新 GPU 程序（含重啟服務）都起不來。
+  **v21 已於 2026-09-14 11:22 上線**（`scripts/vm_deploy_v21.sh`，在 VM 上以
+  `~/deploy_v21.sh` 執行）：換了 checkpoint（v21 checkpoint-349）、
+  `candidate_config.json`、`serve_model.py`（門檻 0.001814）、`script_schema.py`、
+  `bundle_server.py` 的 `EXPECTED_MODEL`。上線前備份在 `~/deploy-bak-v21-0914-1120`，
+  `model_service/checkpoint.old` 現在是 v19。**回滾**：把備份的五個檔複製回去
+  （checkpoint 整個目錄），再砍 `[b]undle_server.py`＋`[s]erve_model.py`，看門狗接回。
+  驗收：/health 報 `qlora_e4b_v21script`、`model_identity_ok: true`；核心 3 句線上輸出
+  與離線推論逐字相同；log 印「候選參數與訓練時一致」。
+  重開機前的驅動不匹配（9/12 unattended-upgrade 升到 580.178、核心模組 580.173）
+  已由 9/14 重開機解決：kernel 6.8.0-138、驅動 580.178.04。
   重訓起跑順序（v21 第一次就 OOM 的教訓）：`touch training.lock` →
   砍父程序 `pkill -f "[b]undle_server.py --host 127.0.0.1 --port 8084"` → 砍
   `pkill -f "[s]erve_model.py"`（只砍子程序沒用，bundle_server 秒級重生它）→

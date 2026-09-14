@@ -93,9 +93,12 @@
   （5,545→5,584，`coverage_stats.json` 的 `whole_word_gap_rows`=58），dev／test／
   test_corpus／test_textbook 與 v19 **逐位元相同**——盲測若有差異只能歸因於那 39 列。
   **v21 已於 2026-09-09 訓完**（`~/outputs/qlora_e4b_v21script/checkpoint-349`，
-  門檻 0.001814）：自動指標小升但拆字零改善、OOV 旗標反而變弱，
-  見 `results/v21_vs_v19_report.md`；88 題盲測表在 VM `~/tsl-v18/outputs/`
-  （`outputs/` 不入庫），待評。**線上維持 v19。**
+  門檻 0.001814）：拆字零改善、OOV 旗標反而變弱，但 **9/14 盲測 88 題 v21 勝 69%
+  （p=0.004）、語意 +0.40、漏詞備註 19→4——建議部署 v21**，見
+  `results/v21_vs_v19_report.md` 第六節。
+  ⚠ **部署前 VM 要先重開機**：9/12 unattended-upgrade 把 NVIDIA 使用者函式庫升到
+  580.178 而核心模組仍是 580.173，`nvidia-smi` 報 Driver/library version mismatch；
+  線上 v19 靠升級前的 CUDA context 撐著，任何新 GPU 程序（含重啟服務）都起不來。
   重訓起跑順序（v21 第一次就 OOM 的教訓）：`touch training.lock` →
   砍父程序 `pkill -f "[b]undle_server.py --host 127.0.0.1 --port 8084"` → 砍
   `pkill -f "[s]erve_model.py"`（只砍子程序沒用，bundle_server 秒級重生它）→
